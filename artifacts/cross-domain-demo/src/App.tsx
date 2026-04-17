@@ -10,6 +10,7 @@ import { StartScreen } from "./components/StartScreen";
 import { NavPanel } from "./components/NavPanel";
 import type { NavTab } from "./components/NavPanel";
 import { AlertDetailModal } from "./components/AlertDetailModal";
+import { SEED_EVENTS } from "./data/seedEvents";
 
 const MAX_RAW = 80;
 const MAX_SANITIZED = 160;
@@ -129,7 +130,11 @@ export default function App() {
       </div>
 
       {/* Nav panel — slides in below nav bar */}
-      <NavPanel activeTab={activeNav} onClose={() => setActiveNav(null)} rawEvents={rawEvents} />
+      <NavPanel
+        activeTab={activeNav}
+        onClose={() => setActiveNav(null)}
+        rawEvents={[...SEED_EVENTS, ...rawEvents]}
+      />
 
       {/* Alert detail modal */}
       {selectedAlert && (
