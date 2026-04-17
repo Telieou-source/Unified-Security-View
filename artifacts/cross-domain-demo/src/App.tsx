@@ -6,6 +6,7 @@ import { DomainPanel } from "./components/DomainPanel";
 import { BoundaryLayer } from "./components/BoundaryLayer";
 import { CorrelatedView } from "./components/CorrelatedView";
 import { StatsBar } from "./components/StatsBar";
+import { StartScreen } from "./components/StartScreen";
 
 const MAX_RAW = 80;
 const MAX_SANITIZED = 160;
@@ -125,64 +126,75 @@ export default function App() {
       <div className="flex-1 overflow-auto">
         <div className="max-w-screen-2xl mx-auto px-4 py-3 flex flex-col gap-3">
 
-          {/* Controls */}
-          <StatsBar
-            rawEvents={rawEvents}
-            sanitizedEvents={sanitizedEvents}
-            alerts={alerts}
-            isRunning={isRunning}
-            speed={speed}
-            onToggle={() => setIsRunning((r) => !r)}
-            onSpeedChange={setSpeed}
-            onReset={handleReset}
-          />
+          {/* START SCREEN — shown until simulation begins */}
+          {rawEvents.length === 0 && !isRunning ? (
+            <StartScreen
+              onStart={() => setIsRunning(true)}
+              speed={speed}
+              onSpeedChange={setSpeed}
+            />
+          ) : (
+            <>
+              {/* Controls */}
+              <StatsBar
+                rawEvents={rawEvents}
+                sanitizedEvents={sanitizedEvents}
+                alerts={alerts}
+                isRunning={isRunning}
+                speed={speed}
+                onToggle={() => setIsRunning((r) => !r)}
+                onSpeedChange={setSpeed}
+                onReset={handleReset}
+              />
 
-          {/* Domain panel label row */}
-          <div className="flex items-center gap-1 text-xs font-mono text-[#555a62]">
-            <span>sourcetype=</span>
-            <span className="text-[#48c78e]">siem:events</span>
-            <span className="mx-2 text-[#2d3035]">|</span>
-            <span className="text-[#555a62]">Raw SIEM event streams — 3 classification domains</span>
-            <span className="ml-auto flex items-center gap-4">
-              {DOMAINS.map((d) => (
-                <span key={d.id} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-sm" style={{ background: d.color }} />
-                  <span style={{ color: d.color }}>{d.name}</span>
-                  <span className="text-[#444850]">({d.subnet})</span>
+              {/* Domain panel label row */}
+              <div className="flex items-center gap-1 text-xs font-mono text-[#555a62]">
+                <span>sourcetype=</span>
+                <span className="text-[#48c78e]">siem:events</span>
+                <span className="mx-2 text-[#2d3035]">|</span>
+                <span className="text-[#555a62]">Raw SIEM event streams — 3 classification domains</span>
+                <span className="ml-auto flex items-center gap-4">
+                  {DOMAINS.map((d) => (
+                    <span key={d.id} className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-sm" style={{ background: d.color }} />
+                      <span style={{ color: d.color }}>{d.name}</span>
+                      <span className="text-[#444850]">({d.subnet})</span>
+                    </span>
+                  ))}
                 </span>
-              ))}
-            </span>
-          </div>
+              </div>
 
-          {/* Three domain panels */}
-          <div className="grid grid-cols-3 gap-2">
-            {DOMAINS.map((domain) => (
-              <DomainPanel
-                key={domain.id}
-                domain={domain}
-                events={rawByDomain(domain.id)}
+              {/* Three domain panels */}
+              <div className="grid grid-cols-3 gap-2">
+                {DOMAINS.map((domain) => (
+                  <DomainPanel
+                    key={domain.id}
+                    domain={domain}
+                    events={rawByDomain(domain.id)}
+                    isRunning={isRunning}
+                  />
+                ))}
+              </div>
+
+              {/* Boundary layer */}
+              <BoundaryLayer
+                sanitizedCount={sanitizedEvents.length}
+                strippedFieldCount={strippedFieldCount}
+                recentSanitized={sanitizedEvents.slice(0, 10)}
                 isRunning={isRunning}
               />
-            ))}
-          </div>
 
-          {/* Boundary layer */}
-          <BoundaryLayer
-            sanitizedCount={sanitizedEvents.length}
-            strippedFieldCount={strippedFieldCount}
-            recentSanitized={sanitizedEvents.slice(0, 10)}
-            isRunning={isRunning}
-          />
+              {/* Correlated notables — high side */}
+              <CorrelatedView
+                alerts={alerts}
+                totalEvents={rawEvents.length}
+              />
 
-          {/* Correlated notables — high side */}
-          <CorrelatedView
-            alerts={alerts}
-            totalEvents={rawEvents.length}
-          />
-
-          <div className="text-center text-xs text-[#333840] font-mono pb-2">
-            Simulated data only — no real SIEM, network traffic, credentials, or classified material
-          </div>
+              <div className="text-center text-xs text-[#333840] font-mono pb-2">
+                Simulated data only — no real SIEM, network traffic, credentials, or classified material
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
