@@ -7,9 +7,9 @@ import { BoundaryLayer } from "./components/BoundaryLayer";
 import { CorrelatedView } from "./components/CorrelatedView";
 import { StatsBar } from "./components/StatsBar";
 
-const MAX_RAW = 60;
-const MAX_SANITIZED = 120;
-const MAX_ALERTS = 50;
+const MAX_RAW = 80;
+const MAX_SANITIZED = 160;
+const MAX_ALERTS = 60;
 
 export default function App() {
   const [isRunning, setIsRunning] = useState(false);
@@ -17,7 +17,7 @@ export default function App() {
   const [rawEvents, setRawEvents] = useState<RawEvent[]>([]);
   const [sanitizedEvents, setSanitizedEvents] = useState<SanitizedEvent[]>([]);
   const [alerts, setAlerts] = useState<CorrelatedAlert[]>([]);
-  const [blockedCount, setBlockedCount] = useState(0);
+  const [strippedFieldCount, setStrippedFieldCount] = useState(0);
 
   const sanitizedRef = useRef<SanitizedEvent[]>([]);
   sanitizedRef.current = sanitizedEvents;
@@ -31,9 +31,7 @@ export default function App() {
     const sanitized = sanitizeEvent(raw);
     const newSanitized = [sanitized, ...sanitizedRef.current].slice(0, MAX_SANITIZED);
     setSanitizedEvents(newSanitized);
-
-    const blockedFieldCount = sanitized.strippedFields.length;
-    setBlockedCount((c) => c + blockedFieldCount);
+    setStrippedFieldCount((c) => c + sanitized.strippedFields.length);
 
     const alert = tryCorrelate(newSanitized, sanitized);
     if (alert) {
@@ -52,37 +50,80 @@ export default function App() {
     setRawEvents([]);
     setSanitizedEvents([]);
     setAlerts([]);
-    setBlockedCount(0);
+    setStrippedFieldCount(0);
   }, []);
 
   const rawByDomain = (id: DomainId) => rawEvents.filter((e) => e.domainId === id);
-  const recentSanitized = sanitizedEvents.slice(0, 6);
-  const sanitizedPassCount = sanitizedEvents.length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top Header */}
-      <div className="border-b border-slate-800 px-6 py-3 flex items-center justify-between bg-slate-950/80">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-slate-400" style={{ boxShadow: "0 0 10px rgba(255,255,255,0.3)" }} />
-          <div>
-            <h1 className="text-sm font-semibold tracking-widest text-slate-200 uppercase">
-              Cross-Domain Security Metadata Aggregation
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Simulated multi-domain event correlation with sanitized boundary crossing
-            </p>
+    <div className="min-h-screen flex flex-col" style={{ background: "#111315", color: "#c8d0d8" }}>
+
+      {/* Splunk-style top nav bar */}
+      <div
+        className="flex items-center justify-between px-5 py-0 border-b border-[#2d3035] flex-shrink-0"
+        style={{ background: "#1a1c1f", height: "40px" }}
+      >
+        {/* Splunk-ish logo mark + app name */}
+        <div className="flex items-center gap-0 h-full">
+          <div
+            className="flex items-center gap-2 px-4 h-full border-r border-[#2d3035]"
+          >
+            <span className="font-bold text-sm" style={{ color: "#f58220" }}>▶</span>
+            <span className="font-semibold text-sm text-[#c8d0d8] tracking-wide">Splunk SIEM</span>
+          </div>
+          <div className="flex items-center gap-0 h-full text-xs font-mono text-[#555a62]">
+            <span className="px-4 h-full flex items-center border-r border-[#2d3035] hover:text-[#c8d0d8] cursor-default">Search</span>
+            <span className="px-4 h-full flex items-center border-r border-[#2d3035] hover:text-[#c8d0d8] cursor-default">Dashboards</span>
+            <span
+              className="px-4 h-full flex items-center border-r border-[#2d3035] cursor-default"
+              style={{ background: "#1e2226", color: "#f58220", borderBottom: "2px solid #f58220" }}
+            >
+              Cross-Domain Notable Events
+            </span>
+            <span className="px-4 h-full flex items-center hover:text-[#c8d0d8] cursor-default">Reports</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="text-slate-600">Classification:</span>
-          <span className="text-red-400 font-semibold tracking-wider">TOP SECRET // HIGH SIDE</span>
+        <div className="flex items-center gap-4 text-xs font-mono text-[#555a62]">
+          <span>index=cross_domain_siem</span>
+          <span className="text-[#e55555] font-semibold">TOP SECRET // HIGH SIDE</span>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Splunk search bar (decorative) */}
+      <div
+        className="flex items-center gap-2 px-4 py-2 border-b border-[#2d3035] flex-shrink-0"
+        style={{ background: "#17191d" }}
+      >
+        <span className="text-xs text-[#555a62] font-mono">|</span>
+        <div
+          className="flex-1 flex items-center gap-2 px-3 py-1 rounded-sm text-xs font-mono text-[#7a8490]"
+          style={{ background: "#1e2124", border: "1px solid #3a3d45" }}
+        >
+          <span style={{ color: "#f58220" }}>index</span>
+          <span className="text-[#555a62">=</span>
+          <span className="text-[#48c78e]">cross_domain_siem</span>
+          <span className="text-[#555a62] mx-1">|</span>
+          <span style={{ color: "#f58220" }}>eval</span>
+          <span className="text-[#c8d0d8]"> domain IN (ALPHA, BRAVO, CHARLIE)</span>
+          <span className="text-[#555a62] mx-1">|</span>
+          <span style={{ color: "#f58220" }}>stats</span>
+          <span className="text-[#c8d0d8]"> count by domain eventtype severity</span>
+          <span className="text-[#555a62] mx-1">|</span>
+          <span style={{ color: "#f58220" }}>correlate</span>
+          <span className="text-[#c8d0d8]"> window=10s threshold=2</span>
+        </div>
+        <button
+          className="px-4 py-1 rounded-sm text-xs font-semibold"
+          style={{ background: "#f58220", color: "#111315" }}
+        >
+          Search
+        </button>
+        <span className="text-xs text-[#555a62] font-mono">Last 60 min</span>
+      </div>
+
+      {/* Main content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4">
+        <div className="max-w-screen-2xl mx-auto px-4 py-3 flex flex-col gap-3">
 
           {/* Controls */}
           <StatsBar
@@ -96,28 +137,25 @@ export default function App() {
             onReset={handleReset}
           />
 
-          {/* Architecture Legend */}
-          <div className="flex items-center gap-6 px-1 text-xs text-slate-500 font-mono">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-1 bg-sky-500/50 rounded" />
-              <span>Domain Alpha — Cyber Ops Network</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-1 bg-green-500/50 rounded" />
-              <span>Domain Bravo — Enterprise IT</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-1 bg-amber-500/50 rounded" />
-              <span>Domain Charlie — Industrial Control Systems</span>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <div className="w-4 h-1 border-t border-dashed border-violet-500/50" />
-              <span className="text-violet-400">Sanitization boundary</span>
-            </div>
+          {/* Domain panel label row */}
+          <div className="flex items-center gap-1 text-xs font-mono text-[#555a62]">
+            <span>sourcetype=</span>
+            <span className="text-[#48c78e]">siem:events</span>
+            <span className="mx-2 text-[#2d3035]">|</span>
+            <span className="text-[#555a62]">Raw SIEM event streams — 3 classification domains</span>
+            <span className="ml-auto flex items-center gap-4">
+              {DOMAINS.map((d) => (
+                <span key={d.id} className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-sm" style={{ background: d.color }} />
+                  <span style={{ color: d.color }}>{d.name}</span>
+                  <span className="text-[#444850]">({d.subnet})</span>
+                </span>
+              ))}
+            </span>
           </div>
 
-          {/* Three Domain Panels */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Three domain panels */}
+          <div className="grid grid-cols-3 gap-2">
             {DOMAINS.map((domain) => (
               <DomainPanel
                 key={domain.id}
@@ -128,24 +166,22 @@ export default function App() {
             ))}
           </div>
 
-          {/* Boundary Layer */}
+          {/* Boundary layer */}
           <BoundaryLayer
-            sanitizedCount={sanitizedPassCount}
-            blockedCount={blockedCount}
-            recentSanitized={recentSanitized}
+            sanitizedCount={sanitizedEvents.length}
+            strippedFieldCount={strippedFieldCount}
+            recentSanitized={sanitizedEvents.slice(0, 10)}
             isRunning={isRunning}
           />
 
-          {/* Correlated View */}
+          {/* Correlated notables — high side */}
           <CorrelatedView
             alerts={alerts}
             totalEvents={rawEvents.length}
-            uniqueThreats={alerts.length}
           />
 
-          {/* Footer note */}
-          <div className="text-center text-xs text-slate-600 font-mono pb-2">
-            All data is simulated. No real network traffic, credentials, or classified material is used.
+          <div className="text-center text-xs text-[#333840] font-mono pb-2">
+            Simulated data only — no real SIEM, network traffic, credentials, or classified material
           </div>
         </div>
       </div>

@@ -3,14 +3,14 @@ export type DomainId = "ALPHA" | "BRAVO" | "CHARLIE";
 export type Classification = "UNCLASSIFIED" | "CONFIDENTIAL" | "SECRET" | "TOP SECRET";
 
 export type EventType =
-  | "AUTH_ATTEMPT"
-  | "FILE_ACCESS"
-  | "NETWORK_CONN"
-  | "ANOMALY_DETECTED"
-  | "POLICY_VIOLATION"
-  | "PROCESS_SPAWN"
-  | "EXFIL_ATTEMPT"
-  | "PRIVILEGE_ESC";
+  | "Authentication"
+  | "FileAccess"
+  | "NetworkConn"
+  | "AnomalyDetected"
+  | "PolicyViolation"
+  | "ProcessSpawn"
+  | "ExfilAttempt"
+  | "PrivilegeEsc";
 
 export interface RawEvent {
   id: string;
@@ -18,11 +18,15 @@ export interface RawEvent {
   timestamp: number;
   type: EventType;
   classification: Classification;
-  sourceIp: string;
+  srcIp: string;
+  dstIp: string;
+  srcPort: number;
+  dstPort: number;
+  protocol: "TCP" | "UDP" | "ICMP";
   userId: string;
-  hostId: string;
-  payload: Record<string, string | number | boolean>;
-  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  host: string;
+  rawPacketBytes: string;
+  severity: "INFO" | "WARN" | "ERROR" | "FATAL";
 }
 
 export interface SanitizedEvent {
@@ -30,9 +34,14 @@ export interface SanitizedEvent {
   domainId: DomainId;
   timestamp: number;
   type: EventType;
-  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  hostIdHash: string;
-  userIdHash: string;
+  severity: "INFO" | "WARN" | "ERROR" | "FATAL";
+  srcIp: string;
+  dstIp: string;
+  srcPort: number;
+  dstPort: number;
+  protocol: "TCP" | "UDP" | "ICMP";
+  userId: string;
+  host: string;
   strippedFields: string[];
   passedFields: string[];
 }
@@ -46,11 +55,12 @@ export interface CorrelatedAlert {
   summary: string;
   eventIds: string[];
   confidence: number;
+  ruleId: string;
 }
 
 export interface BoundaryRule {
   field: string;
-  action: "STRIP" | "HASH" | "PASS";
+  action: "STRIP" | "PASS";
   reason: string;
 }
 
@@ -59,9 +69,12 @@ export interface DomainConfig {
   name: string;
   label: string;
   color: string;
-  bgClass: string;
+  headerClass: string;
+  rowEvenClass: string;
+  rowOddClass: string;
   borderClass: string;
   textClass: string;
-  badgeClass: string;
+  badgeStyle: string;
   systems: string[];
+  subnet: string;
 }
