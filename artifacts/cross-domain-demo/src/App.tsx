@@ -7,6 +7,8 @@ import { BoundaryLayer } from "./components/BoundaryLayer";
 import { CorrelatedView } from "./components/CorrelatedView";
 import { StatsBar } from "./components/StatsBar";
 import { StartScreen } from "./components/StartScreen";
+import { NavPanel } from "./components/NavPanel";
+import type { NavTab } from "./components/NavPanel";
 
 const MAX_RAW = 80;
 const MAX_SANITIZED = 160;
@@ -19,6 +21,11 @@ export default function App() {
   const [sanitizedEvents, setSanitizedEvents] = useState<SanitizedEvent[]>([]);
   const [alerts, setAlerts] = useState<CorrelatedAlert[]>([]);
   const [strippedFieldCount, setStrippedFieldCount] = useState(0);
+  const [activeNav, setActiveNav] = useState<NavTab | null>(null);
+
+  function toggleNav(tab: NavTab) {
+    setActiveNav((cur) => (cur === tab ? null : tab));
+  }
 
   const sanitizedRef = useRef<SanitizedEvent[]>([]);
   sanitizedRef.current = sanitizedEvents;
@@ -56,71 +63,70 @@ export default function App() {
 
   const rawByDomain = (id: DomainId) => rawEvents.filter((e) => e.domainId === id);
 
+  const NAV_TABS: { id: NavTab; label: string }[] = [
+    { id: "search",     label: "Search" },
+    { id: "dashboards", label: "Dashboards" },
+    { id: "reports",    label: "Reports" },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#111315", color: "#c8d0d8" }}>
 
-      {/* Splunk-style top nav bar */}
+      {/* Top nav bar */}
       <div
         className="flex items-center justify-between px-5 py-0 border-b border-[#2d3035] flex-shrink-0"
         style={{ background: "#1a1c1f", height: "40px" }}
       >
-        {/* Splunk-ish logo mark + app name */}
         <div className="flex items-center gap-0 h-full">
-          <div
-            className="flex items-center gap-2 px-4 h-full border-r border-[#2d3035]"
-          >
+          {/* Brand */}
+          <div className="flex items-center gap-2 px-4 h-full border-r border-[#2d3035]">
             <span className="font-bold text-sm" style={{ color: "#f58220" }}>▶</span>
-            <span className="font-semibold text-sm text-[#c8d0d8] tracking-wide">Splunk SIEM</span>
+            <span className="font-semibold text-sm text-[#c8d0d8] tracking-wide">Demo SIEM</span>
           </div>
-          <div className="flex items-center gap-0 h-full text-xs font-mono text-[#555a62]">
-            <span className="px-4 h-full flex items-center border-r border-[#2d3035] hover:text-[#c8d0d8] cursor-default">Search</span>
-            <span className="px-4 h-full flex items-center border-r border-[#2d3035] hover:text-[#c8d0d8] cursor-default">Dashboards</span>
-            <span
-              className="px-4 h-full flex items-center border-r border-[#2d3035] cursor-default"
-              style={{ background: "#1e2226", color: "#f58220", borderBottom: "2px solid #f58220" }}
+
+          {/* Clickable nav tabs */}
+          <div className="flex items-center gap-0 h-full text-xs font-mono">
+            {NAV_TABS.map(({ id, label }) => {
+              const isActive = activeNav === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => toggleNav(id)}
+                  className="px-4 h-full flex items-center border-r border-[#2d3035] transition-colors"
+                  style={{
+                    background: isActive ? "#1e2226" : "transparent",
+                    color: isActive ? "#f58220" : "#666b74",
+                    borderBottom: isActive ? "2px solid #f58220" : "2px solid transparent",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+
+            {/* Main view tab — always-on indicator */}
+            <button
+              onClick={() => setActiveNav(null)}
+              className="px-4 h-full flex items-center border-r border-[#2d3035] transition-colors"
+              style={{
+                background: activeNav === null ? "#1e2226" : "transparent",
+                color: activeNav === null ? "#f58220" : "#666b74",
+                borderBottom: activeNav === null ? "2px solid #f58220" : "2px solid transparent",
+              }}
             >
               Cross-Domain Notable Events
-            </span>
-            <span className="px-4 h-full flex items-center hover:text-[#c8d0d8] cursor-default">Reports</span>
+            </button>
           </div>
         </div>
+
         <div className="flex items-center gap-4 text-xs font-mono text-[#555a62]">
           <span>index=cross_domain_siem</span>
           <span className="text-[#e55555] font-semibold">TOP SECRET // HIGH SIDE</span>
         </div>
       </div>
 
-      {/* Splunk search bar (decorative) */}
-      <div
-        className="flex items-center gap-2 px-4 py-2 border-b border-[#2d3035] flex-shrink-0"
-        style={{ background: "#17191d" }}
-      >
-        <span className="text-xs text-[#555a62] font-mono">|</span>
-        <div
-          className="flex-1 flex items-center gap-2 px-3 py-1 rounded-sm text-xs font-mono text-[#7a8490]"
-          style={{ background: "#1e2124", border: "1px solid #3a3d45" }}
-        >
-          <span style={{ color: "#f58220" }}>index</span>
-          <span className="text-[#555a62">=</span>
-          <span className="text-[#48c78e]">cross_domain_siem</span>
-          <span className="text-[#555a62] mx-1">|</span>
-          <span style={{ color: "#f58220" }}>eval</span>
-          <span className="text-[#c8d0d8]"> domain IN (ALPHA, BRAVO, CHARLIE)</span>
-          <span className="text-[#555a62] mx-1">|</span>
-          <span style={{ color: "#f58220" }}>stats</span>
-          <span className="text-[#c8d0d8]"> count by domain eventtype severity</span>
-          <span className="text-[#555a62] mx-1">|</span>
-          <span style={{ color: "#f58220" }}>correlate</span>
-          <span className="text-[#c8d0d8]"> window=10s threshold=2</span>
-        </div>
-        <button
-          className="px-4 py-1 rounded-sm text-xs font-semibold"
-          style={{ background: "#f58220", color: "#111315" }}
-        >
-          Search
-        </button>
-        <span className="text-xs text-[#555a62] font-mono">Last 60 min</span>
-      </div>
+      {/* Nav panel — slides in below nav bar */}
+      <NavPanel activeTab={activeNav} onClose={() => setActiveNav(null)} />
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
