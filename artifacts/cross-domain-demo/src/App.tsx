@@ -11,6 +11,7 @@ import { NavPanel } from "./components/NavPanel";
 import type { NavTab } from "./components/NavPanel";
 import { AlertDetailModal } from "./components/AlertDetailModal";
 import { DashboardView } from "./components/DashboardView";
+import { HealthMonitor } from "./components/HealthMonitor";
 import { SEED_EVENTS } from "./data/seedEvents";
 
 const MAX_RAW = 80;
@@ -213,6 +214,14 @@ export default function App() {
                 sanitizedCount={sanitizedEvents.length}
                 strippedFieldCount={strippedFieldCount}
                 recentSanitized={sanitizedEvents.slice(0, 10)}
+                isRunning={isRunning}
+              />
+
+              {/* Bandwidth & system health strip */}
+              <HealthMonitor
+                rawEvents={rawEvents}
+                sanitizedEvents={sanitizedEvents}
+                strippedFieldCount={strippedFieldCount}
                 isRunning={isRunning}
               />
 
