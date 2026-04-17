@@ -961,39 +961,126 @@ const INVESTIGATIONS: Investigation[] = [
   },
 ];
 
-function InvestigationsPanel() {
-  const [selected, setSelected] = useState<Investigation | null>(null);
+/* ── blank form state ── */
+interface NewInvForm {
+  title:      string;
+  severity:   "CRITICAL" | "HIGH" | "MEDIUM";
+  status:     InvStatus;
+  analyst:    string;
+  domains:    string[];
+  summary:    string;
+  findings:   string;   /* newline-separated */
+  notes:      string;
+  sourceMode: "blank" | "event";
+  sourceEventId: string;
+}
 
+const BLANK_FORM: NewInvForm = {
+  title: "", severity: "HIGH", status: "Open",
+  analyst: "", domains: [], summary: "", findings: "", notes: "",
+  sourceMode: "blank", sourceEventId: "",
+};
+
+const SEV_TO_INV: Record<string, "CRITICAL" | "HIGH" | "MEDIUM"> = {
+  FATAL: "CRITICAL", ERROR: "HIGH", WARN: "MEDIUM", INFO: "MEDIUM",
+};
+
+let invSeq = 6; /* start after pre-seeded 5 */
+
+function InvestigationsPanel({ rawEvents }: { rawEvents: RawEvent[] }) {
+  const [allInv, setAllInv]     = useState<Investigation[]>(INVESTIGATIONS);
+  const [selected, setSelected] = useState<Investigation | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm]         = useState<NewInvForm>(BLANK_FORM);
+  const [created, setCreated]   = useState<string | null>(null);
+
+  /* notable source events (FATAL/ERROR) for the "from event" picker */
+  const notableEvents = rawEvents
+    .filter((e) => e.severity === "FATAL" || e.severity === "ERROR")
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 20);
+
+  /* when user picks a source event, pre-fill fields */
+  function applySourceEvent(id: string) {
+    const e = notableEvents.find((ev) => ev.id === id);
+    if (!e) return;
+    setForm((f) => ({
+      ...f,
+      sourceEventId: id,
+      title:    `${e.type} — ${e.host} (${e.domainId})`,
+      severity: SEV_TO_INV[e.severity] ?? "HIGH",
+      domains:  [e.domainId],
+      summary:  `${e.severity} ${e.type} event detected on host ${e.host} in domain ${e.domainId}. `
+              + `Source: ${e.srcIp}:${e.srcPort} → ${e.dstIp}:${e.dstPort} (${e.protocol}). `
+              + `User: ${e.userId ?? "unknown"}. Classification: ${e.classification}.`,
+      findings: `${e.type} event with severity ${e.severity} observed at ${new Date(e.timestamp).toISOString().replace("T"," ").slice(0,19)} UTC\n`
+              + `Host ${e.host} initiated connection to ${e.dstIp}:${e.dstPort}\n`
+              + `User account ${e.userId ?? "unknown"} was active during the event\n`
+              + `Event classification: ${e.classification}`,
+      notes:    `Auto-populated from event ${e.id}. Analyst review required.`,
+    }));
+  }
+
+  function handleCreate() {
+    if (!form.title.trim()) return;
+    const now   = new Date();
+    const invId = `INV-${now.getFullYear()}-${String(invSeq++).padStart(3, "0")}`;
+    const inv: Investigation = {
+      id:       invId,
+      title:    form.title.trim(),
+      severity: form.severity,
+      status:   form.status,
+      analyst:  form.analyst.trim() || "Unassigned",
+      opened:   now.toISOString().replace("T", " ").slice(0, 16) + " UTC",
+      domains:  form.domains.length > 0 ? form.domains : ["ALPHA"],
+      summary:  form.summary.trim() || "No summary provided.",
+      keyFindings: form.findings.split("\n").map((s) => s.trim()).filter(Boolean),
+      timeline: [
+        { time: now.toISOString().slice(11, 19), event: `Investigation ${invId} created` },
+        ...(form.sourceEventId
+          ? [{ time: now.toISOString().slice(11, 19), event: `Seeded from event ${form.sourceEventId}` }]
+          : []),
+      ],
+      notes: form.notes.trim() || "No notes.",
+    };
+    setAllInv((prev) => [inv, ...prev]);
+    setCreated(invId);
+    setShowCreate(false);
+    setForm(BLANK_FORM);
+    setTimeout(() => setCreated(null), 4000);
+  }
+
+  /* ── Detail view ── */
   if (selected) {
     const sev = INV_SEV_COLOR[selected.severity];
-    const st = STATUS_STYLE[selected.status];
+    const st  = STATUS_STYLE[selected.status];
+    const isNew = created === selected.id;
     return (
       <div className="flex flex-col gap-4 p-4">
-        {/* Back */}
-        <button
-          onClick={() => setSelected(null)}
-          className="flex items-center gap-1.5 text-xs font-mono text-[#555a62] hover:text-[#c8d0d8] self-start"
-        >
+        <button onClick={() => setSelected(null)}
+          className="flex items-center gap-1.5 text-xs font-mono text-[#555a62] hover:text-[#c8d0d8] self-start">
           ← All Investigations
         </button>
-
-        {/* Header */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-mono text-[#a78bfa]">{selected.id}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-sm font-mono" style={{ background: `${sev}18`, color: sev, border: `1px solid ${sev}40` }}>
-              {selected.severity}
-            </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-sm font-mono" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
-              {selected.status}
-            </span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-sm font-mono"
+              style={{ background: `${sev}18`, color: sev, border: `1px solid ${sev}40` }}>{selected.severity}</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-sm font-mono"
+              style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>{selected.status}</span>
+            {isNew && (
+              <span className="text-xs font-mono px-2 py-0.5 rounded-sm"
+                style={{ background: "#1a3020", color: "#48c78e", border: "1px solid #264a38" }}>
+                ✓ Just created
+              </span>
+            )}
           </div>
           <div className="text-sm font-semibold text-[#c8d0d8]">{selected.title}</div>
           <div className="flex items-center gap-4 text-xs font-mono text-[#555a62]">
             <span>Analyst: <span className="text-[#8a9aaa]">{selected.analyst}</span></span>
             <span>Opened: <span className="text-[#8a9aaa]">{selected.opened}</span></span>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap">
             {selected.domains.map((d) => (
               <span key={d} className="text-xs font-semibold px-2 py-0.5 rounded-sm font-mono"
                 style={{ color: DOMAIN_COLOR_INV[d], background: `${DOMAIN_COLOR_INV[d]}18`, border: `1px solid ${DOMAIN_COLOR_INV[d]}35` }}>
@@ -1002,27 +1089,22 @@ function InvestigationsPanel() {
             ))}
           </div>
         </div>
-
-        {/* Summary */}
         <div>
           <div className="text-xs font-semibold text-[#555a62] tracking-wider uppercase mb-1.5">Summary</div>
           <p className="text-xs text-[#8a9aaa] leading-relaxed">{selected.summary}</p>
         </div>
-
-        {/* Key findings */}
-        <div>
-          <div className="text-xs font-semibold text-[#555a62] tracking-wider uppercase mb-1.5">Key Findings</div>
-          <ul className="flex flex-col gap-1">
-            {selected.keyFindings.map((f, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-[#8a9aaa]">
-                <span className="flex-shrink-0 mt-0.5" style={{ color: sev }}>▸</span>
-                {f}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Timeline */}
+        {selected.keyFindings.length > 0 && (
+          <div>
+            <div className="text-xs font-semibold text-[#555a62] tracking-wider uppercase mb-1.5">Key Findings</div>
+            <ul className="flex flex-col gap-1">
+              {selected.keyFindings.map((f, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-[#8a9aaa]">
+                  <span className="flex-shrink-0 mt-0.5" style={{ color: sev }}>▸</span>{f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div>
           <div className="text-xs font-semibold text-[#555a62] tracking-wider uppercase mb-1.5">Event Timeline</div>
           <div className="flex flex-col gap-0">
@@ -1037,8 +1119,6 @@ function InvestigationsPanel() {
             ))}
           </div>
         </div>
-
-        {/* Analyst notes */}
         <div>
           <div className="text-xs font-semibold text-[#555a62] tracking-wider uppercase mb-1.5">Analyst Notes</div>
           <div className="px-3 py-2 rounded-sm text-xs text-[#7a8490] font-mono leading-relaxed"
@@ -1046,37 +1126,268 @@ function InvestigationsPanel() {
             {selected.notes}
           </div>
         </div>
-
         <div className="pb-2" />
       </div>
     );
   }
 
+  /* ── Create form ── */
+  const iCls = "w-full bg-[#0e1012] border border-[#3a3d45] rounded-sm px-2 py-1.5 text-xs text-[#c8d0d8] outline-none font-mono focus:border-[#f58220]";
+  const sCls = "bg-[#0e1012] border border-[#3a3d45] rounded-sm px-2 py-1.5 text-xs text-[#c8d0d8] outline-none font-mono focus:border-[#f58220] cursor-pointer";
+  const lbCls = "text-xs font-semibold text-[#888c94] tracking-wider mb-1.5";
+
+  if (showCreate) {
+    return (
+      <div className="flex flex-col gap-4 p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setShowCreate(false); setForm(BLANK_FORM); }}
+              className="text-xs font-mono text-[#555a62] hover:text-[#c8d0d8]">
+              ← Cancel
+            </button>
+            <span className="text-[#2a2d32] text-xs">|</span>
+            <span className="text-sm font-semibold text-[#f58220]">New Investigation</span>
+          </div>
+        </div>
+
+        {/* Source mode tabs */}
+        <div
+          className="rounded-sm p-3 flex flex-col gap-3"
+          style={{ background: "#13151a", border: "1px solid #2a2d32" }}
+        >
+          <div className={lbCls}>SOURCE</div>
+          <div className="flex gap-2">
+            {(["blank", "event"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setForm({ ...BLANK_FORM, sourceMode: m }); }}
+                className="px-3 py-1.5 rounded-sm text-xs font-mono font-semibold transition-colors"
+                style={{
+                  background: form.sourceMode === m ? "#1e3040" : "#1a1c20",
+                  color:      form.sourceMode === m ? "#f58220" : "#555a62",
+                  border:     `1px solid ${form.sourceMode === m ? "#4a5a70" : "#2a2d32"}`,
+                }}
+              >
+                {m === "blank" ? "◻ Blank" : "⚡ From Notable Event"}
+              </button>
+            ))}
+          </div>
+
+          {/* Event picker */}
+          {form.sourceMode === "event" && (
+            <div className="flex flex-col gap-1.5">
+              <div className="text-xs text-[#555a62] font-mono">
+                {notableEvents.length === 0
+                  ? "No notable events yet — start the simulation or seed events exist in data."
+                  : "Select a FATAL/ERROR event to pre-populate the form:"}
+              </div>
+              {notableEvents.length > 0 && (
+                <select
+                  className={sCls}
+                  value={form.sourceEventId}
+                  onChange={(e) => applySourceEvent(e.target.value)}
+                >
+                  <option value="">— pick an event —</option>
+                  {notableEvents.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      [{e.severity}] {e.domainId} · {e.type} · {e.host} · {new Date(e.timestamp).toISOString().slice(11,19)}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Form fields in 2 columns */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* LEFT */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <div className={lbCls}>TITLE *</div>
+              <input className={iCls} placeholder="e.g. Exfil Attempt — alpha-ws-0044"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className={lbCls}>SEVERITY</div>
+                <select className={sCls} value={form.severity}
+                  onChange={(e) => setForm({ ...form, severity: e.target.value as NewInvForm["severity"] })}>
+                  <option>CRITICAL</option>
+                  <option>HIGH</option>
+                  <option>MEDIUM</option>
+                </select>
+              </div>
+              <div>
+                <div className={lbCls}>STATUS</div>
+                <select className={sCls} value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as InvStatus })}>
+                  <option>Open</option>
+                  <option>In Progress</option>
+                  <option>Closed</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <div className={lbCls}>ANALYST</div>
+              <input className={iCls} placeholder="e.g. J. Harris"
+                value={form.analyst}
+                onChange={(e) => setForm({ ...form, analyst: e.target.value })} />
+            </div>
+
+            <div>
+              <div className={lbCls}>DOMAINS</div>
+              <div className="flex gap-1.5">
+                {["ALPHA", "BRAVO", "CHARLIE"].map((d) => {
+                  const on = form.domains.includes(d);
+                  const color = DOMAIN_COLOR_INV[d];
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => setForm({ ...form, domains: on ? form.domains.filter((x) => x !== d) : [...form.domains, d] })}
+                      className="px-2.5 py-1 rounded-sm text-xs font-mono font-semibold transition-colors"
+                      style={{
+                        background: on ? `${color}22` : "#1a1c20",
+                        color:      on ? color         : "#555a62",
+                        border:     `1px solid ${on ? color + "60" : "#2a2d32"}`,
+                      }}
+                    >
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className={lbCls}>ANALYST NOTES</div>
+              <textarea
+                className={iCls} rows={3}
+                placeholder="Initial observations, context, links to tickets..."
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                style={{ resize: "vertical" }}
+              />
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <div className={lbCls}>SUMMARY</div>
+              <textarea
+                className={iCls} rows={4}
+                placeholder="Brief description of the incident..."
+                value={form.summary}
+                onChange={(e) => setForm({ ...form, summary: e.target.value })}
+                style={{ resize: "vertical" }}
+              />
+            </div>
+
+            <div>
+              <div className={lbCls}>KEY FINDINGS <span className="font-normal text-[#555a62] normal-case">(one per line)</span></div>
+              <textarea
+                className={iCls} rows={6}
+                placeholder={"Login failures spike across 3 domains\nUnknown source IPs from /24 range\nUser account active outside business hours"}
+                value={form.findings}
+                onChange={(e) => setForm({ ...form, findings: e.target.value })}
+                style={{ resize: "vertical" }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Action bar */}
+        <div className="flex items-center gap-3 pt-1 border-t border-[#2a2d32]">
+          <button
+            onClick={() => { setShowCreate(false); setForm(BLANK_FORM); }}
+            className="px-3 py-1.5 rounded-sm text-xs font-mono text-[#555a62] hover:text-[#c8d0d8]"
+          >
+            Cancel
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={handleCreate}
+            disabled={!form.title.trim()}
+            className="px-4 py-1.5 rounded-sm text-xs font-semibold font-mono transition-opacity"
+            style={{
+              background: form.title.trim() ? "#f58220" : "#2a2d32",
+              color:      form.title.trim() ? "#111315" : "#555a62",
+              cursor:     form.title.trim() ? "pointer"  : "not-allowed",
+            }}
+          >
+            ✓ Create Investigation
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── List view ── */
+  const open = allInv.filter((i) => i.status === "Open").length;
+  const inp  = allInv.filter((i) => i.status === "In Progress").length;
+  const cls  = allInv.filter((i) => i.status === "Closed").length;
+
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-semibold text-[#888c94] tracking-wider">INVESTIGATIONS</span>
-        <div className="flex items-center gap-3 text-xs font-mono text-[#555a62]">
-          <span><span className="text-[#e55555]">{INVESTIGATIONS.filter((i) => i.status === "Open").length}</span> open</span>
-          <span><span className="text-[#f58220]">{INVESTIGATIONS.filter((i) => i.status === "In Progress").length}</span> in progress</span>
-          <span><span className="text-[#48c78e]">{INVESTIGATIONS.filter((i) => i.status === "Closed").length}</span> closed</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-xs font-mono text-[#555a62]">
+            <span><span className="text-[#e55555]">{open}</span> open</span>
+            <span><span className="text-[#f58220]">{inp}</span> in progress</span>
+            <span><span className="text-[#48c78e]">{cls}</span> closed</span>
+          </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-semibold transition-colors"
+            style={{ background: "#1e2124", color: "#f58220", border: "1px solid #4a3a20" }}
+          >
+            + Create
+          </button>
         </div>
       </div>
+
+      {created && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-sm text-xs font-mono"
+          style={{ background: "#0e2a1a", border: "1px solid #264a38" }}>
+          <span className="text-[#48c78e]">✓</span>
+          <span className="text-[#48c78e] font-semibold">Investigation created:</span>
+          <span className="text-[#c8d0d8]">{created}</span>
+          <span className="text-[#555a62]">— click it to view</span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-1.5">
-        {INVESTIGATIONS.map((inv) => {
+        {allInv.map((inv) => {
           const sev = INV_SEV_COLOR[inv.severity];
-          const st = STATUS_STYLE[inv.status];
+          const st  = STATUS_STYLE[inv.status];
+          const isNew = created === inv.id;
           return (
             <button
               key={inv.id}
               onClick={() => setSelected(inv)}
               className="text-left rounded-sm px-3 py-3 transition-colors hover:bg-[#1e2226] flex items-start gap-4"
-              style={{ background: "#1a1c20", borderTop: "1px solid #2a2d32", borderRight: "1px solid #2a2d32", borderBottom: "1px solid #2a2d32", borderLeft: `3px solid ${sev}` }}
+              style={{
+                background: isNew ? "#0d1e14" : "#1a1c20",
+                borderTop:    `1px solid ${isNew ? "#264a38" : "#2a2d32"}`,
+                borderRight:  `1px solid ${isNew ? "#264a38" : "#2a2d32"}`,
+                borderBottom: `1px solid ${isNew ? "#264a38" : "#2a2d32"}`,
+                borderLeft:   `3px solid ${sev}`,
+              }}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-xs font-mono text-[#a78bfa]">{inv.id}</span>
-                  <span className="text-xs font-semibold text-[#c8d0d8]">{inv.title}</span>
+                  <span className="text-xs font-semibold text-[#c8d0d8] truncate">{inv.title}</span>
+                  {isNew && (
+                    <span className="text-xs font-mono px-1.5 rounded-sm flex-shrink-0"
+                      style={{ background: "#1a3020", color: "#48c78e", border: "1px solid #264a38" }}>new</span>
+                  )}
                 </div>
                 <p className="text-xs text-[#555a62] leading-relaxed line-clamp-1">{inv.summary}</p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -1089,7 +1400,8 @@ function InvestigationsPanel() {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1.5 flex-shrink-0 text-xs font-mono">
-                <span className="px-2 py-0.5 rounded-sm font-semibold" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
+                <span className="px-2 py-0.5 rounded-sm font-semibold"
+                  style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
                   {inv.status}
                 </span>
                 <span className="text-[#555a62]">{inv.analyst}</span>
@@ -1118,7 +1430,7 @@ export function NavPanel({ activeTab, onClose, rawEvents, onOpenDashboard }: Pro
         <DashboardsPanel onOpenDashboard={(id) => { onOpenDashboard?.(id); onClose(); }} />
       )}
       {activeTab === "reports"        && <ReportsPanel events={rawEvents} />}
-      {activeTab === "investigations" && <InvestigationsPanel />}
+      {activeTab === "investigations" && <InvestigationsPanel rawEvents={rawEvents} />}
     </div>
   );
 }
