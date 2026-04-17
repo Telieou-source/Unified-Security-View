@@ -1,126 +1,152 @@
-import type { CorrelatedAlert, DomainConfig } from "../types";
-import { DOMAINS } from "../data/config";
+import type { CorrelatedAlert } from "../types";
+import { DOMAINS, CORR_SEVERITY_STYLE } from "../data/config";
 
 interface Props {
   alerts: CorrelatedAlert[];
   totalEvents: number;
-  uniqueThreats: number;
 }
 
-const DOMAIN_MAP: Record<string, DomainConfig> = Object.fromEntries(
-  DOMAINS.map((d) => [d.id, d])
-);
+function fmt(ts: number) {
+  const d = new Date(ts);
+  return (
+    d.toLocaleDateString([], { month: "2-digit", day: "2-digit" }) +
+    " " +
+    d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })
+  );
+}
 
-const ALERT_ICONS: Record<string, string> = {
-  CORRELATED_THREAT: "◉",
-  PATTERN_MATCH: "◎",
-  CROSS_DOMAIN_ANOMALY: "△",
-  SYNCHRONIZED_ACTIVITY: "◈",
+const DOMAIN_COLOR: Record<string, string> = {
+  ALPHA: "#4ea6dc",
+  BRAVO: "#48c78e",
+  CHARLIE: "#c9a227",
 };
 
-const ALERT_SEVERITY_STYLES: Record<string, string> = {
-  MEDIUM: "border-yellow-700/50 bg-yellow-950/20",
-  HIGH: "border-orange-700/50 bg-orange-950/20",
-  CRITICAL: "border-red-700/60 bg-red-950/25",
+const ALERT_TYPE_LABEL: Record<string, string> = {
+  CORRELATED_THREAT:    "Correlated Threat",
+  PATTERN_MATCH:        "Pattern Match",
+  CROSS_DOMAIN_ANOMALY: "Cross-Domain Anomaly",
+  SYNCHRONIZED_ACTIVITY:"Synchronized Activity",
 };
 
-const ALERT_SEVERITY_TEXT: Record<string, string> = {
-  MEDIUM: "text-yellow-400",
-  HIGH: "text-orange-400",
-  CRITICAL: "text-red-400",
-};
-
-export function CorrelatedView({ alerts, totalEvents, uniqueThreats }: Props) {
-  const criticalCount = alerts.filter((a) => a.severity === "CRITICAL").length;
+export function CorrelatedView({ alerts, totalEvents }: Props) {
+  const critCount = alerts.filter((a) => a.severity === "CRITICAL").length;
   const highCount = alerts.filter((a) => a.severity === "HIGH").length;
+  const medCount  = alerts.filter((a) => a.severity === "MEDIUM").length;
 
   return (
-    <div className="flex flex-col rounded-lg border border-slate-600/40 bg-slate-900/80 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/60 bg-slate-800/40">
+    <div
+      className="rounded-sm border border-[#2d3035] overflow-hidden"
+      style={{ background: "#14161a" }}
+    >
+      {/* Splunk panel header */}
+      <div
+        className="flex items-center justify-between px-4 py-2 border-b border-[#2d3035]"
+        style={{ background: "#1e2124" }}
+      >
         <div className="flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-slate-300" style={{ boxShadow: "0 0 8px rgba(255,255,255,0.4)" }} />
-          <span className="text-xs font-semibold tracking-widest text-slate-200">
-            HIGH SIDE — UNIFIED CORRELATION VIEW
+          <span className="text-xs font-semibold tracking-wide text-[#f58220]">
+            HIGH SIDE CORRELATION — Notable Events
           </span>
+          <span className="text-xs text-[#555a62] font-mono">Source: cross-domain-siem | sourcetype: notable</span>
         </div>
         <div className="flex items-center gap-4 text-xs font-mono">
-          <span className="text-slate-400">{totalEvents} total events ingested</span>
-          <span className="text-red-400">{criticalCount} CRITICAL</span>
-          <span className="text-orange-400">{highCount} HIGH</span>
-          <span className="text-slate-300">{uniqueThreats} correlated alerts</span>
+          <span className="text-[#555a62]">{totalEvents} events ingested</span>
+          <span className="text-[#e55555]">{critCount} CRITICAL</span>
+          <span className="text-[#f58220]">{highCount} HIGH</span>
+          <span className="text-[#e5c97a]">{medCount} MEDIUM</span>
+          <span className="text-[#888c94]">{alerts.length} notables</span>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-0 border-b border-slate-800">
+      {/* Domain contribution summary */}
+      <div className="grid grid-cols-3 border-b border-[#1f2226]">
         {DOMAINS.map((domain) => {
           const domainAlerts = alerts.filter((a) => a.domains.includes(domain.id));
+          const pct = alerts.length > 0 ? Math.round((domainAlerts.length / alerts.length) * 100) : 0;
           return (
             <div
               key={domain.id}
-              className="flex items-center justify-between px-4 py-2 border-r border-slate-800 last:border-r-0"
+              className="flex items-center justify-between px-4 py-2 border-r border-[#1f2226] last:border-r-0"
+              style={{ background: "#17191d" }}
             >
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: domain.color }} />
-                <span className={`text-xs font-mono font-semibold ${domain.textClass}`}>{domain.label}</span>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: domain.color }} />
+                <span className="text-xs font-mono font-semibold" style={{ color: domain.color }}>
+                  {domain.name}
+                </span>
               </div>
-              <span className="text-xs font-mono text-slate-400">{domainAlerts.length} correlated</span>
+              <div className="flex items-center gap-2 text-xs font-mono text-[#555a62]">
+                <span>{domainAlerts.length} notables</span>
+                <span>{pct}%</span>
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Alert List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ maxHeight: "320px" }}>
+      {/* Column headers */}
+      <div
+        className="grid text-xs font-semibold text-[#666b74] px-3 py-1.5 border-b border-[#1f2226]"
+        style={{
+          gridTemplateColumns: "130px 90px 90px 90px 1fr 64px",
+          background: "#191c20",
+          letterSpacing: "0.04em",
+        }}
+      >
+        <span>Time</span>
+        <span>Rule ID</span>
+        <span>Type</span>
+        <span>Domains</span>
+        <span>Summary</span>
+        <span className="text-right">Confidence</span>
+      </div>
+
+      {/* Alert rows */}
+      <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
         {alerts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-24 text-slate-600 text-sm gap-2">
-            <span className="text-2xl opacity-30">◎</span>
-            <span className="text-xs">No correlated alerts yet — start simulation to detect cross-domain patterns</span>
+          <div className="flex flex-col items-center justify-center h-24 gap-2 text-[#444850]">
+            <span className="text-2xl">◎</span>
+            <span className="text-xs font-mono">No notables — start simulation to detect cross-domain correlation</span>
           </div>
         ) : (
-          alerts.slice(0, 20).map((alert, i) => (
-            <div
-              key={alert.id}
-              className={`rounded-lg border p-3 ${ALERT_SEVERITY_STYLES[alert.severity]} ${i === 0 ? "corr-enter" : ""}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`text-sm font-mono flex-shrink-0 ${ALERT_SEVERITY_TEXT[alert.severity]}`}>
-                    {ALERT_ICONS[alert.type]}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-xs font-semibold font-mono ${ALERT_SEVERITY_TEXT[alert.severity]}`}>
-                        {alert.severity}
-                      </span>
-                      <span className="text-xs text-slate-400 font-mono">{alert.type.replace(/_/g, " ")}</span>
-                    </div>
-                    <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{alert.summary}</p>
-                  </div>
+          alerts.slice(0, 25).map((alert, i) => {
+            const sev = CORR_SEVERITY_STYLE[alert.severity];
+            const isNew = i === 0;
+            return (
+              <div
+                key={alert.id}
+                className={`grid text-xs font-mono px-3 py-2.5 border-b border-[#1a1c20] border-l-2 hover:bg-[#1c1f24] transition-colors ${isNew ? "corr-new" : ""}`}
+                style={{
+                  gridTemplateColumns: "130px 90px 90px 90px 1fr 64px",
+                  background: isNew ? undefined : i % 2 === 0 ? "#14161a" : "#171a1e",
+                  borderLeftColor: sev.row.replace("border-l-", ""),
+                }}
+              >
+                <span className="text-[#555a62]">{fmt(alert.timestamp)}</span>
+                <span className="text-[#a78bfa]">{alert.ruleId}</span>
+                <span className="text-[#8a9aaa] truncate">{ALERT_TYPE_LABEL[alert.type]}</span>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {alert.domains.map((did) => (
+                    <span
+                      key={did}
+                      className="text-xs px-1 rounded-sm font-semibold"
+                      style={{ color: DOMAIN_COLOR[did], background: `${DOMAIN_COLOR[did]}18`, border: `1px solid ${DOMAIN_COLOR[did]}35` }}
+                    >
+                      {did}
+                    </span>
+                  ))}
                 </div>
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <div className="flex items-center gap-1">
-                    {alert.domains.map((did) => {
-                      const d = DOMAIN_MAP[did];
-                      return (
-                        <span
-                          key={did}
-                          className={`text-xs px-1.5 py-0 rounded font-mono ${d.badgeClass}`}
-                        >
-                          {did}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                    <span>conf: {alert.confidence}%</span>
-                    <span>{new Date(alert.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-                  </div>
-                </div>
+                <span
+                  className="truncate leading-relaxed pr-2"
+                  style={{ color: alert.severity === "CRITICAL" ? "#e55555" : alert.severity === "HIGH" ? "#f58220" : "#e5c97a" }}
+                  title={alert.summary}
+                >
+                  {alert.summary}
+                </span>
+                <span className="text-right text-[#888c94]">{alert.confidence}%</span>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
