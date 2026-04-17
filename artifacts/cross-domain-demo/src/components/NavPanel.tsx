@@ -1,19 +1,24 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { RawEvent } from "../types";
+import { runQuery } from "../lib/search";
+import type { ExecResult } from "../lib/search";
 
 type NavTab = "search" | "dashboards" | "reports" | "investigations";
 
 interface Props {
   activeTab: NavTab | null;
   onClose: () => void;
+  rawEvents: RawEvent[];
 }
 
 /* ── SEARCH ── */
+
 const PRESET_QUERIES = [
-  'index=cross_domain_siem severity=FATAL | stats count by domain',
-  'index=cross_domain_siem eventtype=ExfilAttempt | table _time host srcIp userId',
-  'index=cross_domain_siem | eval cross=if(domain!="",1,0) | stats dc(domain) as domains by userId | where domains>1',
-  'index=cross_domain_siem eventtype=PrivilegeEsc | timechart count by domain',
-  'index=cross_domain_siem | stats latest(_time) as last_seen by host | sort -last_seen',
+  { label: "FATAL events by domain",         q: 'index=cross_domain_siem severity=FATAL | stats count by domain' },
+  { label: "ExfilAttempt event detail",       q: 'index=cross_domain_siem eventtype=ExfilAttempt | table _time host srcIp userId' },
+  { label: "Cross-domain accounts (>1 domain)", q: 'index=cross_domain_siem | eval cross=if(domain!="",1,0) | stats dc(domain) as domains by userId | where domains>1' },
+  { label: "Privilege escalations over time", q: 'index=cross_domain_siem eventtype=PrivilegeEsc | timechart count by domain' },
+  { label: "Latest activity by host",         q: 'index=cross_domain_siem | stats latest(_time) as last_seen by host | sort -last_seen' },
 ];
 
 const TIME_RANGES = [
@@ -25,13 +30,58 @@ const TIME_RANGES = [
   "All time",
 ];
 
-function SearchPanel() {
-  const [query, setQuery] = useState("");
-  const [timeRange, setTimeRange] = useState("Last 60 minutes");
-  const [ran, setRan] = useState(false);
+const SEV_COLOR: Record<string, string> = {
+  INFO:  "#8eb8d4",
+  WARN:  "#e5c97a",
+  ERROR: "#f58220",
+  FATAL: "#e55555",
+};
+
+const DOMAIN_COLOR: Record<string, string> = {
+  ALPHA:   "#4ea6dc",
+  BRAVO:   "#48c78e",
+  CHARLIE: "#c9a227",
+};
+
+function cellColor(col: string, val: string): string | undefined {
+  if (col === "severity") return SEV_COLOR[val];
+  if (col === "domain")   return DOMAIN_COLOR[val];
+  return undefined;
+}
+
+function SearchPanel({ events }: { events: RawEvent[] }) {
+  const [query, setQuery]       = useState("");
+  const [timeRange, setTimeRange] = useState("All time");
+  const [result, setResult]     = useState<ExecResult | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const handleSearch = useCallback(() => {
+    const r = runQuery(query, events, timeRange);
+    setResult(r);
+    setInputError(!r.ok ? r.error : null);
+  }, [query, events, timeRange]);
+
+  const handleTimeChange = (newRange: string) => {
+    setTimeRange(newRange);
+    if (result) {
+      const r = runQuery(query, events, newRange);
+      setResult(r);
+      setInputError(!r.ok ? r.error : null);
+    }
+  };
+
+  const loadPreset = (q: string) => {
+    setQuery(q);
+    setResult(null);
+    setInputError(null);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const hasResult = result?.ok === true;
+  const hasError  = result?.ok === false || !!inputError;
 
   return (
     <div className="flex flex-col gap-3 p-4">
@@ -40,59 +90,148 @@ function SearchPanel() {
       {/* Search bar */}
       <div className="flex gap-2">
         <div
-          className="flex-1 flex items-center gap-2 px-3 rounded-sm"
-          style={{ background: "#0e1012", border: "1px solid #3a3d45" }}
+          className="flex-1 flex items-center gap-2 px-3 rounded-sm transition-colors"
+          style={{
+            background: "#0e1012",
+            border: `1px solid ${hasError ? "#6a2020" : "#3a3d45"}`,
+          }}
         >
-          <span className="text-[#f58220] text-xs font-mono">|</span>
+          <span className="text-[#f58220] text-xs font-mono flex-shrink-0">|</span>
           <input
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && setRan(true)}
-            placeholder='index=cross_domain_siem | stats count by domain, eventtype'
+            onChange={(e) => { setQuery(e.target.value); setInputError(null); if (result) setResult(null); }}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+            placeholder="index=cross_domain_siem | stats count by domain, eventtype"
             className="flex-1 bg-transparent text-xs font-mono text-[#c8d0d8] placeholder-[#3a3d45] outline-none py-2"
           />
+          {query && (
+            <button
+              onClick={() => { setQuery(""); setResult(null); setInputError(null); inputRef.current?.focus(); }}
+              className="text-[#555a62] hover:text-[#e55555] text-xs flex-shrink-0"
+              title="Clear"
+            >✕</button>
+          )}
         </div>
         <select
           value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
+          onChange={(e) => handleTimeChange(e.target.value)}
           className="px-2 py-1 text-xs font-mono text-[#c8d0d8] rounded-sm cursor-pointer"
           style={{ background: "#1e2124", border: "1px solid #3a3d45" }}
         >
           {TIME_RANGES.map((r) => <option key={r}>{r}</option>)}
         </select>
         <button
-          onClick={() => setRan(true)}
-          className="px-4 py-1 rounded-sm text-xs font-semibold"
+          onClick={handleSearch}
+          className="px-4 py-1 rounded-sm text-xs font-semibold flex-shrink-0"
           style={{ background: "#f58220", color: "#111315" }}
         >
           Search
         </button>
       </div>
 
-      {/* Result hint */}
-      {ran && (
+      {/* Error banner */}
+      {hasError && result && !result.ok && (
         <div
-          className="px-3 py-2 rounded-sm text-xs font-mono text-[#48c78e]"
-          style={{ background: "#151e18", border: "1px solid #264a38" }}
+          className="flex items-start gap-2 px-3 py-2 rounded-sm text-xs font-mono"
+          style={{ background: "#2d0e0e", border: "1px solid #6a2020" }}
         >
-          Query dispatched to cross_domain_siem index — results appear in the main view below.
+          <span className="text-[#e55555] flex-shrink-0 mt-0.5">✕</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[#e55555] font-semibold">{result.error}</span>
+            {result.hint && <span className="text-[#8a4a4a]">{result.hint}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {hasResult && result.ok && (
+        <div className="flex flex-col gap-2">
+          {/* Result meta bar */}
+          <div className="flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center gap-3">
+              <span className="text-[#48c78e] font-semibold">{result.summary}</span>
+              <span className="text-[#555a62]">
+                {result.type === "timechart" ? "Time chart" : result.type === "stats" ? "Statistics" : "Table"}
+              </span>
+              <span className="text-[#3a3d45]">|</span>
+              <span className="text-[#555a62]">Time: {timeRange}</span>
+            </div>
+            <span className="text-[#3a3d45]">{result.queryMs}ms</span>
+          </div>
+
+          {/* Results table */}
+          <div
+            className="overflow-auto rounded-sm"
+            style={{ maxHeight: "220px", border: "1px solid #2a2d32" }}
+          >
+            {result.rows.length === 0 ? (
+              <div className="flex items-center justify-center h-16 text-xs font-mono text-[#444850]">
+                No results — try a different time range or query
+              </div>
+            ) : (
+              <table className="w-full text-xs font-mono border-collapse">
+                <thead>
+                  <tr style={{ background: "#191c20", borderBottom: "1px solid #2a2d32" }}>
+                    {result.columns.map((col) => (
+                      <th
+                        key={col}
+                        className="text-left px-3 py-1.5 font-semibold text-[#666b74] whitespace-nowrap"
+                        style={{ letterSpacing: "0.04em" }}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.rows.map((row, ri) => (
+                    <tr
+                      key={ri}
+                      style={{ background: ri % 2 === 0 ? "#14161a" : "#171a1e", borderBottom: "1px solid #1a1c20" }}
+                    >
+                      {row.map((cell, ci) => {
+                        const col = result.columns[ci];
+                        const color = cellColor(col, cell);
+                        return (
+                          <td
+                            key={ci}
+                            className="px-3 py-1.5 whitespace-nowrap"
+                            style={{ color: color ?? "#8a9aaa", maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis" }}
+                            title={cell}
+                          >
+                            {color ? (
+                              <span className="font-semibold" style={{ color }}>{cell}</span>
+                            ) : cell}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
       {/* Preset queries */}
       <div>
-        <div className="text-xs text-[#555a62] mb-2 font-mono">Preset queries</div>
+        <div className="text-xs text-[#555a62] mb-2 font-mono">Preset queries — click to load, press Search to run</div>
         <div className="flex flex-col gap-1">
-          {PRESET_QUERIES.map((q) => (
+          {PRESET_QUERIES.map(({ label, q }) => (
             <button
               key={q}
-              onClick={() => { setQuery(q); setRan(false); inputRef.current?.focus(); }}
-              className="text-left px-3 py-1.5 rounded-sm text-xs font-mono text-[#7a8490] hover:text-[#c8d0d8] transition-colors"
-              style={{ background: "#1a1c20", border: "1px solid #2a2d32" }}
+              onClick={() => loadPreset(q)}
+              className="text-left px-3 py-2 rounded-sm transition-colors"
+              style={{
+                background: query === q ? "#1a2226" : "#1a1c20",
+                border: `1px solid ${query === q ? "#2a4a60" : "#2a2d32"}`,
+              }}
             >
-              {q}
+              <div className="text-xs text-[#8a9aaa] font-semibold mb-0.5">{label}</div>
+              <div className="text-xs font-mono text-[#555a62] truncate">{q}</div>
             </button>
           ))}
         </div>
@@ -711,7 +850,7 @@ function InvestigationsPanel() {
 /* ── ROOT ── */
 export type { NavTab };
 
-export function NavPanel({ activeTab, onClose }: Props) {
+export function NavPanel({ activeTab, onClose, rawEvents }: Props) {
   if (!activeTab) return null;
 
   return (
@@ -719,7 +858,7 @@ export function NavPanel({ activeTab, onClose }: Props) {
       className="border-b border-[#2d3035] flex-shrink-0 overflow-y-auto"
       style={{ background: "#14161a", maxHeight: "420px" }}
     >
-      {activeTab === "search"         && <SearchPanel />}
+      {activeTab === "search"         && <SearchPanel events={rawEvents} />}
       {activeTab === "dashboards"     && <DashboardsPanel onClose={onClose} />}
       {activeTab === "reports"        && <ReportsPanel />}
       {activeTab === "investigations" && <InvestigationsPanel />}
