@@ -684,3 +684,142 @@ export const REPORT_ACTIONS: Record<string, ReportAction> = {
     txtFilename: `network_anomaly_report_${today()}.txt`,
   },
 };
+
+/* ═══════════════════════════════════════════════════
+   CUSTOM REPORT BUILDER
+═══════════════════════════════════════════════════ */
+
+export const ALL_DOMAINS     = ["ALPHA", "BRAVO", "CHARLIE"] as const;
+export const ALL_SEVERITIES  = ["FATAL", "ERROR", "WARN", "INFO"] as const;
+export const ALL_EVENT_TYPES = [
+  "Authentication", "ExfilAttempt", "PrivilegeEsc", "FileAccess",
+  "NetworkConn", "AnomalyDetected", "PolicyViolation", "ProcessSpawn",
+] as const;
+
+export const ALL_FIELDS: { key: string; label: string }[] = [
+  { key: "timestamp",        label: "Timestamp" },
+  { key: "domain",           label: "Domain" },
+  { key: "severity",         label: "Severity" },
+  { key: "event_type",       label: "Event Type" },
+  { key: "src_ip",           label: "Source IP" },
+  { key: "src_port",         label: "Source Port" },
+  { key: "dst_ip",           label: "Dest IP" },
+  { key: "dst_port",         label: "Dest Port" },
+  { key: "protocol",         label: "Protocol" },
+  { key: "user_id",          label: "User ID" },
+  { key: "host",             label: "Host" },
+  { key: "classification",   label: "Classification" },
+  { key: "mitre_technique",  label: "MITRE Technique" },
+  { key: "mitre_tactic",     label: "MITRE Tactic" },
+  { key: "confidence_pct",   label: "Confidence %" },
+];
+
+export const TIME_RANGE_MS: Record<string, number> = {
+  "Last 15 minutes": 15 * 60_000,
+  "Last 60 minutes": 60 * 60_000,
+  "Last 4 hours":    4  * 60 * 60_000,
+  "Last 24 hours":   24 * 60 * 60_000,
+  "Last 7 days":     7  * 24 * 60 * 60_000,
+  "All time":        Infinity,
+};
+
+export interface CustomReportConfig {
+  name:        string;
+  domains:     string[];
+  severities:  string[];
+  eventTypes:  string[];
+  timeRange:   string;
+  fields:      string[];
+  sortBy:      "timestamp" | "severity" | "domain";
+  sortDir:     "desc" | "asc";
+}
+
+function getFieldValue(e: RawEvent, field: string): string | number {
+  switch (field) {
+    case "timestamp":       return ts(e.timestamp);
+    case "domain":          return e.domainId;
+    case "severity":        return e.severity;
+    case "event_type":      return e.type;
+    case "src_ip":          return e.srcIp;
+    case "src_port":        return e.srcPort;
+    case "dst_ip":          return e.dstIp ?? "—";
+    case "dst_port":        return e.dstPort;
+    case "protocol":        return e.protocol;
+    case "user_id":         return e.userId ?? "—";
+    case "host":            return e.host;
+    case "classification":  return e.classification;
+    case "mitre_technique": return MITRE[e.type]?.technique ?? "—";
+    case "mitre_tactic":    return MITRE[e.type]?.tactic ?? "—";
+    case "confidence_pct":  return confidence(e);
+    default:                return "—";
+  }
+}
+
+const SEV_ORDER: Record<string, number> = { FATAL: 0, ERROR: 1, WARN: 2, INFO: 3 };
+
+export function filterEvents(events: RawEvent[], cfg: CustomReportConfig): RawEvent[] {
+  const cutoff = cfg.timeRange === "All time"
+    ? 0
+    : Date.now() - (TIME_RANGE_MS[cfg.timeRange] ?? Infinity);
+
+  let filtered = events.filter((e) =>
+    cfg.domains.includes(e.domainId) &&
+    cfg.severities.includes(e.severity) &&
+    cfg.eventTypes.includes(e.type) &&
+    e.timestamp >= cutoff
+  );
+
+  filtered.sort((a, b) => {
+    let diff = 0;
+    if      (cfg.sortBy === "timestamp") diff = a.timestamp - b.timestamp;
+    else if (cfg.sortBy === "severity")  diff = (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9);
+    else if (cfg.sortBy === "domain")    diff = a.domainId.localeCompare(b.domainId);
+    return cfg.sortDir === "desc" ? -diff : diff;
+  });
+
+  return filtered;
+}
+
+export function generateCustomCSV(events: RawEvent[], cfg: CustomReportConfig): string {
+  const filtered = filterEvents(events, cfg);
+  const headers  = cfg.fields.map((f) => ALL_FIELDS.find((a) => a.key === f)?.label ?? f);
+  const rows     = filtered.map((e) => cfg.fields.map((f) => getFieldValue(e, f)));
+  return toCSV(headers, rows);
+}
+
+export function generateCustomTXT(events: RawEvent[], cfg: CustomReportConfig): string {
+  const filtered = filterEvents(events, cfg);
+  const name     = cfg.name || "Custom Report";
+
+  let out = `${name.toUpperCase()}
+Generated  : ${ts(Date.now())}
+Classification: TOP SECRET // HIGH SIDE
+Filters    : domains=[${cfg.domains.join(",")}]  severity=[${cfg.severities.join(",")}]
+             event_types=[${cfg.eventTypes.join(",")}]  time_range=${cfg.timeRange}
+Sort       : ${cfg.sortBy} (${cfg.sortDir})
+${"=".repeat(72)}
+
+RESULT SUMMARY
+--------------
+Total matching events : ${filtered.length}
+Domains represented   : ${[...new Set(filtered.map((e) => e.domainId))].join(", ") || "—"}
+Severities found      : ${[...new Set(filtered.map((e) => e.severity))].join(", ") || "—"}
+
+${"=".repeat(72)}
+EVENTS
+${"=".repeat(72)}
+
+`;
+
+  filtered.forEach((e, i) => {
+    out += `[${String(i + 1).padStart(4, "0")}]\n`;
+    for (const f of cfg.fields) {
+      const label = (ALL_FIELDS.find((a) => a.key === f)?.label ?? f).padEnd(18);
+      out += `  ${label}: ${getFieldValue(e, f)}\n`;
+    }
+    out += "\n";
+  });
+
+  out += `${"=".repeat(72)}\nEND OF ${name.toUpperCase()}\n`;
+  return out;
+}

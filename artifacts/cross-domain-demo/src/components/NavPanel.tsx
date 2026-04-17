@@ -2,7 +2,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { RawEvent } from "../types";
 import { runQuery } from "../lib/search";
 import type { ExecResult } from "../lib/search";
-import { REPORT_ACTIONS, downloadFile } from "../lib/reports";
+import {
+  REPORT_ACTIONS, downloadFile,
+  ALL_DOMAINS, ALL_SEVERITIES, ALL_EVENT_TYPES, ALL_FIELDS,
+  generateCustomCSV, generateCustomTXT, filterEvents,
+} from "../lib/reports";
+import type { CustomReportConfig } from "../lib/reports";
 
 type NavTab = "search" | "dashboards" | "reports" | "investigations";
 
@@ -408,7 +413,254 @@ const SEV_STYLE: Record<string, { color: string; bg: string; border: string }> =
   MEDIUM:   { color: "#e5c97a", bg: "#2d2510", border: "#5a4a20" },
 };
 
+const DEFAULT_CUSTOM: CustomReportConfig = {
+  name:       "Custom Report",
+  domains:    [...ALL_DOMAINS],
+  severities: [...ALL_SEVERITIES],
+  eventTypes: [...ALL_EVENT_TYPES],
+  timeRange:  "All time",
+  fields:     ["timestamp", "domain", "severity", "event_type", "user_id", "host", "src_ip", "dst_ip", "dst_port"],
+  sortBy:     "timestamp",
+  sortDir:    "desc",
+};
+
+function toggle<T>(arr: T[], val: T): T[] {
+  return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+}
+
+function CheckPill({
+  label, active, color, onClick,
+}: { label: string; active: boolean; color?: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-2 py-0.5 rounded-sm text-xs font-mono font-semibold transition-colors flex-shrink-0"
+      style={{
+        background: active ? (color ? `${color}22` : "#1e3040") : "#1a1c20",
+        color:      active ? (color ?? "#f58220")               : "#555a62",
+        border:     `1px solid ${active ? (color ?? "#f58220") + "60" : "#2a2d32"}`,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+const SEV_PILL: Record<string, string> = { FATAL: "#e55555", ERROR: "#f58220", WARN: "#e5c97a", INFO: "#8eb8d4" };
+const DOM_PILL: Record<string, string> = { ALPHA: "#4ea6dc", BRAVO: "#48c78e", CHARLIE: "#c9a227" };
+
+function CustomReportBuilder({ events, onDownloaded }: { events: RawEvent[]; onDownloaded: () => void }) {
+  const [cfg, setCfg] = useState<CustomReportConfig>(DEFAULT_CUSTOM);
+  const [fmt, setFmt] = useState<"csv" | "txt">("csv");
+
+  const matchCount = filterEvents(events, cfg).length;
+
+  function handleGenerate() {
+    const content  = fmt === "csv" ? generateCustomCSV(events, cfg) : generateCustomTXT(events, cfg);
+    const safeName = cfg.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase() || "custom_report";
+    downloadFile(content, `${safeName}_${new Date().toISOString().slice(0, 10)}.${fmt}`, fmt === "csv" ? "text/csv;charset=utf-8;" : "text/plain;charset=utf-8;");
+    onDownloaded();
+  }
+
+  const sectionHd = "text-xs font-semibold text-[#888c94] tracking-wider mb-2";
+  const inputCls  = "w-full bg-[#0e1012] border border-[#3a3d45] rounded-sm px-2 py-1 text-xs text-[#c8d0d8] outline-none font-mono focus:border-[#f58220]";
+  const selectCls = "bg-[#0e1012] border border-[#3a3d45] rounded-sm px-2 py-1 text-xs text-[#c8d0d8] outline-none font-mono focus:border-[#f58220] cursor-pointer";
+
+  return (
+    <div
+      className="rounded-sm p-4 flex flex-col gap-4"
+      style={{ background: "#13151a", border: "1px solid #f5822030", borderLeft: "3px solid #f58220" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-[#f58220]">+ Custom Report</span>
+          <span
+            className="text-xs font-mono px-1.5 rounded-sm"
+            style={{
+              background: matchCount > 0 ? "#1a3020" : "#2d0e0e",
+              color:      matchCount > 0 ? "#48c78e" : "#e55555",
+              border:     `1px solid ${matchCount > 0 ? "#264a38" : "#6a2020"}`,
+            }}
+          >
+            {matchCount} event{matchCount !== 1 ? "s" : ""} match
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* LEFT COLUMN */}
+        <div className="flex flex-col gap-4">
+          {/* Report name */}
+          <div>
+            <div className={sectionHd}>REPORT NAME</div>
+            <input
+              className={inputCls}
+              value={cfg.name}
+              onChange={(e) => setCfg({ ...cfg, name: e.target.value })}
+              placeholder="My Custom Report"
+            />
+          </div>
+
+          {/* Domains */}
+          <div>
+            <div className={sectionHd}>DOMAINS</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {ALL_DOMAINS.map((d) => (
+                <CheckPill
+                  key={d} label={d} active={cfg.domains.includes(d)} color={DOM_PILL[d]}
+                  onClick={() => setCfg({ ...cfg, domains: toggle(cfg.domains, d) })}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Severities */}
+          <div>
+            <div className={sectionHd}>SEVERITY</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {ALL_SEVERITIES.map((s) => (
+                <CheckPill
+                  key={s} label={s} active={cfg.severities.includes(s)} color={SEV_PILL[s]}
+                  onClick={() => setCfg({ ...cfg, severities: toggle(cfg.severities, s) })}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Event types */}
+          <div>
+            <div className={sectionHd}>EVENT TYPES</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {ALL_EVENT_TYPES.map((t) => (
+                <CheckPill
+                  key={t} label={t} active={cfg.eventTypes.includes(t)}
+                  onClick={() => setCfg({ ...cfg, eventTypes: toggle(cfg.eventTypes, t) })}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Time range + sort */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className={sectionHd}>TIME RANGE</div>
+              <select className={selectCls} value={cfg.timeRange} onChange={(e) => setCfg({ ...cfg, timeRange: e.target.value })}>
+                {["Last 15 minutes","Last 60 minutes","Last 4 hours","Last 24 hours","Last 7 days","All time"].map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div className={sectionHd}>SORT BY</div>
+              <div className="flex gap-1">
+                <select className={`${selectCls} flex-1`} value={cfg.sortBy} onChange={(e) => setCfg({ ...cfg, sortBy: e.target.value as CustomReportConfig["sortBy"] })}>
+                  <option value="timestamp">Timestamp</option>
+                  <option value="severity">Severity</option>
+                  <option value="domain">Domain</option>
+                </select>
+                <button
+                  onClick={() => setCfg({ ...cfg, sortDir: cfg.sortDir === "desc" ? "asc" : "desc" })}
+                  className="px-2 rounded-sm text-xs font-mono text-[#8a9aaa]"
+                  style={{ background: "#1e2124", border: "1px solid #3a3d45" }}
+                  title="Toggle sort direction"
+                >
+                  {cfg.sortDir === "desc" ? "↓" : "↑"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN — Fields */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className={sectionHd} style={{ marginBottom: 0 }}>OUTPUT FIELDS</div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCfg({ ...cfg, fields: ALL_FIELDS.map((f) => f.key) })}
+                className="text-xs font-mono text-[#555a62] hover:text-[#f58220]"
+              >All</button>
+              <span className="text-[#333840] text-xs">|</span>
+              <button
+                onClick={() => setCfg({ ...cfg, fields: ["timestamp", "domain", "severity", "event_type"] })}
+                className="text-xs font-mono text-[#555a62] hover:text-[#f58220]"
+              >Reset</button>
+            </div>
+          </div>
+          <div
+            className="flex flex-col gap-0.5 overflow-auto rounded-sm p-2"
+            style={{ background: "#0e1012", border: "1px solid #2a2d32", maxHeight: "230px" }}
+          >
+            {ALL_FIELDS.map((f) => {
+              const on = cfg.fields.includes(f.key);
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => {
+                    if (on && cfg.fields.length === 1) return;
+                    setCfg({ ...cfg, fields: toggle(cfg.fields, f.key) });
+                  }}
+                  className="flex items-center gap-2 px-2 py-1 rounded-sm text-left transition-colors"
+                  style={{ background: on ? "#1a2630" : "transparent" }}
+                >
+                  <span
+                    className="w-3 h-3 rounded-sm flex-shrink-0 flex items-center justify-center text-xs"
+                    style={{
+                      background: on ? "#f58220" : "#1a1c20",
+                      border:     `1px solid ${on ? "#f58220" : "#3a3d45"}`,
+                    }}
+                  >
+                    {on && <span style={{ color: "#111315", fontSize: "9px", fontWeight: 900 }}>✓</span>}
+                  </span>
+                  <span className="text-xs font-mono" style={{ color: on ? "#c8d0d8" : "#555a62" }}>{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-xs font-mono text-[#444850]">
+            {cfg.fields.length} field{cfg.fields.length !== 1 ? "s" : ""} selected
+          </div>
+        </div>
+      </div>
+
+      {/* Format + Generate */}
+      <div className="flex items-center gap-3 pt-1 border-t border-[#2a2d32]">
+        <div className="flex items-center gap-1 text-xs font-mono text-[#555a62]">Format:</div>
+        {(["csv", "txt"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFmt(f)}
+            className="px-3 py-1 rounded-sm text-xs font-mono font-semibold transition-colors"
+            style={{
+              background: fmt === f ? (f === "csv" ? "#1a3020" : "#2a2210") : "#1e2124",
+              color:      fmt === f ? (f === "csv" ? "#48c78e"  : "#c9a227") : "#555a62",
+              border:     `1px solid ${fmt === f ? (f === "csv" ? "#264a38" : "#4a3a10") : "#2a2d32"}`,
+            }}
+          >
+            {f.toUpperCase()}
+          </button>
+        ))}
+        <div className="flex-1" />
+        <button
+          onClick={handleGenerate}
+          disabled={matchCount === 0 || cfg.fields.length === 0}
+          className="px-4 py-1.5 rounded-sm text-xs font-semibold font-mono flex items-center gap-1.5 transition-opacity"
+          style={{
+            background: matchCount === 0 || cfg.fields.length === 0 ? "#2a2d32" : "#f58220",
+            color:      matchCount === 0 || cfg.fields.length === 0 ? "#555a62"  : "#111315",
+            cursor:     matchCount === 0 || cfg.fields.length === 0 ? "not-allowed" : "pointer",
+          }}
+        >
+          ↓ Generate &amp; Download {fmt.toUpperCase()}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ReportsPanel({ events }: { events: RawEvent[] }) {
+  const [showBuilder, setShowBuilder] = useState(false);
   const [lastDownload, setLastDownload] = useState<{ id: string; fmt: string } | null>(null);
 
   function handleDownload(reportId: string, fmt: "csv" | "txt") {
@@ -426,10 +678,30 @@ function ReportsPanel({ events }: { events: RawEvent[] }) {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-semibold text-[#888c94] tracking-wider">REPORTS</span>
-        <span className="text-xs font-mono text-[#555a62]">
-          {events.length} events available · click CSV or TXT to download
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono text-[#555a62]">
+            {events.length} events · click CSV or TXT to download
+          </span>
+          <button
+            onClick={() => setShowBuilder((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-semibold transition-colors"
+            style={{
+              background: showBuilder ? "#2a1a08" : "#1e2124",
+              color:      "#f58220",
+              border:     `1px solid ${showBuilder ? "#6a3a10" : "#4a3a20"}`,
+            }}
+          >
+            {showBuilder ? "✕ Cancel" : "+ Create Report"}
+          </button>
+        </div>
       </div>
+
+      {showBuilder && (
+        <CustomReportBuilder
+          events={events}
+          onDownloaded={() => setShowBuilder(false)}
+        />
+      )}
 
       {lastDownload && (
         <div
