@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Cross-Domain Security Metadata Demo"
+version = "1.0.0"
+id = "artifacts/cross-domain-demo"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23769
+
+[services.development]
+run = "pnpm --filter @workspace/cross-domain-demo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cross-domain-demo", "run", "build" ]
+publicDir = "artifacts/cross-domain-demo/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23769"
+BASE_PATH = "/"
