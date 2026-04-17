@@ -9,6 +9,7 @@ interface Props {
   activeTab: NavTab | null;
   onClose: () => void;
   rawEvents: RawEvent[];
+  onOpenDashboard?: (id: string) => void;
 }
 
 /* ── SEARCH ── */
@@ -286,68 +287,35 @@ const DASHBOARDS = [
   },
 ];
 
-function DashboardsPanel({ onClose }: { onClose: () => void }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [showCustomize, setShowCustomize] = useState(false);
-
+function DashboardsPanel({
+  onOpenDashboard,
+}: {
+  onOpenDashboard?: (id: string) => void;
+}) {
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-semibold text-[#888c94] tracking-wider">DASHBOARDS</span>
-        <button
-          onClick={() => setShowCustomize(true)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-semibold transition-colors"
-          style={{ background: "#1e2124", color: "#f58220", border: "1px solid #4a3a20" }}
-        >
-          + Customize Dashboard
-        </button>
+        <span className="text-xs font-mono text-[#555a62]">Click a dashboard to open it</span>
       </div>
-
-      {showCustomize && (
-        <div
-          className="px-3 py-2.5 rounded-sm text-xs font-mono"
-          style={{ background: "#1a1c14", border: "1px solid #3a3c1a" }}
-        >
-          <div className="text-[#c9a227] font-semibold mb-1">Dashboard Builder</div>
-          <div className="text-[#666b74]">
-            Drag panels from the library, configure data sources, set refresh intervals,
-            and choose visualization types. Save as a new named dashboard or overwrite an existing one.
-          </div>
-          <button
-            onClick={() => setShowCustomize(false)}
-            className="mt-2 text-xs text-[#555a62] hover:text-[#888c94]"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {selected && (
-        <div
-          className="px-3 py-2.5 rounded-sm text-xs font-mono"
-          style={{ background: "#151e18", border: "1px solid #264a38" }}
-        >
-          <div className="text-[#48c78e] font-semibold mb-1">
-            Opening: {DASHBOARDS.find((d) => d.id === selected)?.title}
-          </div>
-          <div className="text-[#555a62]">
-            Dashboard loaded — navigate to the main view to see live panels.
-          </div>
-          <button onClick={() => { setSelected(null); onClose(); }} className="mt-1 text-xs text-[#f58220]">
-            Go to dashboard →
-          </button>
-        </div>
-      )}
 
       <div className="grid grid-cols-3 gap-2">
         {DASHBOARDS.map((db) => (
           <button
             key={db.id}
-            onClick={() => setSelected(db.id)}
-            className="text-left rounded-sm p-3 transition-colors"
+            onClick={() => onOpenDashboard?.(db.id)}
+            className="text-left rounded-sm p-3 transition-all hover:scale-[1.01]"
             style={{
-              background: selected === db.id ? "#1a2630" : "#1a1c20",
-              border: `1px solid ${selected === db.id ? "#2a4a70" : "#2a2d32"}`,
+              background: "#1a1c20",
+              border: "1px solid #2a2d32",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "#f5822060";
+              (e.currentTarget as HTMLElement).style.background = "#1e2124";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "#2a2d32";
+              (e.currentTarget as HTMLElement).style.background = "#1a1c20";
             }}
           >
             <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -360,16 +328,19 @@ function DashboardsPanel({ onClose }: { onClose: () => void }) {
               </span>
             </div>
             <p className="text-xs text-[#666b74] leading-relaxed">{db.desc}</p>
-            <div className="flex gap-1 mt-2 flex-wrap">
-              {db.tags.map((t) => (
-                <span
-                  key={t}
-                  className="text-xs px-1.5 rounded-sm font-mono"
-                  style={{ background: "#222528", color: "#555a62", border: "1px solid #2d3035" }}
-                >
-                  {t}
-                </span>
-              ))}
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex gap-1 flex-wrap">
+                {db.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="text-xs px-1.5 rounded-sm font-mono"
+                    style={{ background: "#222528", color: "#555a62", border: "1px solid #2d3035" }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <span className="text-xs font-mono text-[#f58220] opacity-70 flex-shrink-0">Open →</span>
             </div>
           </button>
         ))}
@@ -850,7 +821,7 @@ function InvestigationsPanel() {
 /* ── ROOT ── */
 export type { NavTab };
 
-export function NavPanel({ activeTab, onClose, rawEvents }: Props) {
+export function NavPanel({ activeTab, onClose, rawEvents, onOpenDashboard }: Props) {
   if (!activeTab) return null;
 
   return (
@@ -859,7 +830,9 @@ export function NavPanel({ activeTab, onClose, rawEvents }: Props) {
       style={{ background: "#14161a", maxHeight: "420px" }}
     >
       {activeTab === "search"         && <SearchPanel events={rawEvents} />}
-      {activeTab === "dashboards"     && <DashboardsPanel onClose={onClose} />}
+      {activeTab === "dashboards"     && (
+        <DashboardsPanel onOpenDashboard={(id) => { onOpenDashboard?.(id); onClose(); }} />
+      )}
       {activeTab === "reports"        && <ReportsPanel />}
       {activeTab === "investigations" && <InvestigationsPanel />}
     </div>
