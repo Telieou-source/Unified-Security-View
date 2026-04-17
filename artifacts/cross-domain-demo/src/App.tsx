@@ -9,6 +9,7 @@ import { StatsBar } from "./components/StatsBar";
 import { StartScreen } from "./components/StartScreen";
 import { NavPanel } from "./components/NavPanel";
 import type { NavTab } from "./components/NavPanel";
+import { AlertDetailModal } from "./components/AlertDetailModal";
 
 const MAX_RAW = 80;
 const MAX_SANITIZED = 160;
@@ -22,6 +23,7 @@ export default function App() {
   const [alerts, setAlerts] = useState<CorrelatedAlert[]>([]);
   const [strippedFieldCount, setStrippedFieldCount] = useState(0);
   const [activeNav, setActiveNav] = useState<NavTab | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<CorrelatedAlert | null>(null);
 
   function toggleNav(tab: NavTab) {
     setActiveNav((cur) => (cur === tab ? null : tab));
@@ -64,9 +66,10 @@ export default function App() {
   const rawByDomain = (id: DomainId) => rawEvents.filter((e) => e.domainId === id);
 
   const NAV_TABS: { id: NavTab; label: string }[] = [
-    { id: "search",     label: "Search" },
-    { id: "dashboards", label: "Dashboards" },
-    { id: "reports",    label: "Reports" },
+    { id: "search",         label: "Search" },
+    { id: "dashboards",     label: "Dashboards" },
+    { id: "reports",        label: "Reports" },
+    { id: "investigations", label: "Investigations" },
   ];
 
   return (
@@ -127,6 +130,14 @@ export default function App() {
 
       {/* Nav panel — slides in below nav bar */}
       <NavPanel activeTab={activeNav} onClose={() => setActiveNav(null)} />
+
+      {/* Alert detail modal */}
+      {selectedAlert && (
+        <AlertDetailModal
+          alert={selectedAlert}
+          onClose={() => setSelectedAlert(null)}
+        />
+      )}
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
@@ -194,6 +205,7 @@ export default function App() {
               <CorrelatedView
                 alerts={alerts}
                 totalEvents={rawEvents.length}
+                onAlertClick={setSelectedAlert}
               />
 
               <div className="text-center text-xs text-[#333840] font-mono pb-2">
