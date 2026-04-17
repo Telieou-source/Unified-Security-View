@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { RawEvent } from "../types";
 
 /* ── colour helpers ── */
@@ -77,20 +78,35 @@ function StatCard({
   value,
   sub,
   color = "#f58220",
+  onClick,
+  isActive,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   color?: string;
+  onClick?: () => void;
+  isActive?: boolean;
 }) {
   return (
     <div
-      className="flex flex-col gap-0.5 rounded-sm px-4 py-3"
-      style={{ background: "#1a1c20", border: "1px solid #2a2d32" }}
+      className="flex flex-col gap-0.5 rounded-sm px-4 py-3 transition-all"
+      style={{
+        background: isActive ? `${color}18` : "#1a1c20",
+        border: isActive ? `1px solid ${color}80` : "1px solid #2a2d32",
+        cursor: onClick ? "pointer" : "default",
+        boxShadow: isActive ? `0 0 0 1px ${color}40` : "none",
+      }}
+      onClick={onClick}
     >
       <div className="text-xs text-[#555a62] font-mono uppercase tracking-wider">{label}</div>
       <div className="text-2xl font-bold font-mono" style={{ color }}>{value}</div>
       {sub && <div className="text-xs text-[#444850] font-mono">{sub}</div>}
+      {onClick && (
+        <div className="text-xs font-mono mt-0.5" style={{ color: isActive ? color : "#444850" }}>
+          {isActive ? "▲ collapse" : "▼ expand"}
+        </div>
+      )}
     </div>
   );
 }
@@ -146,6 +162,55 @@ function MiniTable({
                   </td>
                 );
               })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ── shared event detail table ── */
+function EventDetailTable({ events, accentColor }: { events: RawEvent[]; accentColor?: string }) {
+  if (events.length === 0) {
+    return (
+      <div className="text-xs font-mono text-[#444850] px-3 py-4 text-center" style={{ background: "#111315", borderRadius: "2px" }}>
+        No matching events
+      </div>
+    );
+  }
+  const sorted = [...events].sort((a, b) => b.timestamp - a.timestamp);
+  return (
+    <div
+      className="detail-table-enter rounded-sm overflow-auto"
+      style={{ border: `1px solid ${accentColor ? accentColor + "30" : "#222528"}`, maxHeight: 240 }}
+    >
+      <table className="w-full text-xs font-mono border-collapse">
+        <thead>
+          <tr style={{ background: "#191c20", borderBottom: "1px solid #2a2d32", position: "sticky", top: 0 }}>
+            {["TIME", "DOMAIN", "USER", "TYPE", "SEVERITY"].map((c) => (
+              <th key={c} className="px-3 py-1.5 text-left font-semibold whitespace-nowrap" style={{ color: accentColor ?? "#555a62", letterSpacing: "0.04em" }}>
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((e, i) => (
+            <tr key={e.id} style={{ background: i % 2 === 0 ? "#14161a" : "#171a1e", borderBottom: "1px solid #1a1c20" }}>
+              <td className="px-3 py-1.5 whitespace-nowrap text-[#555a62]">
+                {new Date(e.timestamp).toISOString().slice(11, 19)}
+              </td>
+              <td className="px-3 py-1.5 whitespace-nowrap font-semibold" style={{ color: DOMAIN_COLOR[e.domainId] ?? "#8a9aaa" }}>
+                {e.domainId}
+              </td>
+              <td className="px-3 py-1.5 whitespace-nowrap text-[#8a9aaa]" style={{ maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis" }}>
+                {e.userId ?? "—"}
+              </td>
+              <td className="px-3 py-1.5 whitespace-nowrap text-[#8a9aaa]">{e.type}</td>
+              <td className="px-3 py-1.5 whitespace-nowrap font-semibold" style={{ color: SEV_COLOR[e.severity] }}>
+                {e.severity}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -550,6 +615,11 @@ function IncidentTimeline({ events }: { events: RawEvent[] }) {
 
 /* 6. Executive Summary */
 function ExecSummary({ events }: { events: RawEvent[] }) {
+  const [activeKpi, setActiveKpi] = useState<string | null>(null);
+  const [activeSev, setActiveSev] = useState<string | null>(null);
+  const [activeDomain, setActiveDomain] = useState<string | null>(null);
+  const [activeRec, setActiveRec] = useState<number | null>(null);
+
   const fatal   = events.filter((e) => e.severity === "FATAL").length;
   const error   = events.filter((e) => e.severity === "ERROR").length;
   const warn    = events.filter((e) => e.severity === "WARN").length;
@@ -565,7 +635,10 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
     if (!userDomains[u]) userDomains[u] = new Set();
     userDomains[u].add(e.domainId);
   }
-  const crossUsers = Object.values(userDomains).filter((ds) => ds.size > 1).length;
+  const crossDomainUserIds = new Set(
+    Object.entries(userDomains).filter(([, ds]) => ds.size > 1).map(([u]) => u)
+  );
+  const crossUsers = crossDomainUserIds.size;
 
   const totalThreats = fatal + error;
   const riskColor = fatal > 5 ? "#e55555" : fatal > 0 ? "#f58220" : "#48c78e";
@@ -577,6 +650,42 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
     ["WARN",  warn,  "#e5c97a"],
     ["INFO",  info,  "#8eb8d4"],
   ] as [string, number, string][];
+
+  /* KPI filter logic */
+  const kpiFilteredEvents = (key: string): RawEvent[] => {
+    switch (key) {
+      case "total":   return events;
+      case "fatal":   return events.filter((e) => e.severity === "FATAL");
+      case "exfil":   return events.filter((e) => e.type === "ExfilAttempt");
+      case "priv":    return events.filter((e) => e.type === "PrivilegeEsc");
+      case "cross":   return events.filter((e) => crossDomainUserIds.has(e.userId ?? "unknown"));
+      case "domains": return events;
+      default:        return [];
+    }
+  };
+
+  /* Recommendation event filter logic */
+  const recFilteredEvents = (i: number): RawEvent[] => {
+    switch (i) {
+      case 0: return events.filter((e) => crossDomainUserIds.has(e.userId ?? "unknown"));
+      case 1: return events.filter((e) => e.type === "ExfilAttempt");
+      case 2: return events.filter((e) => e.type === "PrivilegeEsc");
+      case 3: return events;
+      default: return [];
+    }
+  };
+
+  const toggleKpi = (key: string) => setActiveKpi((prev) => prev === key ? null : key);
+  const toggleSev = (sev: string) => setActiveSev((prev) => prev === sev ? null : sev);
+  const toggleDomain = (d: string) => setActiveDomain((prev) => prev === d ? null : d);
+  const toggleRec = (i: number) => setActiveRec((prev) => prev === i ? null : i);
+
+  const recommendations = [
+    { color: "#e55555", text: `Investigate ${crossUsers} cross-domain user account(s) — potential lateral movement` },
+    { color: "#e55555", text: `Review ${exfil} ExfilAttempt event(s) — validate data loss controls` },
+    { color: "#f58220", text: `Audit ${priv} PrivilegeEsc event(s) — confirm authorization for each escalation` },
+    { color: "#e5c97a", text: `Run cross-domain correlation query to identify shared threat actor indicators` },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -612,13 +721,47 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-6 gap-2">
-        <StatCard label="Total Events"    value={events.length}   color="#8eb8d4" />
-        <StatCard label="FATAL"           value={fatal}            color="#e55555" />
-        <StatCard label="Exfil Attempts"  value={exfil}            color="#e55555" />
-        <StatCard label="Priv Escalations" value={priv}            color="#f58220" />
-        <StatCard label="Cross-Domain"    value={crossUsers}        color="#c9a227" sub="Suspicious users" />
-        <StatCard label="Domains"         value={domains}           color="#48c78e" sub="Under monitoring" />
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-6 gap-2">
+          <StatCard label="Total Events"     value={events.length} color="#8eb8d4" onClick={() => toggleKpi("total")} isActive={activeKpi === "total"} />
+          <StatCard label="FATAL"            value={fatal}          color="#e55555" onClick={() => toggleKpi("fatal")} isActive={activeKpi === "fatal"} />
+          <StatCard label="Exfil Attempts"   value={exfil}          color="#e55555" onClick={() => toggleKpi("exfil")} isActive={activeKpi === "exfil"} />
+          <StatCard label="Priv Escalations" value={priv}           color="#f58220" onClick={() => toggleKpi("priv")}  isActive={activeKpi === "priv"} />
+          <StatCard label="Cross-Domain"     value={crossUsers}     color="#c9a227" sub="Suspicious users" onClick={() => toggleKpi("cross")}  isActive={activeKpi === "cross"} />
+          <StatCard label="Domains"          value={domains}         color="#48c78e" sub="Under monitoring" onClick={() => toggleKpi("domains")} isActive={activeKpi === "domains"} />
+        </div>
+        {activeKpi && (
+          <div
+            className="rounded-sm p-3 flex flex-col gap-2"
+            style={{ background: "#14161a", border: "1px solid #2a2d32" }}
+          >
+            <div className="text-xs font-semibold tracking-wider text-[#888c94] font-mono uppercase">
+              {activeKpi === "total" && `All Events — ${events.length} total`}
+              {activeKpi === "fatal" && `FATAL Events — ${fatal} total`}
+              {activeKpi === "exfil" && `Exfil Attempts — ${exfil} total`}
+              {activeKpi === "priv" && `Privilege Escalations — ${priv} total`}
+              {activeKpi === "cross" && `Cross-Domain Users — ${crossUsers} users · ${kpiFilteredEvents("cross").length} events`}
+              {activeKpi === "domains" && `Events by Domain — ${events.length} total across ${domains} domains`}
+            </div>
+            {activeKpi === "domains" ? (
+              <div className="flex flex-col gap-3">
+                {["ALPHA", "BRAVO", "CHARLIE"].map((d) => {
+                  const de = events.filter((e) => e.domainId === d);
+                  return (
+                    <div key={d} className="flex flex-col gap-1">
+                      <div className="text-xs font-mono font-semibold" style={{ color: DOMAIN_COLOR[d] }}>
+                        {d} — {de.length} events
+                      </div>
+                      <EventDetailTable events={de} accentColor={DOMAIN_COLOR[d]} />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EventDetailTable events={kpiFilteredEvents(activeKpi)} />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Split: severity table + domain breakdown */}
@@ -626,20 +769,37 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
         <Panel title="SEVERITY BREAKDOWN">
           <div className="flex flex-col gap-2">
             {sevRows.map(([sev, count, color]) => (
-              <div key={sev} className="flex items-center justify-between py-1.5 border-b border-[#1e2124]">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-sm" style={{ background: color }} />
-                  <span className="text-xs font-mono font-semibold" style={{ color }}>{sev}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-32 h-2 rounded-sm overflow-hidden" style={{ background: "#1e2124" }}>
-                    <div style={{ width: `${(count / events.length) * 100}%`, height: "100%", background: color, opacity: 0.8 }} />
+              <div key={sev}>
+                <div
+                  className="flex items-center justify-between py-1.5 border-b border-[#1e2124] rounded-sm px-1 transition-all"
+                  style={{
+                    cursor: "pointer",
+                    background: activeSev === sev ? `${color}12` : "transparent",
+                  }}
+                  onClick={() => toggleSev(sev)}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-sm" style={{ background: color }} />
+                    <span className="text-xs font-mono font-semibold" style={{ color }}>{sev}</span>
+                    <span className="text-xs font-mono ml-1" style={{ color: activeSev === sev ? color : "#444850" }}>
+                      {activeSev === sev ? "▲" : "▼"}
+                    </span>
                   </div>
-                  <span className="text-xs font-mono text-[#8a9aaa] w-8 text-right">{count}</span>
-                  <span className="text-xs font-mono text-[#444850] w-8 text-right">
-                    {events.length ? Math.round((count / events.length) * 100) : 0}%
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32 h-2 rounded-sm overflow-hidden" style={{ background: "#1e2124" }}>
+                      <div style={{ width: `${(count / events.length) * 100}%`, height: "100%", background: color, opacity: 0.8 }} />
+                    </div>
+                    <span className="text-xs font-mono text-[#8a9aaa] w-8 text-right">{count}</span>
+                    <span className="text-xs font-mono text-[#444850] w-8 text-right">
+                      {events.length ? Math.round((count / events.length) * 100) : 0}%
+                    </span>
+                  </div>
                 </div>
+                {activeSev === sev && (
+                  <div className="mt-1 mb-1">
+                    <EventDetailTable events={events.filter((e) => e.severity === sev)} accentColor={color} />
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -651,16 +811,34 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
               const de = events.filter((e) => e.domainId === d);
               const df = de.filter((e) => e.severity === "FATAL").length;
               const de2 = de.filter((e) => e.severity === "ERROR").length;
+              const dColor = DOMAIN_COLOR[d];
               return (
-                <div key={d} className="flex items-center gap-3 py-1.5 border-b border-[#1e2124]">
-                  <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: DOMAIN_COLOR[d] }} />
-                  <span className="text-xs font-mono font-semibold flex-shrink-0 w-16" style={{ color: DOMAIN_COLOR[d] }}>{d}</span>
-                  <div className="flex-1 h-2 rounded-sm overflow-hidden" style={{ background: "#1e2124" }}>
-                    <div style={{ width: `${(de.length / Math.max(events.length, 1)) * 100}%`, height: "100%", background: DOMAIN_COLOR[d], opacity: 0.7 }} />
+                <div key={d}>
+                  <div
+                    className="flex items-center gap-3 py-1.5 border-b border-[#1e2124] rounded-sm px-1 transition-all"
+                    style={{
+                      cursor: "pointer",
+                      background: activeDomain === d ? `${dColor}12` : "transparent",
+                    }}
+                    onClick={() => toggleDomain(d)}
+                  >
+                    <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: dColor }} />
+                    <span className="text-xs font-mono font-semibold flex-shrink-0 w-16" style={{ color: dColor }}>{d}</span>
+                    <div className="flex-1 h-2 rounded-sm overflow-hidden" style={{ background: "#1e2124" }}>
+                      <div style={{ width: `${(de.length / Math.max(events.length, 1)) * 100}%`, height: "100%", background: dColor, opacity: 0.7 }} />
+                    </div>
+                    <span className="text-xs font-mono text-[#8a9aaa] w-8 text-right">{de.length}</span>
+                    <span className="text-xs font-mono text-[#e55555] w-12 text-right">{df} FATAL</span>
+                    <span className="text-xs font-mono text-[#f58220] w-12 text-right">{de2} ERROR</span>
+                    <span className="text-xs font-mono ml-1" style={{ color: activeDomain === d ? dColor : "#444850" }}>
+                      {activeDomain === d ? "▲" : "▼"}
+                    </span>
                   </div>
-                  <span className="text-xs font-mono text-[#8a9aaa] w-8 text-right">{de.length}</span>
-                  <span className="text-xs font-mono text-[#e55555] w-12 text-right">{df} FATAL</span>
-                  <span className="text-xs font-mono text-[#f58220] w-12 text-right">{de2} ERROR</span>
+                  {activeDomain === d && (
+                    <div className="mt-1">
+                      <EventDetailTable events={de} accentColor={dColor} />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -671,19 +849,26 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
       {/* Recommendations */}
       <Panel title="ANALYST RECOMMENDATIONS">
         <div className="grid grid-cols-2 gap-2">
-          {[
-            { color: "#e55555", text: `Investigate ${crossUsers} cross-domain user account(s) — potential lateral movement` },
-            { color: "#e55555", text: `Review ${exfil} ExfilAttempt event(s) — validate data loss controls` },
-            { color: "#f58220", text: `Audit ${priv} PrivilegeEsc event(s) — confirm authorization for each escalation` },
-            { color: "#e5c97a", text: `Run cross-domain correlation query to identify shared threat actor indicators` },
-          ].map((rec, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 px-3 py-2 rounded-sm text-xs font-mono"
-              style={{ background: "#1a1c20", border: `1px solid ${rec.color}30`, borderLeft: `3px solid ${rec.color}` }}
-            >
-              <span style={{ color: rec.color }}>▶</span>
-              <span className="text-[#8a9aaa]">{rec.text}</span>
+          {recommendations.map((rec, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <div
+                className="flex items-start gap-2 px-3 py-2 rounded-sm text-xs font-mono transition-all"
+                style={{
+                  background: activeRec === i ? `${rec.color}12` : "#1a1c20",
+                  border: `1px solid ${activeRec === i ? rec.color + "60" : rec.color + "30"}`,
+                  borderLeft: `3px solid ${rec.color}`,
+                  cursor: "pointer",
+                }}
+                onClick={() => toggleRec(i)}
+              >
+                <span style={{ color: rec.color }}>{activeRec === i ? "▼" : "▶"}</span>
+                <span className="text-[#8a9aaa] flex-1">{rec.text}</span>
+              </div>
+              {activeRec === i && (
+                <div className="px-1">
+                  <EventDetailTable events={recFilteredEvents(i)} accentColor={rec.color} />
+                </div>
+              )}
             </div>
           ))}
         </div>
