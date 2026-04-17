@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { RawEvent } from "../types";
 import { runQuery } from "../lib/search";
 import type { ExecResult } from "../lib/search";
+import { REPORT_ACTIONS, downloadFile } from "../lib/reports";
 
 type NavTab = "search" | "dashboards" | "reports" | "investigations";
 
@@ -407,82 +408,60 @@ const SEV_STYLE: Record<string, { color: string; bg: string; border: string }> =
   MEDIUM:   { color: "#e5c97a", bg: "#2d2510", border: "#5a4a20" },
 };
 
-function ReportsPanel() {
-  const [opening, setOpening] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
+function ReportsPanel({ events }: { events: RawEvent[] }) {
+  const [lastDownload, setLastDownload] = useState<{ id: string; fmt: string } | null>(null);
+
+  function handleDownload(reportId: string, fmt: "csv" | "txt") {
+    const action = REPORT_ACTIONS[reportId];
+    if (!action) return;
+    const content  = fmt === "csv" ? action.csvContent(events) : action.txtContent(events);
+    const filename = fmt === "csv" ? action.csvFilename : action.txtFilename;
+    const mime     = fmt === "csv" ? "text/csv;charset=utf-8;" : "text/plain;charset=utf-8;";
+    downloadFile(content, filename, mime);
+    setLastDownload({ id: reportId, fmt });
+    setTimeout(() => setLastDownload(null), 3000);
+  }
 
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-semibold text-[#888c94] tracking-wider">REPORTS</span>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-semibold transition-colors"
-          style={{ background: "#1e2124", color: "#f58220", border: "1px solid #4a3a20" }}
-        >
-          + Create Report
-        </button>
+        <span className="text-xs font-mono text-[#555a62]">
+          {events.length} events available · click CSV or TXT to download
+        </span>
       </div>
 
-      {showCreate && (
+      {lastDownload && (
         <div
-          className="px-3 py-2.5 rounded-sm text-xs font-mono"
-          style={{ background: "#1a1c14", border: "1px solid #3a3c1a" }}
+          className="flex items-center gap-2 px-3 py-2 rounded-sm text-xs font-mono"
+          style={{ background: "#0e2a1a", border: "1px solid #264a38" }}
         >
-          <div className="text-[#c9a227] font-semibold mb-2">New Report</div>
-          <div className="grid grid-cols-3 gap-2">
-            {["Name", "Data Source", "Schedule"].map((label) => (
-              <div key={label} className="flex flex-col gap-1">
-                <span className="text-[#555a62]">{label}</span>
-                <input
-                  placeholder={label === "Name" ? "My Report" : label === "Data Source" ? "cross_domain_siem" : "Weekly"}
-                  className="bg-[#0e1012] border border-[#3a3d45] rounded-sm px-2 py-1 text-xs text-[#c8d0d8] outline-none font-mono"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button
-              className="px-3 py-1 rounded-sm text-xs font-semibold"
-              style={{ background: "#f58220", color: "#111315" }}
-              onClick={() => setShowCreate(false)}
-            >
-              Save Report
-            </button>
-            <button onClick={() => setShowCreate(false)} className="text-xs text-[#555a62] hover:text-[#888c94] px-2">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {opening && (
-        <div
-          className="px-3 py-2 rounded-sm text-xs font-mono"
-          style={{ background: "#151e18", border: "1px solid #264a38" }}
-        >
-          <span className="text-[#48c78e]">Generating report: </span>
-          <span className="text-[#c8d0d8]">{REPORTS.find((r) => r.id === opening)?.title}</span>
-          <span className="text-[#555a62]"> — available for download shortly.</span>
+          <span className="text-[#48c78e]">✓</span>
+          <span className="text-[#48c78e] font-semibold">Downloaded:</span>
+          <span className="text-[#c8d0d8]">
+            {REPORTS.find((r) => r.id === lastDownload.id)?.title}
+          </span>
+          <span className="text-[#555a62]">({lastDownload.fmt.toUpperCase()})</span>
         </div>
       )}
 
       <div className="flex flex-col gap-1.5">
         {REPORTS.map((rpt) => {
-          const sev = SEV_STYLE[rpt.severity];
+          const sev     = SEV_STYLE[rpt.severity];
+          const isLast  = lastDownload?.id === rpt.id;
           return (
-            <button
+            <div
               key={rpt.id}
-              onClick={() => setOpening(rpt.id)}
-              className="text-left rounded-sm px-3 py-2.5 transition-colors hover:bg-[#1e2124] flex items-start gap-4"
+              className="rounded-sm px-3 py-2.5 flex items-center gap-4"
               style={{
-                background: opening === rpt.id ? "#1a2630" : "#1a1c20",
-                borderTop: `1px solid ${opening === rpt.id ? "#2a4a70" : "#2a2d32"}`,
-                borderRight: `1px solid ${opening === rpt.id ? "#2a4a70" : "#2a2d32"}`,
-                borderBottom: `1px solid ${opening === rpt.id ? "#2a4a70" : "#2a2d32"}`,
-                borderLeft: `3px solid ${sev.color}`,
+                background: isLast ? "#0e1e14" : "#1a1c20",
+                borderTop:    `1px solid ${isLast ? "#264a38" : "#2a2d32"}`,
+                borderRight:  `1px solid ${isLast ? "#264a38" : "#2a2d32"}`,
+                borderBottom: `1px solid ${isLast ? "#264a38" : "#2a2d32"}`,
+                borderLeft:   `3px solid ${sev.color}`,
               }}
             >
+              {/* Report info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="text-xs font-semibold text-[#c8d0d8]">{rpt.title}</span>
@@ -495,11 +474,44 @@ function ReportsPanel() {
                 </div>
                 <p className="text-xs text-[#666b74] leading-relaxed">{rpt.desc}</p>
               </div>
-              <div className="flex-shrink-0 text-right text-xs font-mono text-[#555a62] mt-0.5 space-y-1">
+
+              {/* Schedule / format info */}
+              <div className="flex-shrink-0 text-right text-xs font-mono text-[#555a62] w-20">
                 <div>{rpt.schedule}</div>
-                <div className="text-[#3a3d45]">{rpt.format}</div>
               </div>
-            </button>
+
+              {/* Download buttons */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => handleDownload(rpt.id, "csv")}
+                  title={`Download ${rpt.title} as CSV`}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-mono font-semibold transition-colors"
+                  style={{
+                    background: lastDownload?.id === rpt.id && lastDownload.fmt === "csv" ? "#0e2a1a" : "#1e2124",
+                    color:      lastDownload?.id === rpt.id && lastDownload.fmt === "csv" ? "#48c78e" : "#48c78e",
+                    border:     `1px solid ${lastDownload?.id === rpt.id && lastDownload.fmt === "csv" ? "#264a38" : "#1e4a30"}`,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#1a3020"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = lastDownload?.id === rpt.id && lastDownload.fmt === "csv" ? "#0e2a1a" : "#1e2124"; }}
+                >
+                  ↓ CSV
+                </button>
+                <button
+                  onClick={() => handleDownload(rpt.id, "txt")}
+                  title={`Download ${rpt.title} as TXT`}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-mono font-semibold transition-colors"
+                  style={{
+                    background: lastDownload?.id === rpt.id && lastDownload.fmt === "txt" ? "#1a1e08" : "#1e2124",
+                    color:      "#c9a227",
+                    border:     `1px solid ${lastDownload?.id === rpt.id && lastDownload.fmt === "txt" ? "#4a4010" : "#3a3010"}`,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#2a2210"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = lastDownload?.id === rpt.id && lastDownload.fmt === "txt" ? "#1a1e08" : "#1e2124"; }}
+                >
+                  ↓ TXT
+                </button>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -833,7 +845,7 @@ export function NavPanel({ activeTab, onClose, rawEvents, onOpenDashboard }: Pro
       {activeTab === "dashboards"     && (
         <DashboardsPanel onOpenDashboard={(id) => { onOpenDashboard?.(id); onClose(); }} />
       )}
-      {activeTab === "reports"        && <ReportsPanel />}
+      {activeTab === "reports"        && <ReportsPanel events={rawEvents} />}
       {activeTab === "investigations" && <InvestigationsPanel />}
     </div>
   );
