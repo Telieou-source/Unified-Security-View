@@ -613,6 +613,119 @@ function IncidentTimeline({ events }: { events: RawEvent[] }) {
   );
 }
 
+/* ── bandwidth / health panel (reused in ExecSummary) ── */
+const BYTES_RAW_PER_EVT  = 200;
+const BYTES_SAN_PER_EVT  = 136;
+const BYTES_STRIP_PER_EVT =  64;
+
+function fmtBytes(b: number): string {
+  if (b >= 1_000_000) return `${(b / 1_000_000).toFixed(2)} MB`;
+  if (b >= 1_000)     return `${(b / 1_000).toFixed(1)} KB`;
+  return `${b} B`;
+}
+
+function BandwidthHealthPanel({ events }: { events: RawEvent[] }) {
+  const DOMAINS = ["ALPHA", "BRAVO", "CHARLIE"] as const;
+
+  const totalBytes    = events.length * BYTES_RAW_PER_EVT;
+  const strippedBytes = events.length * BYTES_STRIP_PER_EVT;
+  const sanBytes      = events.length * BYTES_SAN_PER_EVT;
+  const reductionPct  = Math.round((strippedBytes / Math.max(totalBytes, 1)) * 100);
+
+  const domainData = DOMAINS.map((id) => ({
+    id,
+    color: DOMAIN_COLOR[id],
+    count: events.filter((e) => e.domainId === id).length,
+    bytes: events.filter((e) => e.domainId === id).length * BYTES_RAW_PER_EVT,
+  }));
+  const maxDomBytes = Math.max(...domainData.map((d) => d.bytes), 1);
+
+  const components = [
+    { label: "Domain Alpha",       status: "ONLINE",  color: "#4ea6dc" },
+    { label: "Domain Bravo",       status: "ONLINE",  color: "#48c78e" },
+    { label: "Domain Charlie",     status: "ONLINE",  color: "#c9a227" },
+    { label: "Cross-Domain Guard", status: "ACTIVE",  color: "#a855f7" },
+    { label: "High-Side Engine",   status: "ACTIVE",  color: "#f58220" },
+  ];
+
+  return (
+    <Panel title="BANDWIDTH &amp; SYSTEM HEALTH">
+
+      {/* Component status row */}
+      <div className="flex gap-2">
+        {components.map((c) => (
+          <div
+            key={c.label}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm flex-1"
+            style={{ background: `${c.color}12`, border: `1px solid ${c.color}30` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ background: c.color }} />
+            <span className="text-xs font-mono font-semibold truncate flex-1" style={{ color: c.color }}>{c.label}</span>
+            <span className="text-xs font-mono flex-shrink-0" style={{ color: c.color }}>{c.status}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Volume breakdown */}
+      <div className="grid grid-cols-2 gap-4">
+
+        {/* Per-domain bars */}
+        <div className="flex flex-col gap-2">
+          <div className="text-xs font-mono text-[#555a62] uppercase tracking-wider">Volume by Domain</div>
+          {domainData.map((d) => (
+            <div key={d.id} className="flex items-center gap-2">
+              <div className="text-xs font-mono w-16 flex-shrink-0" style={{ color: d.color }}>{d.id}</div>
+              <div className="flex-1 h-4 rounded-sm overflow-hidden" style={{ background: "#1e2124" }}>
+                <div
+                  className="h-full rounded-sm transition-all"
+                  style={{ width: `${(d.bytes / maxDomBytes) * 100}%`, background: d.color, opacity: 0.8 }}
+                />
+              </div>
+              <div className="text-xs font-mono text-[#8a9aaa] w-16 text-right flex-shrink-0">{fmtBytes(d.bytes)}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Throughput summary */}
+        <div className="flex flex-col gap-2">
+          <div className="text-xs font-mono text-[#555a62] uppercase tracking-wider">Throughput Summary</div>
+          <div
+            className="flex flex-col gap-2 px-3 py-2.5 rounded-sm"
+            style={{ background: "#111315" }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[#555a62]">Total Ingested</span>
+              <span className="text-xs font-mono text-[#8a9aaa]">{fmtBytes(totalBytes)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[#555a62]">Sanitized Output</span>
+              <span className="text-xs font-mono text-[#48c78e]">{fmtBytes(sanBytes)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[#555a62]">Stripped (rawPktBytes)</span>
+              <span className="text-xs font-mono text-[#e55555]">{fmtBytes(strippedBytes)}</span>
+            </div>
+            <div className="h-px" style={{ background: "#2a2d32" }} />
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[#555a62]">Data Reduction</span>
+              <span
+                className="text-xs font-mono font-semibold"
+                style={{ color: reductionPct >= 25 ? "#48c78e" : "#f58220" }}
+              >
+                {reductionPct}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[#555a62]">Guard Status</span>
+              <span className="text-xs font-mono text-[#48c78e]">NOMINAL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 /* 6. Executive Summary */
 function ExecSummary({ events }: { events: RawEvent[] }) {
   const [activeKpi, setActiveKpi] = useState<string | null>(null);
@@ -845,6 +958,9 @@ function ExecSummary({ events }: { events: RawEvent[] }) {
           </div>
         </Panel>
       </div>
+
+      {/* Bandwidth & system health */}
+      <BandwidthHealthPanel events={events} />
 
       {/* Recommendations */}
       <Panel title="ANALYST RECOMMENDATIONS">
