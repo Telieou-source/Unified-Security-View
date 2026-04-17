@@ -62,6 +62,9 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    hmr: {
+      timeout: 2000,
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],
