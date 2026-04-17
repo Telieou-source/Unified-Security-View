@@ -10,6 +10,7 @@ import { StartScreen } from "./components/StartScreen";
 import { NavPanel } from "./components/NavPanel";
 import type { NavTab } from "./components/NavPanel";
 import { AlertDetailModal } from "./components/AlertDetailModal";
+import { DashboardView } from "./components/DashboardView";
 import { SEED_EVENTS } from "./data/seedEvents";
 
 const MAX_RAW = 80;
@@ -25,6 +26,7 @@ export default function App() {
   const [strippedFieldCount, setStrippedFieldCount] = useState(0);
   const [activeNav, setActiveNav] = useState<NavTab | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<CorrelatedAlert | null>(null);
+  const [openDashboardId, setOpenDashboardId] = useState<string | null>(null);
 
   function toggleNav(tab: NavTab) {
     setActiveNav((cur) => (cur === tab ? null : tab));
@@ -134,6 +136,14 @@ export default function App() {
         activeTab={activeNav}
         onClose={() => setActiveNav(null)}
         rawEvents={[...SEED_EVENTS, ...rawEvents]}
+        onOpenDashboard={(id) => { setOpenDashboardId(id); setActiveNav(null); }}
+      />
+
+      {/* Dashboard full-screen overlay */}
+      <DashboardView
+        dashboardId={openDashboardId}
+        events={[...SEED_EVENTS, ...rawEvents]}
+        onClose={() => setOpenDashboardId(null)}
       />
 
       {/* Alert detail modal */}
