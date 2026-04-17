@@ -129,7 +129,7 @@ export default function App() {
       </div>
 
       {/* Nav panel — slides in below nav bar */}
-      <NavPanel activeTab={activeNav} onClose={() => setActiveNav(null)} />
+      <NavPanel activeTab={activeNav} onClose={() => setActiveNav(null)} rawEvents={rawEvents} />
 
       {/* Alert detail modal */}
       {selectedAlert && (
