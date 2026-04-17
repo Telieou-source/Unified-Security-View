@@ -4,6 +4,7 @@ import { DOMAINS, CORR_SEVERITY_STYLE } from "../data/config";
 interface Props {
   alerts: CorrelatedAlert[];
   totalEvents: number;
+  onAlertClick: (alert: CorrelatedAlert) => void;
 }
 
 function fmt(ts: number) {
@@ -28,7 +29,7 @@ const ALERT_TYPE_LABEL: Record<string, string> = {
   SYNCHRONIZED_ACTIVITY:"Synchronized Activity",
 };
 
-export function CorrelatedView({ alerts, totalEvents }: Props) {
+export function CorrelatedView({ alerts, totalEvents, onAlertClick }: Props) {
   const critCount = alerts.filter((a) => a.severity === "CRITICAL").length;
   const highCount = alerts.filter((a) => a.severity === "HIGH").length;
   const medCount  = alerts.filter((a) => a.severity === "MEDIUM").length;
@@ -38,7 +39,7 @@ export function CorrelatedView({ alerts, totalEvents }: Props) {
       className="rounded-sm border border-[#2d3035] overflow-hidden"
       style={{ background: "#14161a" }}
     >
-      {/* Splunk panel header */}
+      {/* Panel header */}
       <div
         className="flex items-center justify-between px-4 py-2 border-b border-[#2d3035]"
         style={{ background: "#1e2124" }}
@@ -88,7 +89,7 @@ export function CorrelatedView({ alerts, totalEvents }: Props) {
       <div
         className="grid text-xs font-semibold text-[#666b74] px-3 py-1.5 border-b border-[#1f2226]"
         style={{
-          gridTemplateColumns: "130px 90px 90px 90px 1fr 64px",
+          gridTemplateColumns: "130px 90px 90px 90px 1fr 64px 60px",
           background: "#191c20",
           letterSpacing: "0.04em",
         }}
@@ -99,6 +100,7 @@ export function CorrelatedView({ alerts, totalEvents }: Props) {
         <span>Domains</span>
         <span>Summary</span>
         <span className="text-right">Confidence</span>
+        <span className="text-right">Action</span>
       </div>
 
       {/* Alert rows */}
@@ -115,12 +117,15 @@ export function CorrelatedView({ alerts, totalEvents }: Props) {
             return (
               <div
                 key={alert.id}
-                className={`grid text-xs font-mono px-3 py-2.5 border-b border-[#1a1c20] border-l-2 hover:bg-[#1c1f24] transition-colors ${isNew ? "corr-new" : ""}`}
+                onClick={() => onAlertClick(alert)}
+                className={`grid text-xs font-mono px-3 py-2.5 hover:bg-[#1c2530] cursor-pointer transition-colors group ${isNew ? "corr-new" : ""}`}
                 style={{
-                  gridTemplateColumns: "130px 90px 90px 90px 1fr 64px",
+                  gridTemplateColumns: "130px 90px 90px 90px 1fr 64px 60px",
                   background: isNew ? undefined : i % 2 === 0 ? "#14161a" : "#171a1e",
-                  borderLeftColor: sev.row.replace("border-l-", ""),
+                  borderBottom: "1px solid #1a1c20",
+                  borderLeft: `3px solid ${sev.color}`,
                 }}
+                title="Click to open alert detail"
               >
                 <span className="text-[#555a62]">{fmt(alert.timestamp)}</span>
                 <span className="text-[#a78bfa]">{alert.ruleId}</span>
@@ -144,6 +149,9 @@ export function CorrelatedView({ alerts, totalEvents }: Props) {
                   {alert.summary}
                 </span>
                 <span className="text-right text-[#888c94]">{alert.confidence}%</span>
+                <span className="text-right text-[#3a4a5a] group-hover:text-[#4ea6dc] transition-colors select-none">
+                  Open →
+                </span>
               </div>
             );
           })

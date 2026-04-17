@@ -84,8 +84,8 @@ export const SEVERITY_STYLE: Record<string, { cell: string; badge: string }> = {
   FATAL: { cell: "text-[#e55555]",  badge: "background:#2d0e0e;color:#e55555;border:1px solid #6a2020" },
 };
 
-export const CORR_SEVERITY_STYLE: Record<string, { row: string; badge: string }> = {
-  MEDIUM:   { row: "border-l-[#e5c97a]", badge: "background:#2d2510;color:#e5c97a;border:1px solid #5a4a20" },
-  HIGH:     { row: "border-l-[#f58220]", badge: "background:#2d1a08;color:#f58220;border:1px solid #6a3a10" },
-  CRITICAL: { row: "border-l-[#e55555]", badge: "background:#2d0e0e;color:#e55555;border:1px solid #6a2020" },
+export const CORR_SEVERITY_STYLE: Record<string, { row: string; badge: string; color: string }> = {
+  MEDIUM:   { row: "border-l-[#e5c97a]", badge: "background:#2d2510;color:#e5c97a;border:1px solid #5a4a20", color: "#e5c97a" },
+  HIGH:     { row: "border-l-[#f58220]", badge: "background:#2d1a08;color:#f58220;border:1px solid #6a3a10", color: "#f58220" },
+  CRITICAL: { row: "border-l-[#e55555]", badge: "background:#2d0e0e;color:#e55555;border:1px solid #6a2020", color: "#e55555" },
 };
