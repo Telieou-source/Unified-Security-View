@@ -9,7 +9,7 @@ import {
 } from "../lib/reports";
 import type { CustomReportConfig } from "../lib/reports";
 
-type NavTab = "search" | "dashboards" | "reports" | "investigations";
+type NavTab = "search" | "dashboards" | "reports" | "investigations" | "feedback";
 
 interface Props {
   activeTab: NavTab | null;
@@ -1414,6 +1414,318 @@ function InvestigationsPanel({ rawEvents }: { rawEvents: RawEvent[] }) {
   );
 }
 
+/* ── FEEDBACK ── */
+
+const FEEDBACK_KEY = "demo_siem_feedback";
+
+interface FeedbackEntry {
+  id: string;
+  timestamp: string;
+  category: string;
+  rating: number;
+  message: string;
+}
+
+function loadFeedback(): FeedbackEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(FEEDBACK_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveFeedback(entries: FeedbackEntry[]) {
+  localStorage.setItem(FEEDBACK_KEY, JSON.stringify(entries));
+}
+
+const CATEGORIES = [
+  "General Impression",
+  "Feature Request",
+  "Bug / Issue",
+  "UI / UX",
+  "Data Accuracy",
+  "Performance",
+  "Other",
+];
+
+function FeedbackPanel() {
+  const [entries, setEntries] = useState<FeedbackEntry[]>(() => loadFeedback());
+  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [message, setMessage] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [view, setView] = useState<"form" | "history">("form");
+  const [exportDone, setExportDone] = useState(false);
+
+  function handleSubmit() {
+    if (!message.trim() || rating === 0) return;
+    const entry: FeedbackEntry = {
+      id: `FB-${Date.now().toString(36).toUpperCase()}`,
+      timestamp: new Date().toISOString(),
+      category,
+      rating,
+      message: message.trim(),
+    };
+    const updated = [entry, ...entries];
+    setEntries(updated);
+    saveFeedback(updated);
+    setSubmitted(true);
+    setTimeout(() => {
+      setSubmitted(false);
+      setMessage("");
+      setRating(0);
+      setCategory(CATEGORIES[0]);
+    }, 3000);
+  }
+
+  function handleExport() {
+    const content = JSON.stringify(entries, null, 2);
+    const blob = new Blob([content], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `demo_siem_feedback_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExportDone(true);
+    setTimeout(() => setExportDone(false), 2000);
+  }
+
+  function handleClear() {
+    if (!confirm("Delete all stored feedback submissions?")) return;
+    setEntries([]);
+    saveFeedback([]);
+  }
+
+  const canSubmit = message.trim().length > 0 && rating > 0;
+
+  const inputCls = "w-full bg-[#0e1012] border border-[#3a3d45] rounded-sm px-3 py-2 text-xs text-[#c8d0d8] outline-none font-mono focus:border-[#f58220] transition-colors";
+  const selectCls = "w-full bg-[#0e1012] border border-[#3a3d45] rounded-sm px-3 py-2 text-xs text-[#c8d0d8] outline-none font-mono focus:border-[#f58220] transition-colors cursor-pointer";
+
+  return (
+    <div className="flex flex-col gap-0 p-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-[#888c94] tracking-wider">LEAVE FEEDBACK</span>
+          <span className="text-xs font-mono text-[#555a62]">— feedback is stored locally and reviewed by the developer</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setView("form")}
+            className="px-3 py-1 rounded-sm text-xs font-mono transition-colors"
+            style={{
+              background: view === "form" ? "#f5822020" : "#1a1c20",
+              color: view === "form" ? "#f58220" : "#555a62",
+              border: `1px solid ${view === "form" ? "#f5822060" : "#2a2d32"}`,
+            }}
+          >
+            New
+          </button>
+          <button
+            onClick={() => setView("history")}
+            className="px-3 py-1 rounded-sm text-xs font-mono transition-colors"
+            style={{
+              background: view === "history" ? "#f5822020" : "#1a1c20",
+              color: view === "history" ? "#f58220" : "#555a62",
+              border: `1px solid ${view === "history" ? "#f5822060" : "#2a2d32"}`,
+            }}
+          >
+            History ({entries.length})
+          </button>
+        </div>
+      </div>
+
+      {view === "form" && (
+        <div
+          className="rounded-sm p-4 flex flex-col gap-4"
+          style={{ background: "#13151a", border: "1px solid #f5822030", borderLeft: "3px solid #f58220" }}
+        >
+          {submitted ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-6">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
+                style={{ background: "#1a3020", border: "2px solid #48c78e" }}
+              >
+                ✓
+              </div>
+              <div className="text-sm font-semibold text-[#48c78e] font-mono">Feedback submitted</div>
+              <div className="text-xs text-[#555a62] font-mono text-center">
+                Thank you — your feedback has been recorded and will be reviewed by the developer.
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {/* LEFT */}
+              <div className="flex flex-col gap-4">
+                <div>
+                  <div className="text-xs font-semibold text-[#888c94] tracking-wider mb-2">CATEGORY</div>
+                  <select
+                    className={selectCls}
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-[#888c94] tracking-wider mb-2">OVERALL RATING</div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const filled = star <= (hoverRating || rating);
+                      return (
+                        <button
+                          key={star}
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="text-2xl leading-none transition-transform hover:scale-110"
+                          style={{ color: filled ? "#f58220" : "#2a2d32" }}
+                          title={`${star} star${star > 1 ? "s" : ""}`}
+                        >
+                          ★
+                        </button>
+                      );
+                    })}
+                    {rating > 0 && (
+                      <span className="text-xs font-mono text-[#555a62] ml-2">
+                        {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][rating]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT */}
+              <div className="flex flex-col gap-4">
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-[#888c94] tracking-wider mb-2">
+                    YOUR FEEDBACK
+                    <span className="text-[#555a62] font-normal ml-1">(required)</span>
+                  </div>
+                  <textarea
+                    className={`${inputCls} resize-none`}
+                    style={{ minHeight: "90px" }}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Describe your experience, suggestions, or any issues you encountered..."
+                    maxLength={1000}
+                  />
+                  <div className="flex justify-end mt-1">
+                    <span className="text-xs font-mono text-[#333840]">{message.length}/1000</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-[#444850]">
+                    {!canSubmit
+                      ? rating === 0
+                        ? "Please select a rating"
+                        : "Please enter a message"
+                      : "Ready to submit"}
+                  </span>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    className="px-5 py-2 rounded-sm text-xs font-semibold transition-all"
+                    style={{
+                      background: canSubmit ? "#f58220" : "#2a2d32",
+                      color: canSubmit ? "#111315" : "#555a62",
+                      cursor: canSubmit ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    Submit Feedback
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === "history" && (
+        <div className="flex flex-col gap-3">
+          {/* Actions */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-[#555a62]">
+              {entries.length === 0 ? "No submissions yet" : `${entries.length} submission${entries.length !== 1 ? "s" : ""} stored locally`}
+            </span>
+            {entries.length > 0 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExport}
+                  className="px-3 py-1 rounded-sm text-xs font-mono transition-colors"
+                  style={{
+                    background: exportDone ? "#1a3020" : "#1a1c20",
+                    color: exportDone ? "#48c78e" : "#f58220",
+                    border: `1px solid ${exportDone ? "#264a38" : "#f5822040"}`,
+                  }}
+                >
+                  {exportDone ? "✓ Exported" : "Export JSON"}
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="px-3 py-1 rounded-sm text-xs font-mono text-[#555a62] hover:text-[#e55555] transition-colors"
+                  style={{ background: "#1a1c20", border: "1px solid #2a2d32" }}
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Entries */}
+          {entries.length === 0 ? (
+            <div
+              className="flex items-center justify-center h-24 rounded-sm text-xs font-mono text-[#444850]"
+              style={{ background: "#13151a", border: "1px dashed #2a2d32" }}
+            >
+              No feedback submissions yet — use the New tab to submit one.
+            </div>
+          ) : (
+            <div
+              className="flex flex-col gap-2 overflow-auto"
+              style={{ maxHeight: "280px" }}
+            >
+              {entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="rounded-sm p-3"
+                  style={{ background: "#13151a", border: "1px solid #2a2d32" }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-[#a78bfa]">{entry.id}</span>
+                      <span
+                        className="text-xs px-1.5 rounded-sm font-mono"
+                        style={{ background: "#1e2226", color: "#8a9aaa", border: "1px solid #2a2d32" }}
+                      >
+                        {entry.category}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "#f58220" }}>
+                        {"★".repeat(entry.rating)}
+                        <span style={{ color: "#2a2d32" }}>{"★".repeat(5 - entry.rating)}</span>
+                      </span>
+                      <span className="text-xs font-mono text-[#444850]">
+                        {new Date(entry.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#8a9aaa] font-mono leading-relaxed">{entry.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── ROOT ── */
 export type { NavTab };
 
@@ -1431,6 +1743,7 @@ export function NavPanel({ activeTab, onClose, rawEvents, onOpenDashboard }: Pro
       )}
       {activeTab === "reports"        && <ReportsPanel events={rawEvents} />}
       {activeTab === "investigations" && <InvestigationsPanel rawEvents={rawEvents} />}
+      {activeTab === "feedback"       && <FeedbackPanel />}
     </div>
   );
 }
