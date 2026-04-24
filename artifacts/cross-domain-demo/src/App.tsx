@@ -74,6 +74,7 @@ export default function App() {
     { id: "dashboards",     label: "Dashboards" },
     { id: "reports",        label: "Reports" },
     { id: "investigations", label: "Investigations" },
+    { id: "feedback",       label: "Leave Feedback" },
   ];
 
   return (
@@ -95,17 +96,19 @@ export default function App() {
           <div className="flex items-center gap-0 h-full text-xs font-mono">
             {NAV_TABS.map(({ id, label }) => {
               const isActive = activeNav === id;
+              const isFeedback = id === "feedback";
               return (
                 <button
                   key={id}
                   onClick={() => toggleNav(id)}
-                  className="px-4 h-full flex items-center border-r border-[#2d3035] transition-colors"
+                  className="px-4 h-full flex items-center gap-1.5 border-r border-[#2d3035] transition-colors"
                   style={{
                     background: isActive ? "#1e2226" : "transparent",
-                    color: isActive ? "#f58220" : "#666b74",
+                    color: isActive ? "#f58220" : isFeedback ? "#c87a30" : "#666b74",
                     borderBottom: isActive ? "2px solid #f58220" : "2px solid transparent",
                   }}
                 >
+                  {isFeedback && <span style={{ fontSize: "10px" }}>✦</span>}
                   {label}
                 </button>
               );
