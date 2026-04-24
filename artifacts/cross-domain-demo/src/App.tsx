@@ -238,6 +238,15 @@ export default function App() {
             </>
           )}
         </div>
+
+        {/* Watermark */}
+        <div
+          className="fixed bottom-3 right-4 text-right font-mono pointer-events-none select-none z-50"
+          style={{ color: "rgba(245,130,32,0.18)", fontSize: "11px", lineHeight: "1.5" }}
+        >
+          <div>Will Lawson</div>
+          <div>MSIT 5910-01 · AY2026-T4</div>
+        </div>
       </div>
     </div>
   );
