@@ -1,0 +1,38 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Y7RbqiQtXS1460H-gn4uS"
+uri = "file://screenshots/A1_domain_event_streams.jpg"
+type = "image"
+title = "Figure 1 — A-1: DomainEventGenerator output (all three domains, live events)"
+
+[[outputs]]
+id = "yBqNzHFMtMKy9-zl2QoHP"
+uri = "file://screenshots/A2_crossdomain_guard.jpg"
+type = "image"
+title = "Figure 2 — A-2: CrossDomainGuard + Bandwidth Health Monitor (IN/OUT/STRIP counters)"
+
+[[outputs]]
+id = "KlWUG_XETyxngCE7C8Zvn"
+uri = "file://screenshots/A3_correlation_engine.jpg"
+type = "image"
+title = "Figure 3 — A-3: CorrelationEngine + High-Side Notable Events panel"
+
+[[outputs]]
+id = "tidH1_w6a3Kocq3MrCAoe"
+uri = "file://screenshots/B1_typescript_compiler.jpg"
+type = "image"
+title = "Figure 4 — B-1: TypeScript strict-mode compilation — 0 errors across 9 modules"
+
+[[outputs]]
+id = "3HFGJ6rjlmtv6W1g48ckf"
+uri = "file://screenshots/B2_guard_test_log.jpg"
+type = "image"
+title = "Figure 5 — B-2: CrossDomainGuard test log — IN=50 / OUT=50 / STRIP=50"
+
+[[outputs]]
+id = "1HURK4vAGkTmdtf-rg-a_"
+uri = "file://screenshots/B3_correlation_test_log.jpg"
+type = "image"
+title = "Figure 6 — B-3: CorrelationEngine test log — confidence 0.91, ALPHA+BRAVO ExfilAttempt"

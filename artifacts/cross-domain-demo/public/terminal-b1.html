@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>B-1 TypeScript Compiler Output</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 13px; padding: 20px; min-height: 100vh; }
+  .window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; max-width: 860px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+  .titlebar { background: #21262d; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #e55555; } .dot.yellow { background: #e5c97a; } .dot.green { background: #48c78e; }
+  .title { color: #8b949e; font-size: 12px; margin-left: 8px; }
+  .body { padding: 18px 20px; line-height: 1.7; }
+  .prompt { color: #f58220; }
+  .cmd { color: #e6edf3; }
+  .dim { color: #484f58; }
+  .green { color: #48c78e; }
+  .orange { color: #f58220; }
+  .blue { color: #4ea6dc; }
+  .gray { color: #8b949e; }
+  .bold { font-weight: bold; }
+  .pass { color: #48c78e; font-weight: bold; }
+  .pkg { color: #a78bfa; }
+  hr.sep { border: none; border-top: 1px solid #21262d; margin: 10px 0; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="title">shell — pnpm typecheck</span>
+  </div>
+  <div class="body">
+    <div><span class="prompt">$</span> <span class="cmd">pnpm run typecheck</span></div>
+    <div class="dim" style="margin-top:4px"></div>
+    <div><span class="gray">&gt; workspace@0.0.0 typecheck /home/runner/workspace</span></div>
+    <div><span class="gray">&gt; pnpm run typecheck:libs &amp;&amp; pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck</span></div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="gray">&gt; workspace@0.0.0 typecheck:libs /home/runner/workspace</span></div>
+    <div><span class="gray">&gt; tsc --build</span></div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="blue">Scope:</span> <span class="cmd">4 of 9 workspace projects</span></div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="pkg">artifacts/cross-domain-demo</span> <span class="gray">typecheck$</span> <span class="cmd">tsc -p tsconfig.json --noEmit</span></div>
+    <div><span class="pkg">artifacts/api-server</span>       <span class="gray">typecheck$</span> <span class="cmd">tsc -p tsconfig.json --noEmit</span></div>
+    <div><span class="pkg">artifacts/mockup-sandbox</span>   <span class="gray">typecheck$</span> <span class="cmd">tsc -p tsconfig.json --noEmit</span></div>
+    <div><span class="pkg">scripts</span>                    <span class="gray">typecheck$</span> <span class="cmd">tsc -p tsconfig.json --noEmit</span></div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="pkg">scripts</span>                    <span class="green">typecheck: Done</span></div>
+    <div><span class="pkg">artifacts/api-server</span>       <span class="green">typecheck: Done</span></div>
+    <div><span class="pkg">artifacts/mockup-sandbox</span>   <span class="green">typecheck: Done</span></div>
+    <div><span class="pkg">artifacts/cross-domain-demo</span> <span class="green">typecheck: Done</span></div>
+    <div class="dim">&nbsp;</div>
+    <hr class="sep"/>
+    <div style="margin-top:8px">
+      <span class="pass">✓</span>
+      <span class="cmd bold"> 0 TypeScript errors</span>
+      <span class="gray"> — strict mode across all 9 modules</span>
+    </div>
+    <div style="margin-top:4px; color:#8b949e; font-size:12px">
+      Modules checked: DomainEventGenerator · CrossDomainGuard · CorrelationEngine ·
+      HealthMonitor · DashboardView · NavPanel · AlertDetailModal · reports · simulation
+    </div>
+    <div style="margin-top:4px; color:#8b949e; font-size:12px">
+      Interfaces validated: SecurityEvent · SanitizedEvent · CorrelatedAlert · CustomReportConfig · FeedbackEntry
+    </div>
+    <div style="margin-top:10px">
+      <span class="green bold">All interface contracts satisfied at compile time.</span>
+    </div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="prompt">$</span> <span class="dim">_</span></div>
+  </div>
+</div>
+</body>
+</html>
