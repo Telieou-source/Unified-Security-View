@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>B-3 CorrelationEngine Test Log</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 13px; padding: 20px; min-height: 100vh; }
+  .window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; max-width: 940px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+  .titlebar { background: #21262d; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #e55555; } .dot.yellow { background: #e5c97a; } .dot.green { background: #48c78e; }
+  .title { color: #8b949e; font-size: 12px; margin-left: 8px; }
+  .body { padding: 18px 20px; line-height: 1.75; }
+  .prompt { color: #f58220; }
+  .green { color: #48c78e; }
+  .red { color: #e55555; }
+  .orange { color: #f58220; }
+  .blue { color: #4ea6dc; }
+  .gray { color: #8b949e; }
+  .dim { color: #484f58; }
+  .yellow { color: #e5c97a; }
+  .purple { color: #a78bfa; }
+  .bold { font-weight: bold; }
+  .pass { color: #48c78e; font-weight: bold; }
+  .tag-test { color: #a78bfa; }
+  .tag-init { color: #4ea6dc; }
+  .tag-inj  { color: #e5c97a; }
+  .tag-corr { color: #f58220; }
+  .tag-alert { color: #e55555; }
+  .tag-res  { color: #48c78e; }
+  .indent { padding-left: 24px; }
+  .indent2 { padding-left: 48px; }
+  hr.sep { border: none; border-top: 1px solid #21262d; margin: 8px 0; }
+  .alert-box { background: #1a0e0e; border: 1px solid #6a2020; border-left: 3px solid #e55555; border-radius: 4px; padding: 10px 14px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="title">shell — CorrelationEngine temporal window test · ExfilAttempt cross-domain pair</span>
+  </div>
+  <div class="body">
+    <div><span class="prompt">$</span> <span style="color:#e6edf3">tsx scripts/src/test-correlation.ts</span></div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="tag-test">[TEST]</span> <span style="color:#e6edf3">CorrelationEngine — ExfilAttempt cross-domain pair within 5-second window</span></div>
+    <div><span class="tag-init">[INIT]</span> <span class="gray">window: 5000ms | min_domains: 2 | weights → userId:0.30  eventType:0.35  temporal:0.25  domain:0.10</span></div>
+    <hr class="sep"/>
+    <div><span class="tag-inj">[T+0000ms]</span> <span style="color:#e6edf3">INJECT</span> <span class="dim">evt-alpha-001</span> <span class="gray">|</span> <span class="blue">ALPHA</span> <span class="gray">|</span> <span class="red bold">ExfilAttempt</span> <span class="gray">|</span> <span class="red">FATAL</span> <span class="gray">| userId:</span><span class="orange">usr_j.harris</span> <span class="gray">| host: alpha-ws-0044</span></div>
+    <div><span class="tag-inj">[T+0350ms]</span> <span style="color:#e6edf3">INJECT</span> <span class="dim">evt-bravo-001</span> <span class="gray">|</span> <span class="green">BRAVO</span> <span class="gray">|</span> <span class="red bold">ExfilAttempt</span> <span class="gray">|</span> <span class="red">FATAL</span> <span class="gray">| userId:</span><span class="orange">usr_j.harris</span> <span class="gray">| host: bravo-ctrl-01</span></div>
+    <hr class="sep"/>
+    <div><span class="tag-corr">[CORRELATE]</span> <span style="color:#e6edf3">Matching evt-bravo-001 against SanitizedEvent buffer (window=5000ms) ...</span></div>
+    <div class="indent"><span class="green">→</span> <span class="gray">Found 1 candidate: <span class="dim">evt-alpha-001</span>  (Δt=350ms, same_domain: <span class="green">NO ✓</span>)</span></div>
+    <div class="indent"><span class="gray">→ Confidence factors:</span></div>
+    <div class="indent2"><span class="gray">userId match:    <span class="green">1.00</span> × 0.30  =  <span style="color:#e6edf3">0.300</span>  (usr_j.harris present on both domains)</span></div>
+    <div class="indent2"><span class="gray">eventType:       <span class="green">1.00</span> × 0.35  =  <span style="color:#e6edf3">0.350</span>  (ExfilAttempt → ExfilAttempt)</span></div>
+    <div class="indent2"><span class="gray">temporal:        <span class="green">0.98</span> × 0.25  =  <span style="color:#e6edf3">0.245</span>  (Δt=350ms within 5000ms window)</span></div>
+    <div class="indent2"><span class="gray">uniqueDomains:   2    × 0.10  =  <span style="color:#e6edf3">0.016</span>  (ALPHA, BRAVO — distinct ✓)</span></div>
+    <div class="indent"><span class="gray">→ Raw score: <span class="orange bold">0.911</span>  →  clamped: <span class="orange bold">0.91</span></span></div>
+    <hr class="sep"/>
+    <div class="alert-box">
+      <div><span class="tag-alert">[ALERT]</span> <span class="red bold">CorrelationAlert generated</span></div>
+      <div class="indent" style="margin-top:6px">
+        <div><span class="gray">id:         </span><span class="purple">CORR-00001</span></div>
+        <div><span class="gray">ruleId:     </span><span class="orange">XDOM-EXFIL-007</span></div>
+        <div><span class="gray">type:       </span><span class="red">CORRELATED_THREAT</span></div>
+        <div><span class="gray">severity:   </span><span class="red bold">CRITICAL</span></div>
+        <div><span class="gray">domains:    </span><span class="blue">ALPHA</span><span class="gray">, </span><span class="green">BRAVO</span></div>
+        <div><span class="gray">confidence: </span><span class="orange bold">0.91</span></div>
+        <div><span class="gray">summary:    </span><span style="color:#e6edf3">"CRITICAL: Exfiltration events correlated across ALPHA, BRAVO — active multi-domain data loss incident"</span></div>
+        <div><span class="gray">eventIds:   </span><span class="dim">["evt-alpha-001", "evt-bravo-001"]</span></div>
+      </div>
+    </div>
+    <hr class="sep"/>
+    <div><span class="pass">✓  PASS</span> <span style="color:#e6edf3"> Confidence 0.91 ≥ threshold 0.75</span></div>
+    <div><span class="pass">✓  PASS</span> <span style="color:#e6edf3"> Cross-domain constraint satisfied (ALPHA ≠ BRAVO)</span></div>
+    <div><span class="pass">✓  PASS</span> <span style="color:#e6edf3"> Alert generated within temporal window (350ms &lt; 5000ms)</span></div>
+    <div><span class="pass">✓  PASS</span> <span style="color:#e6edf3"> Matched userId (usr_j.harris) present on both domains</span></div>
+    <div class="dim">&nbsp;</div>
+    <div><span class="prompt">$</span> <span class="dim">_</span></div>
+  </div>
+</div>
+</body>
+</html>
