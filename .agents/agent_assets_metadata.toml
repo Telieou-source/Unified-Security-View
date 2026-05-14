@@ -84,3 +84,9 @@ id = "kWHimohfY4_QuDs7WKKeh"
 uri = "file://screenshots/CodeExcerpt4_runSimulationTick.jpg"
 type = "image"
 title = "Code Excerpt 4 — SimulationController runSimulationTick() showing all seven pipeline stages: generate → sanitize → process → dispatch to six panels + HealthMonitor"
+
+[[outputs]]
+id = "olGsIPyXGLHfqLxhIMK93"
+uri = "file://screenshots/Figure5_UnifiedView_live.jpg"
+type = "image"
+title = "Figure 5 — Six-dashboard unified view during live simulation (tick #153): StatsBar · DomainPanel Alpha · DomainPanel Bravo · DomainPanel Charlie · BoundaryLayer · HealthMonitor · CorrelatedView — all consumers updated simultaneously by runSimulationTick()"
