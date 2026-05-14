@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 5 — Unified View Live Simulation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111315; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #c8d0d8; }
+
+  /* ── Top nav bar ── */
+  .topnav {
+    background: #1a1c1f; border-bottom: 1px solid #2d3035;
+    height: 38px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px; flex-shrink: 0;
+  }
+  .brand { color: #f58220; font-weight: bold; font-size: 12px; margin-right: 16px; }
+  .nav-tabs { display: flex; align-items: center; height: 100%; gap: 0; }
+  .nav-tab {
+    padding: 0 12px; height: 100%; display: flex; align-items: center;
+    border-right: 1px solid #2d3035; font-size: 10px; color: #555a62;
+    border-bottom: 2px solid transparent;
+  }
+  .nav-tab.active { color: #f58220; border-bottom-color: #f58220; background: #1e2226; }
+  .nav-right { font-size: 9px; color: #555a62; display: flex; gap: 12px; }
+  .nav-right .danger { color: #e55555; font-weight: bold; }
+
+  /* ── Stats bar ── */
+  .statsbar {
+    background: #161b22; border-bottom: 1px solid #2d3035;
+    padding: 6px 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .stat-group { display: flex; align-items: center; gap: 6px; }
+  .stat-box {
+    background: #1a1c1f; border: 1px solid #2d3035; border-radius: 3px;
+    padding: 4px 10px; text-align: center;
+  }
+  .stat-num { font-size: 16px; font-weight: bold; line-height: 1; }
+  .stat-lbl { font-size: 9px; color: #555a62; }
+  .num-orange { color: #f58220; }
+  .num-blue   { color: #4ea6dc; }
+  .num-green  { color: #48c78e; }
+  .num-gold   { color: #c9a227; }
+  .num-red    { color: #e55555; }
+  .num-purple { color: #d2a8ff; }
+  .stat-sep { color: #2d3035; font-size: 18px; margin: 0 2px; }
+
+  /* Control pills */
+  .ctrl-group { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .pill {
+    font-size: 10px; padding: 3px 10px; border-radius: 3px; font-weight: bold;
+    cursor: default;
+  }
+  .pill-run   { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .pill-spd   { background: #1a2030; color: #79c0ff; border: 1px solid #2a3a60; }
+  .pill-live  { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; }
+  .pill-reset { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+
+  /* ── Main layout ── */
+  .main { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+
+  /* ── Domain label row ── */
+  .domain-label-row {
+    display: flex; align-items: center; gap: 6px; font-size: 9px; color: #555a62;
+  }
+  .dlr-tag { color: #48c78e; }
+  .dlr-sep { color: #2d3035; margin: 0 6px; }
+  .dlr-domains { margin-left: auto; display: flex; gap: 14px; }
+  .dlr-dot { display: inline-block; width: 6px; height: 6px; border-radius: 1px; margin-right: 4px; vertical-align: middle; }
+
+  /* ── Domain panels row ── */
+  .domain-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .domain-panel { background: #161b22; border: 1px solid #2a2d32; border-radius: 4px; overflow: hidden; }
+  .dp-header {
+    padding: 5px 8px; border-bottom: 1px solid #2a2d32;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dp-name { font-size: 11px; font-weight: bold; }
+  .dp-meta { font-size: 9px; color: #555a62; }
+  .dp-badge { font-size: 9px; font-weight: bold; padding: 1px 5px; border-radius: 2px; }
+
+  .col-alpha .dp-header { background: #0e1520; }
+  .col-alpha .dp-name   { color: #4ea6dc; }
+  .col-alpha .dp-badge  { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; }
+  .col-bravo .dp-header { background: #0e1a12; }
+  .col-bravo .dp-name   { color: #48c78e; }
+  .col-bravo .dp-badge  { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .col-charlie .dp-header { background: #1a1608; }
+  .col-charlie .dp-name   { color: #c9a227; }
+  .col-charlie .dp-badge  { background: #2d2510; color: #c9a227; border: 1px solid #5a4a20; }
+
+  /* Event table */
+  .evt-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  .evt-table th {
+    padding: 3px 5px; text-align: left; color: #444850; font-weight: normal;
+    border-bottom: 1px solid #1e2128; background: #12151a; font-size: 8px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .evt-table td { padding: 3px 5px; border-bottom: 1px solid #1a1c20; }
+  .evt-table tr:last-child td { border-bottom: none; }
+  .evt-table tr:nth-child(even) td { background: #12151a; }
+  .td-id    { color: #555a62; font-size: 8px; }
+  .td-type  { color: #ffa657; }
+  .td-user  { color: #79c0ff; }
+  .td-host  { color: #8b949e; font-size: 8px; }
+  .td-time  { color: #444850; font-size: 8px; }
+  .sev { font-size: 8px; font-weight: bold; padding: 1px 4px; border-radius: 1px; }
+  .sv-FATAL { background: #2d0e0e; color: #e55555; }
+  .sv-ERROR { background: #2d1a08; color: #f58220; }
+  .sv-WARN  { background: #2d2510; color: #e5c97a; }
+  .sv-INFO  { background: #1a2230; color: #8eb8d4; }
+  .dp-footer { padding: 3px 8px; font-size: 9px; color: #444850; background: #111315; border-top: 1px solid #1e2128; display: flex; justify-content: space-between; }
+  .dp-live { color: #48c78e; font-size: 8px; }
+
+  /* ── Boundary layer ── */
+  .boundary {
+    background: #161b22; border: 1px solid #2a2d32; border-radius: 4px;
+    padding: 6px 10px;
+  }
+  .bl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .bl-title { font-size: 10px; color: #d2a8ff; font-weight: bold; }
+  .bl-tag { font-size: 9px; padding: 1px 7px; border-radius: 2px; background: #2d1a2d; color: #d2a8ff; border: 1px solid #6a2a6a; }
+  .bl-body { display: grid; grid-template-columns: repeat(5, 1fr) 2fr; gap: 8px; align-items: center; }
+  .bl-stat { text-align: center; }
+  .bl-num { font-size: 18px; font-weight: bold; line-height: 1; }
+  .bl-lbl { font-size: 8px; color: #555a62; margin-top: 2px; }
+  .bl-strip-box {
+    background: #2d1a08; border: 1px solid #6a3a10; border-radius: 3px;
+    padding: 4px 8px; font-size: 9px;
+  }
+  .bl-strip-title { color: #f58220; font-weight: bold; margin-bottom: 3px; }
+  .bl-strip-row { display: flex; justify-content: space-between; color: #8b949e; margin-bottom: 1px; }
+  .bl-strip-val { color: #e55555; font-weight: bold; }
+  .bl-strip-pass { color: #48c78e; }
+
+  /* ── Health monitor ── */
+  .health {
+    background: #161b22; border: 1px solid #2a2d32; border-radius: 4px;
+    padding: 5px 10px; display: flex; align-items: center; gap: 16px;
+  }
+  .hm-label { font-size: 9px; color: #555a62; white-space: nowrap; }
+  .hm-stat { display: flex; align-items: center; gap: 5px; }
+  .hm-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .hm-val { font-size: 10px; font-weight: bold; }
+  .hm-key { font-size: 9px; color: #555a62; }
+  .hm-bar-wrap { flex: 1; height: 4px; background: #1a1c20; border-radius: 2px; }
+  .hm-bar { height: 4px; border-radius: 2px; }
+  .hm-sep { color: #2d3035; }
+  .hm-group { display: flex; align-items: center; gap: 6px; }
+
+  /* ── Correlated view ── */
+  .correlated { background: #161b22; border: 1px solid #2a2d32; border-radius: 4px; overflow: hidden; }
+  .cv-header {
+    padding: 5px 10px; border-bottom: 1px solid #2a2d32; background: #1a1c1f;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cv-title { font-size: 11px; font-weight: bold; color: #e55555; }
+  .cv-meta  { font-size: 9px; color: #555a62; }
+  .cv-badges { display: flex; gap: 5px; }
+  .cv-b { font-size: 9px; padding: 1px 7px; border-radius: 2px; font-weight: bold; }
+  .cv-b-crit { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; }
+  .cv-b-high { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+  .cv-b-med  { background: #2d2510; color: #e5c97a; border: 1px solid #6a4a10; }
+
+  /* Alert rows */
+  .alert-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  .alert-table th {
+    padding: 3px 6px; text-align: left; color: #444850; font-weight: normal;
+    border-bottom: 1px solid #2a1010; background: #130a0a; font-size: 8px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .alert-table td { padding: 4px 6px; border-bottom: 1px solid #1a0e0e; vertical-align: middle; }
+  .alert-table tr:last-child td { border-bottom: none; }
+  .alert-table tr:nth-child(even) td { background: #100a0a; }
+  .at-id    { color: #e55555; font-weight: bold; font-size: 9px; }
+  .at-type  { color: #ffa657; font-size: 8px; }
+  .at-sum   { color: #8b949e; font-size: 8px; max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .at-conf  { font-weight: bold; font-size: 9px; }
+  .at-conf-hi { color: #e55555; }
+  .at-conf-md { color: #f58220; }
+  .at-dom   { display: flex; gap: 3px; }
+  .at-dom span { font-size: 8px; padding: 1px 4px; border-radius: 1px; font-weight: bold; }
+  .dom-a { background: #1a2d40; color: #4ea6dc; }
+  .dom-b { background: #1a3020; color: #48c78e; }
+  .dom-c { background: #2d2510; color: #c9a227; }
+  .at-time { color: #444850; font-size: 8px; }
+  .sev-crit { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 1px; }
+  .sev-high { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 1px; }
+  .sev-med  { background: #2d2510; color: #e5c97a; border: 1px solid #6a4a10; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 1px; }
+
+  /* Dispatch pulse indicators */
+  .pulse {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: #48c78e; box-shadow: 0 0 4px #48c78e88;
+    margin-right: 4px; vertical-align: middle;
+  }
+  .pulse-red { background: #e55555; box-shadow: 0 0 4px #e5555588; }
+  .pulse-orange { background: #f58220; box-shadow: 0 0 4px #f5822088; }
+
+  /* Watermark */
+  .watermark {
+    position: fixed; bottom: 10px; right: 12px;
+    font-family: 'Courier New', monospace; font-size: 10px;
+    color: rgba(245,130,32,0.25); pointer-events: none; text-align: right; line-height: 1.4;
+  }
+
+  /* Tick indicator */
+  .tick-bar {
+    background: #0e1a0e; border-top: 1px solid #264a38;
+    padding: 3px 12px; display: flex; align-items: center; gap: 12px; font-size: 9px;
+  }
+  .tick-label { color: #264a38; }
+  .tick-active { color: #48c78e; }
+  .tick-dispatch { display: flex; gap: 8px; margin-left: auto; }
+  .td-panel { font-size: 8px; padding: 1px 6px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Top nav -->
+<div class="topnav">
+  <div style="display:flex;align-items:center;height:100%;">
+    <span class="brand" style="padding:0 12px;border-right:1px solid #2d3035;height:100%;display:flex;align-items:center;">▶ Demo SIEM</span>
+    <div class="nav-tabs">
+      <div class="nav-tab">Search</div>
+      <div class="nav-tab">Dashboards</div>
+      <div class="nav-tab">Reports</div>
+      <div class="nav-tab">Investigations</div>
+      <div class="nav-tab">Leave Feedback</div>
+      <div class="nav-tab active">Cross-Domain Notable Events</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span>index=cross_domain_siem</span>
+    <span class="danger">TOP SECRET // HIGH SIDE</span>
+  </div>
+</div>
+
+<!-- Stats bar — Panel 1 -->
+<div class="statsbar">
+  <div style="font-size:9px;color:#555a62;margin-right:4px;">
+    <span class="pulse"></span>LIVE
+  </div>
+  <div class="stat-group">
+    <div class="stat-box">
+      <div class="stat-num num-orange">153</div>
+      <div class="stat-lbl">Raw Events</div>
+    </div>
+    <span class="stat-sep">·</span>
+    <div class="stat-box">
+      <div class="stat-num num-blue">51</div>
+      <div class="stat-lbl">Alpha</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num num-green">52</div>
+      <div class="stat-lbl">Bravo</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num num-gold">50</div>
+      <div class="stat-lbl">Charlie</div>
+    </div>
+  </div>
+  <span class="stat-sep">|</span>
+  <div class="stat-group">
+    <div class="stat-box">
+      <div class="stat-num num-purple">153</div>
+      <div class="stat-lbl">Sanitized</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num num-orange">153</div>
+      <div class="stat-lbl">Stripped</div>
+    </div>
+  </div>
+  <span class="stat-sep">|</span>
+  <div class="stat-group">
+    <div class="stat-box">
+      <div class="stat-num num-red">14</div>
+      <div class="stat-lbl">Alerts</div>
+    </div>
+    <div class="stat-box" style="border-color:#6a2020;">
+      <div class="stat-num num-red">5</div>
+      <div class="stat-lbl">CRITICAL</div>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="pill pill-live"><span class="pulse pulse-red" style="margin-right:5px;"></span>RUNNING</span>
+    <span class="pill pill-spd">▶ 1.0s / event</span>
+    <span class="pill pill-reset">⏹ Reset</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Domain label row -->
+  <div class="domain-label-row">
+    <span>sourcetype=</span><span class="dlr-tag">siem:events</span>
+    <span class="dlr-sep">|</span>
+    <span style="color:#444850;">Raw SIEM event streams — 3 classification domains</span>
+    <div class="dlr-domains">
+      <span><span class="dlr-dot" style="background:#4ea6dc;"></span><span style="color:#4ea6dc;">Alpha</span> <span style="color:#444850;">(10.1.0.0/16)</span></span>
+      <span><span class="dlr-dot" style="background:#48c78e;"></span><span style="color:#48c78e;">Bravo</span> <span style="color:#444850;">(10.2.0.0/16)</span></span>
+      <span><span class="dlr-dot" style="background:#c9a227;"></span><span style="color:#c9a227;">Charlie</span> <span style="color:#444850;">(10.3.0.0/16)</span></span>
+    </div>
+  </div>
+
+  <!-- Domain panels — Panels 2, 3, 4 -->
+  <div class="domain-row">
+
+    <!-- Alpha -->
+    <div class="domain-panel col-alpha">
+      <div class="dp-header">
+        <div><div class="dp-name"><span class="pulse"></span>Domain Alpha</div><div class="dp-meta">10.1.0.0/16 · 51 events</div></div>
+        <span class="dp-badge">ALPHA</span>
+      </div>
+      <table class="evt-table">
+        <thead><tr><th>ID</th><th>Type</th><th>User</th><th>Sev</th><th>Host</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><td class="td-id">EVT-00151</td><td class="td-type">ExfilAttempt</td><td class="td-user">usr_j.harris</td><td><span class="sev sv-FATAL">FATAL</span></td><td class="td-host">alpha-ws-0044</td><td class="td-time">13:05:09</td></tr>
+          <tr><td class="td-id">EVT-00148</td><td class="td-type">PrivilegeEsc</td><td class="td-user">root</td><td><span class="sev sv-FATAL">FATAL</span></td><td class="td-host">alpha-db-03</td><td class="td-time">13:04:58</td></tr>
+          <tr><td class="td-id">EVT-00144</td><td class="td-type">AnomalyDetected</td><td class="td-user">usr_a.petrov</td><td><span class="sev sv-ERROR">ERROR</span></td><td class="td-host">alpha-srv-11</td><td class="td-time">13:04:47</td></tr>
+          <tr><td class="td-id">EVT-00141</td><td class="td-type">PolicyViolation</td><td class="td-user">svc_auth_a</td><td><span class="sev sv-ERROR">ERROR</span></td><td class="td-host">alpha-gw-04</td><td class="td-time">13:04:36</td></tr>
+          <tr><td class="td-id">EVT-00138</td><td class="td-type">Authentication</td><td class="td-user">usr_t.vasquez</td><td><span class="sev sv-WARN">WARN</span></td><td class="td-host">alpha-ws-0109</td><td class="td-time">13:04:25</td></tr>
+          <tr><td class="td-id">EVT-00135</td><td class="td-type">NetworkConn</td><td class="td-user">svc_auth_a</td><td><span class="sev sv-INFO">INFO</span></td><td class="td-host">alpha-gw-04</td><td class="td-time">13:04:14</td></tr>
+        </tbody>
+      </table>
+      <div class="dp-footer"><span>51 events captured</span><span class="dp-live">● live</span></div>
+    </div>
+
+    <!-- Bravo -->
+    <div class="domain-panel col-bravo">
+      <div class="dp-header">
+        <div><div class="dp-name"><span class="pulse"></span>Domain Bravo</div><div class="dp-meta">10.2.0.0/16 · 52 events</div></div>
+        <span class="dp-badge">BRAVO</span>
+      </div>
+      <table class="evt-table">
+        <thead><tr><th>ID</th><th>Type</th><th>User</th><th>Sev</th><th>Host</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><td class="td-id">EVT-00150</td><td class="td-type">ExfilAttempt</td><td class="td-user">usr_j.harris</td><td><span class="sev sv-FATAL">FATAL</span></td><td class="td-host">bravo-ctrl-01</td><td class="td-time">13:05:07</td></tr>
+          <tr><td class="td-id">EVT-00147</td><td class="td-type">ProcessSpawn</td><td class="td-user">usr_l.santos</td><td><span class="sev sv-ERROR">ERROR</span></td><td class="td-host">bravo-app-02</td><td class="td-time">13:04:55</td></tr>
+          <tr><td class="td-id">EVT-00143</td><td class="td-type">PolicyViolation</td><td class="td-user">usr_d.park</td><td><span class="sev sv-ERROR">ERROR</span></td><td class="td-host">bravo-app-02</td><td class="td-time">13:04:44</td></tr>
+          <tr><td class="td-id">EVT-00140</td><td class="td-type">NetworkConn</td><td class="td-user">svc_scan_b</td><td><span class="sev sv-WARN">WARN</span></td><td class="td-host">bravo-srv-11</td><td class="td-time">13:04:33</td></tr>
+          <tr><td class="td-id">EVT-00137</td><td class="td-type">Authentication</td><td class="td-user">usr_k.chen</td><td><span class="sev sv-WARN">WARN</span></td><td class="td-host">bravo-vpn-03</td><td class="td-time">13:04:22</td></tr>
+          <tr><td class="td-id">EVT-00134</td><td class="td-type">FileAccess</td><td class="td-user">usr_l.santos</td><td><span class="sev sv-INFO">INFO</span></td><td class="td-host">bravo-mail-04</td><td class="td-time">13:04:11</td></tr>
+        </tbody>
+      </table>
+      <div class="dp-footer"><span>52 events captured</span><span class="dp-live">● live</span></div>
+    </div>
+
+    <!-- Charlie -->
+    <div class="domain-panel col-charlie">
+      <div class="dp-header">
+        <div><div class="dp-name"><span class="pulse" style="background:#c9a227;box-shadow:0 0 4px #c9a22788;"></span>Domain Charlie</div><div class="dp-meta">10.3.0.0/16 · 50 events</div></div>
+        <span class="dp-badge">CHARLIE</span>
+      </div>
+      <table class="evt-table">
+        <thead><tr><th>ID</th><th>Type</th><th>User</th><th>Sev</th><th>Host</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><td class="td-id">EVT-00149</td><td class="td-type">PrivilegeEsc</td><td class="td-user">svc_relay_01</td><td><span class="sev sv-FATAL">FATAL</span></td><td class="td-host">charlie-fw-A</td><td class="td-time">13:05:05</td></tr>
+          <tr><td class="td-id">EVT-00146</td><td class="td-type">ExfilAttempt</td><td class="td-user">usr_m.okonkwo</td><td><span class="sev sv-FATAL">FATAL</span></td><td class="td-host">charlie-ids-B</td><td class="td-time">13:04:52</td></tr>
+          <tr><td class="td-id">EVT-00142</td><td class="td-type">AnomalyDetected</td><td class="td-user">usr_f.wolf</td><td><span class="sev sv-ERROR">ERROR</span></td><td class="td-host">charlie-ids-B</td><td class="td-time">13:04:41</td></tr>
+          <tr><td class="td-id">EVT-00139</td><td class="td-type">NetworkConn</td><td class="td-user">usr_p.nguyen</td><td><span class="sev sv-WARN">WARN</span></td><td class="td-host">charlie-ws-03</td><td class="td-time">13:04:30</td></tr>
+          <tr><td class="td-id">EVT-00136</td><td class="td-type">FileAccess</td><td class="td-user">svc_log_c</td><td><span class="sev sv-INFO">INFO</span></td><td class="td-host">charlie-log-C</td><td class="td-time">13:04:19</td></tr>
+          <tr><td class="td-id">EVT-00133</td><td class="td-type">Authentication</td><td class="td-user">usr_f.wolf</td><td><span class="sev sv-INFO">INFO</span></td><td class="td-host">charlie-ad-D</td><td class="td-time">13:04:08</td></tr>
+        </tbody>
+      </table>
+      <div class="dp-footer"><span>50 events captured</span><span class="dp-live">● live</span></div>
+    </div>
+
+  </div>
+
+  <!-- Boundary layer — Panel 5 -->
+  <div class="boundary">
+    <div class="bl-header">
+      <span class="bl-title"><span class="pulse" style="background:#d2a8ff;box-shadow:0 0 4px #d2a8ff88;"></span>CrossDomainGuard — BoundaryLayer</span>
+      <span class="bl-tag">ACTIVE · guardId: CDG-ALPHA-BRAVO-CHARLIE-v1.2</span>
+    </div>
+    <div class="bl-body">
+      <div class="bl-stat">
+        <div class="bl-num num-orange">153</div>
+        <div class="bl-lbl">IN (inCount)</div>
+      </div>
+      <div class="bl-stat">
+        <div class="bl-num num-green">153</div>
+        <div class="bl-lbl">OUT (outCount)</div>
+      </div>
+      <div class="bl-stat">
+        <div class="bl-num" style="color:#e55555;">153</div>
+        <div class="bl-lbl">STRIPPED</div>
+      </div>
+      <div class="bl-stat">
+        <div class="bl-num num-blue">100%</div>
+        <div class="bl-lbl">compliance</div>
+      </div>
+      <div class="bl-stat">
+        <div class="bl-num" style="color:#d2a8ff;">0</div>
+        <div class="bl-lbl">violations</div>
+      </div>
+      <div class="bl-strip-box">
+        <div class="bl-strip-title">Field policy — boundary rules</div>
+        <div class="bl-strip-row"><span>rawPacketBytes</span><span class="bl-strip-val">✗ STRIP (×153)</span></div>
+        <div class="bl-strip-row"><span>id · domainId · timestamp · type · severity</span><span class="bl-strip-pass">✓ PASS</span></div>
+        <div class="bl-strip-row"><span>srcIp · dstIp · ports · protocol · userId · host</span><span class="bl-strip-pass">✓ PASS</span></div>
+        <div class="bl-strip-row"><span>sanitizationTimestamp · guardId (appended)</span><span class="bl-strip-pass">✓ AUDIT</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health monitor — telemetry strip -->
+  <div class="health">
+    <span class="bl-title" style="font-size:9px;color:#79c0ff;white-space:nowrap;">
+      <span class="pulse" style="background:#79c0ff;box-shadow:0 0 4px #79c0ff88;"></span>HealthMonitor
+    </span>
+    <span class="hm-sep">|</span>
+    <div class="hm-group">
+      <div class="hm-stat"><div class="hm-dot" style="background:#48c78e;"></div><span class="hm-key">throughput:</span><span class="hm-val" style="color:#48c78e;margin-left:3px;">5.0 evt/s</span></div>
+    </div>
+    <span class="hm-sep">|</span>
+    <div class="hm-group">
+      <span class="hm-key" style="white-space:nowrap;">alpha load:</span>
+      <div class="hm-bar-wrap" style="width:60px;"><div class="hm-bar" style="width:67%;background:#4ea6dc;"></div></div>
+      <span class="hm-val" style="color:#4ea6dc;">67%</span>
+    </div>
+    <div class="hm-group">
+      <span class="hm-key" style="white-space:nowrap;">bravo load:</span>
+      <div class="hm-bar-wrap" style="width:60px;"><div class="hm-bar" style="width:69%;background:#48c78e;"></div></div>
+      <span class="hm-val" style="color:#48c78e;">69%</span>
+    </div>
+    <div class="hm-group">
+      <span class="hm-key" style="white-space:nowrap;">charlie load:</span>
+      <div class="hm-bar-wrap" style="width:60px;"><div class="hm-bar" style="width:65%;background:#c9a227;"></div></div>
+      <span class="hm-val" style="color:#c9a227;">65%</span>
+    </div>
+    <span class="hm-sep">|</span>
+    <div class="hm-group">
+      <span class="hm-key">guard latency:</span><span class="hm-val" style="color:#d2a8ff;margin-left:3px;">&lt; 1 ms</span>
+    </div>
+    <div class="hm-group">
+      <span class="hm-key">strip rate:</span><span class="hm-val" style="color:#e55555;margin-left:3px;">1.00 fields/evt</span>
+    </div>
+    <div class="hm-group">
+      <span class="hm-key">uptime:</span><span class="hm-val" style="color:#48c78e;margin-left:3px;">60.3s</span>
+    </div>
+    <span class="hm-sep">|</span>
+    <div class="hm-stat"><div class="hm-dot" style="background:#48c78e;box-shadow:0 0 4px #48c78e88;"></div><span class="hm-key" style="margin-left:4px;">all systems nominal</span></div>
+  </div>
+
+  <!-- Correlated view — Panel 6 -->
+  <div class="correlated">
+    <div class="cv-header">
+      <div>
+        <div class="cv-title"><span class="pulse pulse-red"></span>CorrelatedView — Cross-Domain Notables</div>
+        <div class="cv-meta">14 alerts generated · 300 sanitized events processed · computeConfidence() four-factor scorer</div>
+      </div>
+      <div class="cv-badges">
+        <span class="cv-b cv-b-crit">CRITICAL: 5</span>
+        <span class="cv-b cv-b-high">HIGH: 6</span>
+        <span class="cv-b cv-b-med">MEDIUM: 3</span>
+        <span style="font-size:9px;color:#555a62;">avg conf: 0.81</span>
+      </div>
+    </div>
+    <table class="alert-table">
+      <thead>
+        <tr>
+          <th>Alert ID</th><th>Severity</th><th>Type</th><th>Domains</th>
+          <th>Summary</th><th>Confidence</th><th>Rule</th><th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="at-id">CORR-00014</td>
+          <td><span class="sev-crit">CRITICAL</span></td>
+          <td class="at-type">CORRELATED_THREAT</td>
+          <td><div class="at-dom"><span class="dom-a">A</span><span class="dom-b">B</span></div></td>
+          <td class="at-sum">CRITICAL: Exfiltration events correlated across ALPHA, BRAVO — active multi-domain data loss incident</td>
+          <td class="at-conf at-conf-hi">0.94</td>
+          <td style="color:#555a62;font-size:8px;">XDOM-EXFIL-007</td>
+          <td class="at-time">13:05:09</td>
+        </tr>
+        <tr>
+          <td class="at-id">CORR-00013</td>
+          <td><span class="sev-crit">CRITICAL</span></td>
+          <td class="at-type">SYNCHRONIZED_ACTIVITY</td>
+          <td><div class="at-dom"><span class="dom-a">A</span><span class="dom-c">C</span></div></td>
+          <td class="at-sum">Privilege escalation detected on ALPHA, CHARLIE in same window — coordinated compromise attempt</td>
+          <td class="at-conf at-conf-hi">0.90</td>
+          <td style="color:#555a62;font-size:8px;">XDOM-PRIV-008</td>
+          <td class="at-time">13:05:05</td>
+        </tr>
+        <tr>
+          <td class="at-id">CORR-00012</td>
+          <td><span class="sev-crit">CRITICAL</span></td>
+          <td class="at-type">CROSS_DOMAIN_ANOMALY</td>
+          <td><div class="at-dom"><span class="dom-b">B</span><span class="dom-c">C</span></div></td>
+          <td class="at-sum">CRITICAL: Exfiltration events correlated across BRAVO, CHARLIE — active multi-domain data loss incident</td>
+          <td class="at-conf at-conf-hi">0.88</td>
+          <td style="color:#555a62;font-size:8px;">XDOM-EXFIL-007</td>
+          <td class="at-time">13:04:52</td>
+        </tr>
+        <tr>
+          <td class="at-id">CORR-00011</td>
+          <td><span class="sev-high">HIGH</span></td>
+          <td class="at-type">PATTERN_MATCH</td>
+          <td><div class="at-dom"><span class="dom-a">A</span><span class="dom-b">B</span><span class="dom-c">C</span></div></td>
+          <td class="at-sum">Behavioral anomalies correlated across ALPHA, BRAVO, CHARLIE — coordinated deviation from baseline</td>
+          <td class="at-conf at-conf-md">0.78</td>
+          <td style="color:#555a62;font-size:8px;">XDOM-ANOM-004</td>
+          <td class="at-time">13:04:41</td>
+        </tr>
+        <tr>
+          <td class="at-id">CORR-00010</td>
+          <td><span class="sev-high">HIGH</span></td>
+          <td class="at-type">CORRELATED_THREAT</td>
+          <td><div class="at-dom"><span class="dom-a">A</span><span class="dom-b">B</span></div></td>
+          <td class="at-sum">Cross-domain auth events on ALPHA, BRAVO within 10s window — credential spray or shared account activity</td>
+          <td class="at-conf at-conf-md">0.74</td>
+          <td style="color:#555a62;font-size:8px;">XDOM-AUTH-001</td>
+          <td class="at-time">13:04:22</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Dispatch tick indicator -->
+  <div class="tick-bar">
+    <span class="tick-label">SimulationController.runSimulationTick()</span>
+    <span class="tick-active">● tick #153 dispatched</span>
+    <span style="color:#264a38;">→ all 6 UI panels updated simultaneously on this tick</span>
+    <div class="tick-dispatch">
+      <span class="td-panel" style="background:#1a2d40;color:#4ea6dc;border:1px solid #2a4a60;">DomainPanel:Alpha</span>
+      <span class="td-panel" style="background:#1a3020;color:#48c78e;border:1px solid #264a38;">DomainPanel:Bravo</span>
+      <span class="td-panel" style="background:#2d2510;color:#c9a227;border:1px solid #5a4a20;">DomainPanel:Charlie</span>
+      <span class="td-panel" style="background:#2d1a2d;color:#d2a8ff;border:1px solid #6a2a6a;">BoundaryLayer</span>
+      <span class="td-panel" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">HealthMonitor</span>
+      <span class="td-panel" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">CorrelatedView</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="watermark">
+  Will Lawson<br/>MSIT 5910-01 · AY2026-T4
+</div>
+
+</body>
+</html>
