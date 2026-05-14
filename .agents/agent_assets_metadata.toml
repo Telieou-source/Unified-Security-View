@@ -90,3 +90,9 @@ id = "olGsIPyXGLHfqLxhIMK93"
 uri = "file://screenshots/Figure5_UnifiedView_live.jpg"
 type = "image"
 title = "Figure 5 — Six-dashboard unified view during live simulation (tick #153): StatsBar · DomainPanel Alpha · DomainPanel Bravo · DomainPanel Charlie · BoundaryLayer · HealthMonitor · CorrelatedView — all consumers updated simultaneously by runSimulationTick()"
+
+[[outputs]]
+id = "Vq6we_gW5YLLtqrFQmEcM"
+uri = "file://screenshots/Figure6_HealthMonitor_60s.jpg"
+type = "image"
+title = "Figure 6 — HealthMonitor after 60-second run: 15 evt/s aggregate throughput · IN = OUT = STRIP = 900 guard invariant confirmed · sanitizeEvent() audit trail showing guardId + sanitizationTimestamp on every event"
