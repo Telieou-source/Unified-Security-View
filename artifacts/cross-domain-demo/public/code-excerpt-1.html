@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 1 — TypeScript Interface Definitions</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 13px; padding: 24px; }
+  .window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; max-width: 980px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+  .titlebar { background: #21262d; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+  .filename { color: #8b949e; font-size: 12px; margin-left: 10px; }
+  .filepath { color: #484f58; font-size: 11px; margin-left: 4px; }
+  .body { padding: 20px 24px; line-height: 1.8; }
+
+  /* Section headers */
+  .section-label {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px; margin-top: 20px;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .badge {
+    font-size: 10px; font-family: 'Courier New', monospace; font-weight: bold;
+    padding: 2px 8px; border-radius: 3px; letter-spacing: 0.05em;
+  }
+  .badge-raw    { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+  .badge-san    { background: #1a2d08; color: #48c78e; border: 1px solid #2a5a18; }
+  .badge-corr   { background: #1a0e2d; color: #a78bfa; border: 1px solid #3a1a6a; }
+  .field-count  { font-size: 11px; color: #484f58; font-family: 'Courier New', monospace; }
+  .sep          { flex: 1; border-top: 1px solid #21262d; }
+
+  /* Syntax coloring */
+  .kw       { color: #ff7b72; }           /* export interface */
+  .type-name { color: #ffa657; font-weight: bold; }  /* RawEvent etc */
+  .brace    { color: #8b949e; }
+  .field    { color: #79c0ff; }           /* field names */
+  .colon    { color: #8b949e; }
+  .type-val { color: #a5d6ff; }           /* string, number etc */
+  .union    { color: #d2a8ff; }           /* union types */
+  .comment  { color: #484f58; font-style: italic; }
+  .stripped { color: #e55555; text-decoration: line-through; opacity: 0.55; }
+  .strip-note { color: #e55555; font-style: italic; }
+  .line     { display: flex; align-items: baseline; gap: 0; }
+  .linenum  { color: #484f58; min-width: 32px; text-align: right; padding-right: 16px; font-size: 11px; user-select: none; }
+
+  /* Divider between blocks */
+  .block-sep { border: none; border-top: 1px dashed #21262d; margin: 18px 0 10px; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="filename">types.ts</span>
+    <span class="filepath">artifacts/cross-domain-demo/src/types.ts</span>
+  </div>
+  <div class="body">
+
+    <!-- ── RawEvent (SecurityEvent) ── -->
+    <div class="section-label">
+      <span class="badge badge-raw">SecurityEvent</span>
+      <span class="field-count">14 fields — raw domain event including packet payload</span>
+      <span class="sep"></span>
+    </div>
+
+    <div class="line"><span class="linenum">15</span><span class="kw">export interface </span><span class="type-name">RawEvent</span> <span class="brace">{</span></div>
+    <div class="line"><span class="linenum">16</span>&nbsp;&nbsp;<span class="field">id</span><span class="colon">:</span>               <span class="type-val">string</span><span class="colon">;</span>                              <span class="comment">// unique event identifier</span></div>
+    <div class="line"><span class="linenum">17</span>&nbsp;&nbsp;<span class="field">domainId</span><span class="colon">:</span>         <span class="union">DomainId</span><span class="colon">;</span>                            <span class="comment">// "ALPHA" | "BRAVO" | "CHARLIE"</span></div>
+    <div class="line"><span class="linenum">18</span>&nbsp;&nbsp;<span class="field">timestamp</span><span class="colon">:</span>        <span class="type-val">number</span><span class="colon">;</span>                              <span class="comment">// Unix ms</span></div>
+    <div class="line"><span class="linenum">19</span>&nbsp;&nbsp;<span class="field">type</span><span class="colon">:</span>             <span class="union">EventType</span><span class="colon">;</span>                            <span class="comment">// ExfilAttempt | PrivilegeEsc | …</span></div>
+    <div class="line"><span class="linenum">20</span>&nbsp;&nbsp;<span class="field">classification</span><span class="colon">:</span>  <span class="union">Classification</span><span class="colon">;</span>                       <span class="comment">// UNCLASSIFIED | SECRET | …</span></div>
+    <div class="line"><span class="linenum">21</span>&nbsp;&nbsp;<span class="field">srcIp</span><span class="colon">:</span>           <span class="type-val">string</span><span class="colon">;</span>                              <span class="comment">// source IP address</span></div>
+    <div class="line"><span class="linenum">22</span>&nbsp;&nbsp;<span class="field">dstIp</span><span class="colon">:</span>           <span class="type-val">string</span><span class="colon">;</span>                              <span class="comment">// destination IP address</span></div>
+    <div class="line"><span class="linenum">23</span>&nbsp;&nbsp;<span class="field">srcPort</span><span class="colon">:</span>         <span class="type-val">number</span><span class="colon">;</span>                              <span class="comment">// source port</span></div>
+    <div class="line"><span class="linenum">24</span>&nbsp;&nbsp;<span class="field">dstPort</span><span class="colon">:</span>         <span class="type-val">number</span><span class="colon">;</span>                              <span class="comment">// destination port</span></div>
+    <div class="line"><span class="linenum">25</span>&nbsp;&nbsp;<span class="field">protocol</span><span class="colon">:</span>        <span class="union">"TCP"</span> <span class="colon">|</span> <span class="union">"UDP"</span> <span class="colon">|</span> <span class="union">"ICMP"</span><span class="colon">;</span>              <span class="comment">// transport layer</span></div>
+    <div class="line"><span class="linenum">26</span>&nbsp;&nbsp;<span class="field">userId</span><span class="colon">:</span>          <span class="type-val">string</span><span class="colon">;</span>                              <span class="comment">// actor identity</span></div>
+    <div class="line"><span class="linenum">27</span>&nbsp;&nbsp;<span class="field">host</span><span class="colon">:</span>            <span class="type-val">string</span><span class="colon">;</span>                              <span class="comment">// originating host</span></div>
+    <div class="line"><span class="linenum">28</span>&nbsp;&nbsp;<span class="field">severity</span><span class="colon">:</span>        <span class="union">"INFO"</span> <span class="colon">|</span> <span class="union">"WARN"</span> <span class="colon">|</span> <span class="union">"ERROR"</span> <span class="colon">|</span> <span class="union">"FATAL"</span><span class="colon">;</span>  <span class="comment">// threat level</span></div>
+    <div class="line"><span class="linenum">29</span>&nbsp;&nbsp;<span class="field">rawPacketBytes</span><span class="colon">:</span>  <span class="type-val">string</span><span class="colon">;</span>                              <span class="comment">// ← stripped at CDS boundary</span></div>
+    <div class="line"><span class="linenum">30</span><span class="brace">}</span></div>
+
+    <hr class="block-sep"/>
+
+    <!-- ── SanitizedEvent ── -->
+    <div class="section-label">
+      <span class="badge badge-san">SanitizedEvent</span>
+      <span class="field-count">13 fields — rawPacketBytes stripped, guard metadata appended</span>
+      <span class="sep"></span>
+    </div>
+
+    <div class="line"><span class="linenum">32</span><span class="kw">export interface </span><span class="type-name">SanitizedEvent</span> <span class="brace">{</span></div>
+    <div class="line"><span class="linenum">33</span>&nbsp;&nbsp;<span class="field">id</span><span class="colon">:</span>              <span class="type-val">string</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">34</span>&nbsp;&nbsp;<span class="field">domainId</span><span class="colon">:</span>        <span class="union">DomainId</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">35</span>&nbsp;&nbsp;<span class="field">timestamp</span><span class="colon">:</span>       <span class="type-val">number</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">36</span>&nbsp;&nbsp;<span class="field">type</span><span class="colon">:</span>            <span class="union">EventType</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">37</span>&nbsp;&nbsp;<span class="field">severity</span><span class="colon">:</span>       <span class="union">"INFO"</span> <span class="colon">|</span> <span class="union">"WARN"</span> <span class="colon">|</span> <span class="union">"ERROR"</span> <span class="colon">|</span> <span class="union">"FATAL"</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">38</span>&nbsp;&nbsp;<span class="field">srcIp</span><span class="colon">:</span>          <span class="type-val">string</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">39</span>&nbsp;&nbsp;<span class="field">dstIp</span><span class="colon">:</span>          <span class="type-val">string</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">40</span>&nbsp;&nbsp;<span class="field">srcPort</span><span class="colon">:</span>        <span class="type-val">number</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">41</span>&nbsp;&nbsp;<span class="field">dstPort</span><span class="colon">:</span>        <span class="type-val">number</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">42</span>&nbsp;&nbsp;<span class="field">protocol</span><span class="colon">:</span>       <span class="union">"TCP"</span> <span class="colon">|</span> <span class="union">"UDP"</span> <span class="colon">|</span> <span class="union">"ICMP"</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">43</span>&nbsp;&nbsp;<span class="field">userId</span><span class="colon">:</span>         <span class="type-val">string</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">44</span>&nbsp;&nbsp;<span class="field">host</span><span class="colon">:</span>           <span class="type-val">string</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">45</span>&nbsp;&nbsp;<span class="comment">// ── guard-appended fields ──────────────────────────────────────</span></div>
+    <div class="line"><span class="linenum">46</span>&nbsp;&nbsp;<span class="field">strippedFields</span><span class="colon">:</span> <span class="type-val">string</span><span class="colon">[];</span>                            <span class="comment">// ["rawPacketBytes"]</span></div>
+    <div class="line"><span class="linenum">47</span>&nbsp;&nbsp;<span class="field">passedFields</span><span class="colon">:</span>   <span class="type-val">string</span><span class="colon">[];</span>                            <span class="comment">// all 13 forwarded field names</span></div>
+    <div class="line"><span class="linenum">48</span><span class="brace">}</span></div>
+
+    <hr class="block-sep"/>
+
+    <!-- ── CorrelatedAlert ── -->
+    <div class="section-label">
+      <span class="badge badge-corr">CorrelatedAlert</span>
+      <span class="field-count">8 fields — high-side correlation output with confidence scoring</span>
+      <span class="sep"></span>
+    </div>
+
+    <div class="line"><span class="linenum">49</span><span class="kw">export interface </span><span class="type-name">CorrelatedAlert</span> <span class="brace">{</span></div>
+    <div class="line"><span class="linenum">50</span>&nbsp;&nbsp;<span class="field">id</span><span class="colon">:</span>          <span class="type-val">string</span><span class="colon">;</span>                                    <span class="comment">// CORR-NNNNN</span></div>
+    <div class="line"><span class="linenum">51</span>&nbsp;&nbsp;<span class="field">timestamp</span><span class="colon">:</span>   <span class="type-val">number</span><span class="colon">;</span>                                    <span class="comment">// alert generation time (Unix ms)</span></div>
+    <div class="line"><span class="linenum">52</span>&nbsp;&nbsp;<span class="field">type</span><span class="colon">:</span>        <span class="union">"CORRELATED_THREAT"</span> <span class="colon">|</span> <span class="union">"PATTERN_MATCH"</span>          </div>
+    <div class="line"><span class="linenum">  </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="colon">|</span> <span class="union">"CROSS_DOMAIN_ANOMALY"</span> <span class="colon">|</span> <span class="union">"SYNCHRONIZED_ACTIVITY"</span><span class="colon">;</span></div>
+    <div class="line"><span class="linenum">53</span>&nbsp;&nbsp;<span class="field">severity</span><span class="colon">:</span>    <span class="union">"MEDIUM"</span> <span class="colon">|</span> <span class="union">"HIGH"</span> <span class="colon">|</span> <span class="union">"CRITICAL"</span><span class="colon">;</span>              <span class="comment">// derived from event severity</span></div>
+    <div class="line"><span class="linenum">54</span>&nbsp;&nbsp;<span class="field">domains</span><span class="colon">:</span>     <span class="union">DomainId</span><span class="colon">[];</span>                                <span class="comment">// ≥ 2 distinct domains required</span></div>
+    <div class="line"><span class="linenum">55</span>&nbsp;&nbsp;<span class="field">summary</span><span class="colon">:</span>     <span class="type-val">string</span><span class="colon">;</span>                                    <span class="comment">// human-readable incident narrative</span></div>
+    <div class="line"><span class="linenum">56</span>&nbsp;&nbsp;<span class="field">eventIds</span><span class="colon">:</span>    <span class="type-val">string</span><span class="colon">[];</span>                                  <span class="comment">// correlated SanitizedEvent refs</span></div>
+    <div class="line"><span class="linenum">57</span>&nbsp;&nbsp;<span class="field">confidence</span><span class="colon">:</span>  <span class="type-val">number</span><span class="colon">;</span>                                    <span class="comment">// 0–100 weighted score (e.g. 0.91)</span></div>
+    <div class="line"><span class="linenum">58</span>&nbsp;&nbsp;<span class="field">ruleId</span><span class="colon">:</span>      <span class="type-val">string</span><span class="colon">;</span>                                    <span class="comment">// XDOM-EXFIL-007 | XDOM-AUTH-001 | …</span></div>
+    <div class="line"><span class="linenum">59</span><span class="brace">}</span></div>
+
+  </div>
+</div>
+</body>
+</html>
