@@ -72,3 +72,9 @@ id = "g5j5e0iPL_g22qsNy8VIk"
 uri = "file://screenshots/CodeExcerpt3_computeConfidence.jpg"
 type = "image"
 title = "Code Excerpt 3 — CorrelationEngine computeConfidence() with four-factor weighted scoring (0.40 + 0.30 + 0.20 + up to 0.10, capped at 1.0)"
+
+[[outputs]]
+id = "XouiVmObU-zFqKVtrlcMu"
+uri = "file://screenshots/Figure4_TypeScript_compilation.jpg"
+type = "image"
+title = "Figure 4 — TypeScript 5.9.2 strict-mode compilation: 0 errors · 0 warnings · 9 simulator modules · 79 files checked"

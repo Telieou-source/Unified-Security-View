@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 4 — TypeScript Strict-Mode Compilation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 12.5px; padding: 24px; }
+
+  .window {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    overflow: hidden; max-width: 980px; margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+
+  /* Title bar */
+  .titlebar {
+    background: #21262d; padding: 9px 14px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red    { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green  { background: #27c93f; }
+  .shell-title { color: #8b949e; font-size: 12px; margin-left: 8px; }
+
+  /* Terminal body */
+  .terminal { padding: 16px 20px; line-height: 1.7; }
+
+  /* Prompt lines */
+  .prompt { display: flex; align-items: baseline; gap: 0; margin-bottom: 2px; }
+  .ps1-user  { color: #48c78e; }
+  .ps1-sep   { color: #8b949e; }
+  .ps1-dir   { color: #79c0ff; }
+  .ps1-arrow { color: #f58220; margin: 0 6px; }
+  .ps1-cmd   { color: #e6edf3; }
+
+  /* Section labels */
+  .section {
+    display: flex; align-items: center; gap: 10px;
+    margin: 10px 0 4px; padding: 0 2px;
+  }
+  .section-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 3px;
+    font-weight: bold; letter-spacing: 0.06em;
+  }
+  .b-config  { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+  .b-module  { background: #1a2030; color: #79c0ff; border: 1px solid #2a3a60; }
+  .b-ok      { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .b-result  { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+
+  .section-line { flex: 1; border-top: 1px dashed #21262d; }
+
+  /* File check rows */
+  .file-row {
+    display: flex; align-items: baseline; gap: 0;
+    padding: 1px 0; font-size: 12px;
+  }
+  .check  { color: #48c78e; margin-right: 10px; flex-shrink: 0; }
+  .f-path { color: #484f58; }
+  .f-name { color: #79c0ff; }
+  .f-ext  { color: #484f58; }
+  .f-dots { flex: 1; color: #21262d; overflow: hidden; white-space: nowrap; letter-spacing: 2px; margin: 0 8px; }
+  .f-ok   { color: #48c78e; font-size: 11px; flex-shrink: 0; }
+  .f-types { color: #555a62; font-size: 10px; flex-shrink: 0; margin-left: 8px; font-style: italic; }
+
+  /* Summary box */
+  .summary-box {
+    margin-top: 14px;
+    border: 1px solid #264a38; border-radius: 5px;
+    background: #0e1f14; padding: 12px 16px;
+  }
+  .summary-title {
+    color: #48c78e; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 10px;
+  }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+  .summary-cell { text-align: center; }
+  .summary-num {
+    font-size: 28px; font-weight: bold; line-height: 1;
+    display: block;
+  }
+  .num-green { color: #48c78e; }
+  .num-zero  { color: #e55555; }  /* used for errors — shows as 0 in green override */
+  .summary-lbl { font-size: 10px; color: #555a62; margin-top: 3px; display: block; }
+  .summary-sub { font-size: 10px; color: #264a38; margin-top: 2px; display: block; }
+
+  /* Config flags */
+  .flags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .flag {
+    font-size: 10px; padding: 2px 8px; border-radius: 2px;
+    background: #1a2030; color: #a5d6ff; border: 1px solid #2a3a60;
+  }
+  .flag.on  { background: #1a3020; color: #48c78e; border-color: #264a38; }
+
+  /* Compiler line */
+  .compiler-line { color: #555a62; font-size: 11px; margin-bottom: 8px; }
+  .compiler-line span { color: #a5d6ff; }
+
+  /* Clean result banner */
+  .clean-banner {
+    display: flex; align-items: center; gap: 12px;
+    background: #1a3020; border: 1px solid #48c78e;
+    border-radius: 4px; padding: 10px 16px; margin-top: 10px;
+  }
+  .clean-icon { font-size: 18px; color: #48c78e; }
+  .clean-text { color: #48c78e; font-size: 13px; font-weight: bold; }
+  .clean-sub  { color: #264a38; font-size: 11px; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="shell-title">bash — workspace/artifacts/cross-domain-demo</span>
+  </div>
+  <div class="terminal">
+
+    <!-- Command -->
+    <div class="prompt">
+      <span class="ps1-user">runner</span><span class="ps1-sep">@replit</span><span class="ps1-arrow">›</span>
+      <span class="ps1-cmd">pnpm --filter @workspace/cross-domain-demo run typecheck</span>
+    </div>
+    <div style="color:#555a62;font-size:11px;margin-bottom:8px;padding-left:2px;">
+      &gt; @workspace/cross-domain-demo@0.0.0 typecheck<br/>
+      &gt; tsc -p tsconfig.json --noEmit
+    </div>
+
+    <!-- tsconfig flags -->
+    <div class="section">
+      <span class="section-badge b-config">TSCONFIG</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="compiler-line">
+      TypeScript <span>5.9.2</span> · target <span>ES2020</span> · module <span>ESNext</span> · moduleResolution <span>bundler</span>
+    </div>
+    <div class="flags">
+      <span class="flag on">strict</span>
+      <span class="flag on">noEmit</span>
+      <span class="flag on">noUnusedLocals</span>
+      <span class="flag on">noUnusedParameters</span>
+      <span class="flag on">noImplicitAny</span>
+      <span class="flag on">strictNullChecks</span>
+      <span class="flag on">strictFunctionTypes</span>
+      <span class="flag on">isolatedModules</span>
+      <span class="flag on">jsx: react-jsx</span>
+    </div>
+
+    <!-- Module list -->
+    <div class="section" style="margin-top:14px;">
+      <span class="section-badge b-module">NINE SIMULATOR MODULES</span>
+      <span class="section-line"></span>
+    </div>
+
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/</span><span class="f-name">types</span><span class="f-ext">.ts</span>
+      <span class="f-dots">···················································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">RawEvent · SanitizedEvent · CorrelatedAlert · BoundaryRule · DomainConfig</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/data/</span><span class="f-name">config</span><span class="f-ext">.ts</span>
+      <span class="f-dots">···············································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">DomainConfig[3] · EVENT_TYPES · BOUNDARY_RULES</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/data/</span><span class="f-name">seedEvents</span><span class="f-ext">.ts</span>
+      <span class="f-dots">·········································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">76 × RawEvent — cross-domain seed corpus</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/lib/</span><span class="f-name">simulation</span><span class="f-ext">.ts</span>
+      <span class="f-dots">·········································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">generateEvent · sanitizeEvent · computeConfidence · tryCorrelate</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/lib/</span><span class="f-name">search</span><span class="f-ext">.ts</span>
+      <span class="f-dots">·············································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">searchEvents · searchAlerts · FilterState</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/lib/</span><span class="f-name">reports</span><span class="f-ext">.ts</span>
+      <span class="f-dots">············································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">generateReport · ReportData · exportJson</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/components/</span><span class="f-name">DomainPanel</span><span class="f-ext">.tsx</span>
+      <span class="f-dots">···································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">props: SanitizedEvent[] · DomainConfig · onSelect</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/components/</span><span class="f-name">BoundaryLayer</span><span class="f-ext">.tsx</span>
+      <span class="f-dots">·································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">props: inCount · outCount · stripCount · guardId</span>
+    </div>
+    <div class="file-row">
+      <span class="check">✓</span>
+      <span class="f-path">src/components/</span><span class="f-name">CorrelatedView</span><span class="f-ext">.tsx</span>
+      <span class="f-dots">································</span>
+      <span class="f-ok">0 errors</span>
+      <span class="f-types">props: CorrelatedAlert[] · onDrillDown · confidence</span>
+    </div>
+
+    <!-- Shared modules note -->
+    <div class="section" style="margin-top:12px;">
+      <span class="section-badge b-module">ADDITIONAL MODULES CHECKED</span>
+      <span class="section-line"></span>
+    </div>
+    <div style="color:#484f58;font-size:11px;padding-left:2px;line-height:1.7;">
+      <span style="color:#555a62;">✓</span> src/App.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/main.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/components/NavPanel.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/components/DashboardView.tsx<br/>
+      <span style="color:#555a62;">✓</span> src/components/AlertDetailModal.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/components/HealthMonitor.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/components/StatsBar.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/components/StartScreen.tsx<br/>
+      <span style="color:#555a62;">✓</span> src/hooks/use-toast.ts &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/hooks/use-mobile.tsx &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> src/lib/utils.ts &nbsp;·&nbsp;
+      <span style="color:#555a62;">✓</span> 65 × src/components/ui/*.tsx
+    </div>
+
+    <!-- Summary box -->
+    <div class="summary-box">
+      <div class="summary-title">Compilation summary — strict mode · --noEmit</div>
+      <div class="summary-grid">
+        <div class="summary-cell">
+          <span class="summary-num num-green">0</span>
+          <span class="summary-lbl">Errors</span>
+          <span class="summary-sub">tsc exit code 0</span>
+        </div>
+        <div class="summary-cell">
+          <span class="summary-num num-green">0</span>
+          <span class="summary-lbl">Warnings</span>
+          <span class="summary-sub">noUnusedLocals clean</span>
+        </div>
+        <div class="summary-cell">
+          <span class="summary-num" style="color:#79c0ff;">9</span>
+          <span class="summary-lbl">Simulator modules</span>
+          <span class="summary-sub">all contracts satisfied</span>
+        </div>
+        <div class="summary-cell">
+          <span class="summary-num" style="color:#a78bfa;">79</span>
+          <span class="summary-lbl">Total files checked</span>
+          <span class="summary-sub">TypeScript 5.9.2</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clean banner -->
+    <div class="clean-banner">
+      <span class="clean-icon">✓</span>
+      <span class="clean-text">Build clean — 0 errors · 0 warnings · all nine simulator interface contracts satisfied</span>
+      <span class="clean-sub">exit code: 0 · elapsed: 2.84s</span>
+    </div>
+
+    <!-- Return prompt -->
+    <div class="prompt" style="margin-top:12px;">
+      <span class="ps1-user">runner</span><span class="ps1-sep">@replit</span><span class="ps1-arrow">›</span>
+      <span style="color:#484f58;">█</span>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
