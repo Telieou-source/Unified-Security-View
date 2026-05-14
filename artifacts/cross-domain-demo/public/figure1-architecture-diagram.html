@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 1 — Five-Layer Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 28px 32px 22px;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 10px;
+  }
+  .fig-title { font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px; }
+  .fig-sub   { font-size: 10px; color: #555a62; line-height: 1.6; margin-bottom: 18px; }
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 14px; line-height: 1.5;
+  }
+  .diagram-card {
+    background: #111315; border: 1px solid #21262d; border-radius: 6px;
+    padding: 22px 26px 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">FIGURE 1 — SYSTEM ARCHITECTURE</div>
+<div class="fig-title">Five-Layer Architecture — Unidirectional Cross-Domain SIEM Data Flow</div>
+<div class="fig-sub">
+  Unidirectional pipeline: domain event generators → CDS sanitization → correlation engine → unified dashboard → health telemetry &nbsp;·&nbsp;
+  React 18 · TypeScript 5.9 · three classification domains (Alpha / Bravo / Charlie)
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 1100 830" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <!-- Arrow marker — white/grey -->
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#3a4048"/>
+  </marker>
+  <marker id="arr-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#f58220"/>
+  </marker>
+  <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#48c78e"/>
+  </marker>
+  <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#4ea6dc"/>
+  </marker>
+  <!-- gradient fills for layer bands -->
+  <linearGradient id="glayer1" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="#0a1820"/>
+    <stop offset="100%" stop-color="#0d1218"/>
+  </linearGradient>
+  <linearGradient id="glayer2" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="#180d0a"/>
+    <stop offset="100%" stop-color="#110d0a"/>
+  </linearGradient>
+  <linearGradient id="glayer3" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="#10180a"/>
+    <stop offset="100%" stop-color="#0d1208"/>
+  </linearGradient>
+  <linearGradient id="glayer4" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="#16100a"/>
+    <stop offset="100%" stop-color="#12100a"/>
+  </linearGradient>
+  <linearGradient id="glayer5" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="#0a1020"/>
+    <stop offset="100%" stop-color="#0a0e18"/>
+  </linearGradient>
+</defs>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER BAND BACKGROUNDS
+═══════════════════════════════════════════════════════════ -->
+
+<!-- L1 background band -->
+<rect x="0" y="8"   width="1100" height="130" rx="4" fill="url(#glayer1)" stroke="#1f3a4a" stroke-width="1.5"/>
+<!-- L2 background band -->
+<rect x="0" y="195" width="1100" height="120" rx="4" fill="url(#glayer2)" stroke="#3a1810" stroke-width="1.5"/>
+<!-- L3 background band -->
+<rect x="0" y="375" width="1100" height="120" rx="4" fill="url(#glayer3)" stroke="#1e3a10" stroke-width="1.5"/>
+<!-- L4 background band -->
+<rect x="0" y="555" width="1100" height="120" rx="4" fill="url(#glayer4)" stroke="#3a2a10" stroke-width="1.5"/>
+<!-- L5 background band -->
+<rect x="0" y="735" width="1100" height="88"  rx="4" fill="url(#glayer5)" stroke="#1a2a48" stroke-width="1.5"/>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER LABELS (left pill)
+═══════════════════════════════════════════════════════════ -->
+
+<!-- L1 label -->
+<rect x="10" y="18" width="146" height="46" rx="3" fill="#0d1e2d" stroke="#4ea6dc30" stroke-width="1"/>
+<text x="83" y="36" text-anchor="middle" font-size="9" fill="#4ea6dc" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.08em">LAYER 1</text>
+<text x="83" y="54" text-anchor="middle" font-size="8.5" fill="#3a5a6a" font-family="'Courier New',monospace">Domain Event</text>
+<text x="83" y="63" text-anchor="middle" font-size="8.5" fill="#3a5a6a" font-family="'Courier New',monospace">Generators</text>
+
+<!-- L2 label -->
+<rect x="10" y="205" width="146" height="46" rx="3" fill="#2d0e08" stroke="#e5555530" stroke-width="1"/>
+<text x="83" y="223" text-anchor="middle" font-size="9" fill="#e55555" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.08em">LAYER 2</text>
+<text x="83" y="241" text-anchor="middle" font-size="8.5" fill="#5a3030" font-family="'Courier New',monospace">CDS Sanitization</text>
+<text x="83" y="250" text-anchor="middle" font-size="8.5" fill="#5a3030" font-family="'Courier New',monospace">Cross-Domain Guard</text>
+
+<!-- L3 label -->
+<rect x="10" y="385" width="146" height="46" rx="3" fill="#0e2208" stroke="#48c78e30" stroke-width="1"/>
+<text x="83" y="403" text-anchor="middle" font-size="9" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.08em">LAYER 3</text>
+<text x="83" y="421" text-anchor="middle" font-size="8.5" fill="#2a4a2a" font-family="'Courier New',monospace">Correlation</text>
+<text x="83" y="430" text-anchor="middle" font-size="8.5" fill="#2a4a2a" font-family="'Courier New',monospace">Engine</text>
+
+<!-- L4 label -->
+<rect x="10" y="565" width="146" height="46" rx="3" fill="#2d1e08" stroke="#f5822030" stroke-width="1"/>
+<text x="83" y="583" text-anchor="middle" font-size="9" fill="#f58220" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.08em">LAYER 4</text>
+<text x="83" y="601" text-anchor="middle" font-size="8.5" fill="#5a3a10" font-family="'Courier New',monospace">Unified</text>
+<text x="83" y="610" text-anchor="middle" font-size="8.5" fill="#5a3a10" font-family="'Courier New',monospace">Dashboard</text>
+
+<!-- L5 label -->
+<rect x="10" y="745" width="146" height="46" rx="3" fill="#0a1030" stroke="#79c0ff30" stroke-width="1"/>
+<text x="83" y="763" text-anchor="middle" font-size="9" fill="#79c0ff" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.08em">LAYER 5</text>
+<text x="83" y="781" text-anchor="middle" font-size="8.5" fill="#2a3a5a" font-family="'Courier New',monospace">Health Telemetry</text>
+
+<!-- vertical separator line -->
+<line x1="166" y1="12"  x2="166" y2="130" stroke="#1f3a4a" stroke-width="1" stroke-dasharray="3 3"/>
+<line x1="166" y1="200" x2="166" y2="310" stroke="#3a1810" stroke-width="1" stroke-dasharray="3 3"/>
+<line x1="166" y1="380" x2="166" y2="490" stroke="#1e3a10" stroke-width="1" stroke-dasharray="3 3"/>
+<line x1="166" y1="560" x2="166" y2="670" stroke="#3a2a10" stroke-width="1" stroke-dasharray="3 3"/>
+<line x1="166" y1="740" x2="166" y2="818" stroke="#1a2a48" stroke-width="1" stroke-dasharray="3 3"/>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER 1 CONTENT — Three Domain Generators
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Domain ALPHA box -->
+<rect x="180" y="18" width="270" height="110" rx="3" fill="#0d1e2d" stroke="#4ea6dc40" stroke-width="1.5"/>
+<!-- domain top stripe -->
+<rect x="180" y="18" width="270" height="18" rx="3" fill="#0f2535"/>
+<rect x="180" y="28" width="270" height="8"  fill="#0f2535"/>
+<text x="315" y="31" text-anchor="middle" font-size="9" fill="#4ea6dc" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.1em">DOMAIN ALPHA</text>
+<text x="315" y="49" text-anchor="middle" font-size="8.5" fill="#3a5a6a" font-family="'Courier New',monospace">Classification: TOP SECRET</text>
+<!-- event types -->
+<text x="192" y="64" font-size="8" fill="#4ea6dc" font-family="'Courier New',monospace">● NetworkConn    ● Authentication</text>
+<text x="192" y="76" font-size="8" fill="#4ea6dc" font-family="'Courier New',monospace">● ExfilAttempt   ● PrivilegeEsc</text>
+<text x="192" y="88" font-size="8" fill="#4ea6dc" font-family="'Courier New',monospace">● FileAccess     ● AnomalyDetected</text>
+<!-- stats bar -->
+<rect x="192" y="99" width="246" height="20" rx="2" fill="#0a1420"/>
+<text x="198" y="113" font-size="8.5" fill="#4ea6dc" font-family="'Courier New',monospace" font-weight="bold">1,500 events/run</text>
+<text x="360" y="113" font-size="8.5" fill="#264a5a" font-family="'Courier New',monospace">174 FATAL</text>
+
+<!-- Domain BRAVO box -->
+<rect x="466" y="18" width="270" height="110" rx="3" fill="#0d2017" stroke="#48c78e40" stroke-width="1.5"/>
+<rect x="466" y="18" width="270" height="18" rx="3" fill="#0d2818"/>
+<rect x="466" y="28" width="270" height="8"  fill="#0d2818"/>
+<text x="601" y="31" text-anchor="middle" font-size="9" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.1em">DOMAIN BRAVO</text>
+<text x="601" y="49" text-anchor="middle" font-size="8.5" fill="#264a2a" font-family="'Courier New',monospace">Classification: SECRET</text>
+<text x="478" y="64" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">● NetworkConn    ● Authentication</text>
+<text x="478" y="76" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">● ExfilAttempt   ● PrivilegeEsc</text>
+<text x="478" y="88" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">● PolicyViolation ● ProcessSpawn</text>
+<rect x="478" y="99" width="246" height="20" rx="2" fill="#0a1a10"/>
+<text x="484" y="113" font-size="8.5" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">1,501 events/run</text>
+<text x="550" y="113" font-size="8" fill="#264a2a" font-family="'Courier New',monospace">176 FATAL</text>
+
+<!-- Domain CHARLIE box -->
+<rect x="752" y="18" width="270" height="110" rx="3" fill="#2d2208" stroke="#c9a22740" stroke-width="1.5"/>
+<rect x="752" y="18" width="270" height="18" rx="3" fill="#302508"/>
+<rect x="752" y="28" width="270" height="8"  fill="#302508"/>
+<text x="887" y="31" text-anchor="middle" font-size="9" fill="#c9a227" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="0.1em">DOMAIN CHARLIE</text>
+<text x="887" y="49" text-anchor="middle" font-size="8.5" fill="#4a3a18" font-family="'Courier New',monospace">Classification: CONFIDENTIAL</text>
+<text x="764" y="64" font-size="8" fill="#c9a227" font-family="'Courier New',monospace">● NetworkConn    ● Authentication</text>
+<text x="764" y="76" font-size="8" fill="#c9a227" font-family="'Courier New',monospace">● ExfilAttempt   ● PrivilegeEsc</text>
+<text x="764" y="88" font-size="8" fill="#c9a227" font-family="'Courier New',monospace">● AnomalyDetected ● FileAccess</text>
+<rect x="764" y="99" width="246" height="20" rx="2" fill="#1a1408"/>
+<text x="770" y="113" font-size="8.5" fill="#c9a227" font-family="'Courier New',monospace" font-weight="bold">1,499 events/run</text>
+<text x="836" y="113" font-size="8" fill="#4a3a18" font-family="'Courier New',monospace">172 FATAL</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTER-LAYER ARROWS  L1 → L2
+     Three converging arrows down to Layer 2 CDS
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Arrow from Alpha (centre x=315) -->
+<line x1="315" y1="130" x2="315" y2="155"  stroke="#4ea6dc" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+<!-- Arrow from Bravo (centre x=601) -->
+<line x1="601" y1="130" x2="601" y2="155"  stroke="#48c78e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<!-- Arrow from Charlie (centre x=887) -->
+<line x1="887" y1="130" x2="887" y2="155"  stroke="#c9a227" stroke-width="1.5" marker-end="url(#arr)"/>
+
+<!-- Horizontal convergence bar at y=158 -->
+<line x1="315" y1="158" x2="887" y2="158" stroke="#2a2d32" stroke-width="1.5"/>
+<!-- Single arrow down from mid of bar -->
+<line x1="601" y1="158" x2="601" y2="188" stroke="#3a4048" stroke-width="2" marker-end="url(#arr)"/>
+
+<!-- flow label -->
+<text x="620" y="176" font-size="9" fill="#3a4048" font-family="'Courier New',monospace">RawEvent[]  →  sanitizeEvent()</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER 2 CONTENT — CDS Sanitization
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Pipeline: Input box → process box → Output box -->
+
+<!-- Input: RawEvent -->
+<rect x="180" y="205" width="200" height="98" rx="3" fill="#1a0d0a" stroke="#e5555530" stroke-width="1"/>
+<rect x="180" y="205" width="200" height="16" rx="3" fill="#2a0e0a"/>
+<rect x="180" y="213" width="200" height="8" fill="#2a0e0a"/>
+<text x="280" y="218" text-anchor="middle" font-size="8.5" fill="#e55555" font-family="'Courier New',monospace" font-weight="bold">INPUT: RawEvent</text>
+<text x="192" y="235" font-size="8" fill="#5a3a30" font-family="'Courier New',monospace">id, timestamp, domainId</text>
+<text x="192" y="247" font-size="8" fill="#5a3a30" font-family="'Courier New',monospace">userId, host, type, severity</text>
+<text x="192" y="259" font-size="8" fill="#5a3a30" font-family="'Courier New',monospace">srcIp, dstIp, dstPort, protocol</text>
+<text x="192" y="271" font-size="8" fill="#e55555" font-family="'Courier New',monospace">rawPacketBytes  ← STRIPPED ✕</text>
+<text x="192" y="286" font-size="8" fill="#5a3a30" font-family="'Courier New',monospace">classification, metadata</text>
+
+<!-- Arrow Input → Process -->
+<line x1="382" y1="254" x2="416" y2="254" stroke="#3a4048" stroke-width="1.5" marker-end="url(#arr)"/>
+
+<!-- CDS Guard process box -->
+<rect x="420" y="205" width="262" height="98" rx="3" fill="#1a1008" stroke="#f5822030" stroke-width="1.5"/>
+<rect x="420" y="205" width="262" height="16" rx="3" fill="#2a1808"/>
+<rect x="420" y="213" width="262" height="8"  fill="#2a1808"/>
+<text x="551" y="218" text-anchor="middle" font-size="8.5" fill="#f58220" font-family="'Courier New',monospace" font-weight="bold">sanitizeEvent()  —  CrossDomainGuard</text>
+<!-- Process steps -->
+<text x="432" y="237" font-size="8" fill="#5a4020" font-family="'Courier New',monospace">① ES2018 rest-destructuring (spread omit)</text>
+<text x="432" y="249" font-size="8" fill="#f58220" font-family="'Courier New',monospace">② strip rawPacketBytes  →  inCount++</text>
+<text x="432" y="261" font-size="8" fill="#5a4020" font-family="'Courier New',monospace">③ attach sanitizationTimestamp (Date.now())</text>
+<text x="432" y="273" font-size="8" fill="#5a4020" font-family="'Courier New',monospace">④ attach guardId  (CDG-ALPHA-BRAVO-CHARLIE-v1.2)</text>
+<text x="432" y="285" font-size="8" fill="#5a4020" font-family="'Courier New',monospace">⑤ outCount++  →  invariant: IN = OUT = STRIP</text>
+
+<!-- Arrow Process → Output -->
+<line x1="684" y1="254" x2="718" y2="254" stroke="#3a4048" stroke-width="1.5" marker-end="url(#arr)"/>
+
+<!-- Output: SanitizedEvent -->
+<rect x="722" y="205" width="200" height="98" rx="3" fill="#0a1810" stroke="#48c78e30" stroke-width="1"/>
+<rect x="722" y="205" width="200" height="16" rx="3" fill="#0d2010"/>
+<rect x="722" y="213" width="200" height="8"  fill="#0d2010"/>
+<text x="822" y="218" text-anchor="middle" font-size="8.5" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">OUTPUT: SanitizedEvent</text>
+<text x="734" y="235" font-size="8" fill="#264a2a" font-family="'Courier New',monospace">id, timestamp, domainId</text>
+<text x="734" y="247" font-size="8" fill="#264a2a" font-family="'Courier New',monospace">userId, host, type, severity</text>
+<text x="734" y="259" font-size="8" fill="#264a2a" font-family="'Courier New',monospace">srcIp, dstIp, dstPort, protocol</text>
+<text x="734" y="271" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">sanitizationTimestamp  ✓  new</text>
+<text x="734" y="283" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">guardId  ✓  new</text>
+
+<!-- CDG counter display bottom-right -->
+<rect x="934" y="210" width="156" height="86" rx="3" fill="#0a1208" stroke="#264a3830" stroke-width="1"/>
+<text x="1012" y="225" text-anchor="middle" font-size="8.5" fill="#264a38" font-family="'Courier New',monospace">CDG Counters</text>
+<text x="946" y="241" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">inCount:</text>
+<text x="1040" y="241" text-anchor="end" font-size="8" fill="#4ea6dc" font-family="'Courier New',monospace" font-weight="bold">4,500</text>
+<text x="946" y="254" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">outCount:</text>
+<text x="1040" y="254" text-anchor="end" font-size="8" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">4,500</text>
+<text x="946" y="267" font-size="8" fill="#48c78e" font-family="'Courier New',monospace">stripCount:</text>
+<text x="1040" y="267" text-anchor="end" font-size="8" fill="#e55555" font-family="'Courier New',monospace" font-weight="bold">4,500</text>
+<line x1="946" y1="272" x2="1080" y2="272" stroke="#264a38" stroke-width="0.5"/>
+<text x="946" y="285" font-size="8" fill="#264a38" font-family="'Courier New',monospace">IN = OUT = STRIP  ✓</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTER-LAYER ARROW  L2 → L3
+═══════════════════════════════════════════════════════════ -->
+<line x1="551" y1="305" x2="551" y2="368" stroke="#3a4048" stroke-width="2" marker-end="url(#arr)"/>
+<text x="562" y="342" font-size="9" fill="#3a4048" font-family="'Courier New',monospace">SanitizedEvent[]  →  CorrelationEngine</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER 3 CONTENT — Correlation Engine
+═══════════════════════════════════════════════════════════ -->
+
+<!-- computeConfidence() four factors -->
+<rect x="180" y="383" width="480" height="100" rx="3" fill="#0d1a08" stroke="#48c78e30" stroke-width="1"/>
+<rect x="180" y="383" width="480" height="16" rx="3" fill="#0e2208"/>
+<rect x="180" y="391" width="480" height="8"  fill="#0e2208"/>
+<text x="420" y="396" text-anchor="middle" font-size="8.5" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">computeConfidence()  —  Four-Factor Weighted Scorer</text>
+
+<!-- Factor boxes inside -->
+<rect x="192" y="405" width="98" height="66" rx="2" fill="#0a1208" stroke="#48c78e20"/>
+<text x="241" y="419" text-anchor="middle" font-size="8" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">Identity</text>
+<text x="241" y="432" text-anchor="middle" font-size="14" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">×0.40</text>
+<text x="241" y="462" text-anchor="middle" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">userId match</text>
+
+<rect x="298" y="405" width="98" height="66" rx="2" fill="#0a1208" stroke="#48c78e20"/>
+<text x="347" y="419" text-anchor="middle" font-size="8" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">Event Type</text>
+<text x="347" y="432" text-anchor="middle" font-size="14" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">×0.30</text>
+<text x="347" y="462" text-anchor="middle" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">type === type</text>
+
+<rect x="404" y="405" width="98" height="66" rx="2" fill="#0a1208" stroke="#48c78e20"/>
+<text x="453" y="419" text-anchor="middle" font-size="8" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">Subnet</text>
+<text x="453" y="432" text-anchor="middle" font-size="14" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">×0.20</text>
+<text x="453" y="462" text-anchor="middle" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">srcIp /24 match</text>
+
+<rect x="510" y="405" width="98" height="66" rx="2" fill="#0a1208" stroke="#48c78e20"/>
+<text x="559" y="419" text-anchor="middle" font-size="8" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">Temporal</text>
+<text x="559" y="432" text-anchor="middle" font-size="14" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">×0.10</text>
+<text x="559" y="462" text-anchor="middle" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">within WINDOW_MS</text>
+
+<!-- Threshold + output box -->
+<rect x="678" y="383" width="248" height="100" rx="3" fill="#1a1008" stroke="#f5822030" stroke-width="1"/>
+<rect x="678" y="383" width="248" height="16" rx="3" fill="#2a1a08"/>
+<rect x="678" y="391" width="248" height="8"  fill="#2a1a08"/>
+<text x="802" y="396" text-anchor="middle" font-size="8.5" fill="#f58220" font-family="'Courier New',monospace" font-weight="bold">Alert Generation</text>
+<text x="690" y="413" font-size="8" fill="#5a3a10" font-family="'Courier New',monospace">Threshold:   score ≥ 0.75</text>
+<text x="690" y="426" font-size="8" fill="#5a3a10" font-family="'Courier New',monospace">WINDOW_MS:   30,000 ms</text>
+<text x="690" y="439" font-size="8" fill="#f58220" font-family="'Courier New',monospace">Alerts raised:  38  total</text>
+<text x="690" y="452" font-size="8" fill="#e55555" font-family="'Courier New',monospace">CRITICAL:       14  (score ≥ 0.90)</text>
+<text x="690" y="465" font-size="8" fill="#5a3a10" font-family="'Courier New',monospace">Pairs validated: 12  ExfilAttempt</text>
+
+<!-- Correlation output: mean confidence -->
+<rect x="934" y="383" width="156" height="100" rx="3" fill="#0a1208" stroke="#48c78e20" stroke-width="1"/>
+<text x="1012" y="399" text-anchor="middle" font-size="8" fill="#264a2a" font-family="'Courier New',monospace">Score range</text>
+<text x="1012" y="418" text-anchor="middle" font-size="18" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">0.82</text>
+<text x="1012" y="432" text-anchor="middle" font-size="9"  fill="#264a2a" font-family="'Courier New',monospace">to</text>
+<text x="1012" y="450" text-anchor="middle" font-size="18" fill="#e55555" font-family="'Courier New',monospace" font-weight="bold">0.95</text>
+<text x="1012" y="467" text-anchor="middle" font-size="8" fill="#264a2a" font-family="'Courier New',monospace">μ = 0.878</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTER-LAYER ARROW  L3 → L4
+═══════════════════════════════════════════════════════════ -->
+<line x1="551" y1="485" x2="551" y2="548" stroke="#3a4048" stroke-width="2" marker-end="url(#arr)"/>
+<text x="562" y="522" font-size="9" fill="#3a4048" font-family="'Courier New',monospace">alerts[] + events[]  →  React 18 state (useReducer)</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER 4 CONTENT — Unified Dashboard (6 views)
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Six view tiles -->
+<!-- Tile 1 -->
+<rect x="180" y="563" width="148" height="100" rx="3" fill="#1a1008" stroke="#f5822030"/>
+<rect x="180" y="563" width="148" height="14" rx="3" fill="#281808"/>
+<rect x="180" y="570" width="148" height="7" fill="#281808"/>
+<text x="254" y="574" text-anchor="middle" font-size="7.5" fill="#f58220" font-family="'Courier New',monospace" font-weight="bold">01 · Threat Overview</text>
+<text x="192" y="591" font-size="7.5" fill="#5a3a10" font-family="'Courier New',monospace">Severity distribution</text>
+<text x="192" y="602" font-size="7.5" fill="#5a3a10" font-family="'Courier New',monospace">FATAL / ERROR counts</text>
+<text x="192" y="613" font-size="7.5" fill="#5a3a10" font-family="'Courier New',monospace">ExfilAttempt · PrivEsc</text>
+<text x="192" y="624" font-size="7.5" fill="#5a3a10" font-family="'Courier New',monospace">Recent FATAL events</text>
+<text x="192" y="650" font-size="7.5" fill="#3a2808" font-family="'Courier New',monospace">DashboardView.tsx</text>
+
+<!-- Tile 2 -->
+<rect x="334" y="563" width="148" height="100" rx="3" fill="#0d1a08" stroke="#48c78e30"/>
+<rect x="334" y="563" width="148" height="14" rx="3" fill="#0d2010"/>
+<rect x="334" y="570" width="148" height="7" fill="#0d2010"/>
+<text x="408" y="574" text-anchor="middle" font-size="7.5" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">02 · Domain Activity</text>
+<text x="346" y="591" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">Per-domain event count</text>
+<text x="346" y="602" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">Ingest rate · FATAL rate</text>
+<text x="346" y="613" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">Top hosts per domain</text>
+<text x="346" y="624" font-size="7.5" fill="#264a2a" font-family="'Courier New',monospace">Event type breakdown</text>
+<text x="346" y="650" font-size="7.5" fill="#1e3820" font-family="'Courier New',monospace">DashboardView.tsx</text>
+
+<!-- Tile 3 -->
+<rect x="488" y="563" width="148" height="100" rx="3" fill="#0d1822" stroke="#4ea6dc30"/>
+<rect x="488" y="563" width="148" height="14" rx="3" fill="#0d1a2a"/>
+<rect x="488" y="570" width="148" height="7" fill="#0d1a2a"/>
+<text x="562" y="574" text-anchor="middle" font-size="7.5" fill="#4ea6dc" font-family="'Courier New',monospace" font-weight="bold">03 · Network Analysis</text>
+<text x="500" y="591" font-size="7.5" fill="#1e3a5a" font-family="'Courier New',monospace">Src / Dst IP analysis</text>
+<text x="500" y="602" font-size="7.5" fill="#1e3a5a" font-family="'Courier New',monospace">Port distribution</text>
+<text x="500" y="613" font-size="7.5" fill="#1e3a5a" font-family="'Courier New',monospace">Protocol breakdown</text>
+<text x="500" y="624" font-size="7.5" fill="#1e3a5a" font-family="'Courier New',monospace">External contacts</text>
+<text x="500" y="650" font-size="7.5" fill="#1a2a40" font-family="'Courier New',monospace">DashboardView.tsx</text>
+
+<!-- Tile 4 -->
+<rect x="642" y="563" width="148" height="100" rx="3" fill="#201008" stroke="#c9a22730"/>
+<rect x="642" y="563" width="148" height="14" rx="3" fill="#281808"/>
+<rect x="642" y="570" width="148" height="7" fill="#281808"/>
+<text x="716" y="574" text-anchor="middle" font-size="7.5" fill="#c9a227" font-family="'Courier New',monospace" font-weight="bold">04 · User Behavior</text>
+<text x="654" y="591" font-size="7.5" fill="#4a3010" font-family="'Courier New',monospace">Cross-domain users</text>
+<text x="654" y="602" font-size="7.5" fill="#4a3010" font-family="'Courier New',monospace">PrivEsc by user</text>
+<text x="654" y="613" font-size="7.5" fill="#4a3010" font-family="'Courier New',monospace">Exfil actors</text>
+<text x="654" y="624" font-size="7.5" fill="#4a3010" font-family="'Courier New',monospace">Top users by count</text>
+<text x="654" y="650" font-size="7.5" fill="#362810" font-family="'Courier New',monospace">DashboardView.tsx</text>
+
+<!-- Tile 5 -->
+<rect x="796" y="563" width="148" height="100" rx="3" fill="#1a0a0a" stroke="#e5555530"/>
+<rect x="796" y="563" width="148" height="14" rx="3" fill="#2a0808"/>
+<rect x="796" y="570" width="148" height="7" fill="#2a0808"/>
+<text x="870" y="574" text-anchor="middle" font-size="7.5" fill="#e55555" font-family="'Courier New',monospace" font-weight="bold">05 · Incident Timeline</text>
+<text x="808" y="591" font-size="7.5" fill="#5a2020" font-family="'Courier New',monospace">Chronological FATAL</text>
+<text x="808" y="602" font-size="7.5" fill="#5a2020" font-family="'Courier New',monospace">ERROR notable events</text>
+<text x="808" y="613" font-size="7.5" fill="#5a2020" font-family="'Courier New',monospace">Domain · host · user</text>
+<text x="808" y="624" font-size="7.5" fill="#5a2020" font-family="'Courier New',monospace">Classification label</text>
+<text x="808" y="650" font-size="7.5" fill="#3a1818" font-family="'Courier New',monospace">DashboardView.tsx</text>
+
+<!-- Tile 6 -->
+<rect x="950" y="563" width="140" height="100" rx="3" fill="#181008" stroke="#d2a8ff30"/>
+<rect x="950" y="563" width="140" height="14" rx="3" fill="#201410"/>
+<rect x="950" y="570" width="140" height="7"  fill="#201410"/>
+<text x="1020" y="574" text-anchor="middle" font-size="7.5" fill="#d2a8ff" font-family="'Courier New',monospace" font-weight="bold">06 · Exec Summary</text>
+<text x="962" y="591" font-size="7.5" fill="#3a2848" font-family="'Courier New',monospace">Risk posture ring</text>
+<text x="962" y="602" font-size="7.5" fill="#3a2848" font-family="'Courier New',monospace">KPIs · domain health</text>
+<text x="962" y="613" font-size="7.5" fill="#3a2848" font-family="'Courier New',monospace">Bandwidth summary</text>
+<text x="962" y="624" font-size="7.5" fill="#3a2848" font-family="'Courier New',monospace">Analyst recs × 4</text>
+<text x="962" y="650" font-size="7.5" fill="#2a1838" font-family="'Courier New',monospace">DashboardView.tsx</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTER-LAYER ARROW  L4 → L5
+═══════════════════════════════════════════════════════════ -->
+<line x1="551" y1="665" x2="551" y2="728" stroke="#3a4048" stroke-width="2" marker-end="url(#arr)"/>
+<text x="562" y="702" font-size="9" fill="#3a4048" font-family="'Courier New',monospace">guardCounters{}  →  HealthMonitor  →  StatsBar</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LAYER 5 CONTENT — Health Telemetry
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Three sub-boxes inside L5 -->
+
+<!-- CDG Counters -->
+<rect x="180" y="743" width="230" height="68" rx="3" fill="#0a1020" stroke="#79c0ff30" stroke-width="1"/>
+<text x="295" y="759" text-anchor="middle" font-size="8.5" fill="#79c0ff" font-family="'Courier New',monospace" font-weight="bold">CDG Counter Invariant</text>
+<text x="192" y="775" font-size="8" fill="#2a3a5a" font-family="'Courier New',monospace">getGuardCounters()  →  { in, out, strip }</text>
+<text x="192" y="788" font-size="8" fill="#79c0ff" font-family="'Courier New',monospace">assert: inCount === outCount === stripCount</text>
+<text x="192" y="801" font-size="8" fill="#2a3a5a" font-family="'Courier New',monospace">violations: 0  ·  latency: &lt; 1 ms</text>
+
+<!-- Health Monitor -->
+<rect x="424" y="743" width="230" height="68" rx="3" fill="#0a1020" stroke="#48c78e30" stroke-width="1"/>
+<text x="539" y="759" text-anchor="middle" font-size="8.5" fill="#48c78e" font-family="'Courier New',monospace" font-weight="bold">HealthMonitor.tsx</text>
+<text x="436" y="775" font-size="8" fill="#264a38" font-family="'Courier New',monospace">Domain α / β / γ:  ONLINE  ●</text>
+<text x="436" y="788" font-size="8" fill="#264a38" font-family="'Courier New',monospace">Cross-Domain Guard: ACTIVE  ●</text>
+<text x="436" y="801" font-size="8" fill="#264a38" font-family="'Courier New',monospace">High-Side Engine:   ACTIVE  ●</text>
+
+<!-- StatsBar -->
+<rect x="668" y="743" width="230" height="68" rx="3" fill="#0a1020" stroke="#f5822030" stroke-width="1"/>
+<text x="783" y="759" text-anchor="middle" font-size="8.5" fill="#f58220" font-family="'Courier New',monospace" font-weight="bold">StatsBar.tsx</text>
+<text x="680" y="775" font-size="8" fill="#3a2810" font-family="'Courier New',monospace">Total events · Alerts raised</text>
+<text x="680" y="788" font-size="8" fill="#3a2810" font-family="'Courier New',monospace">CRITICAL alerts · Cross-domain users</text>
+<text x="680" y="801" font-size="8" fill="#f58220" font-family="'Courier New',monospace">Live counter  ·  updates per tick</text>
+
+<!-- Simulation clock note -->
+<rect x="912" y="743" width="178" height="68" rx="3" fill="#0a1020" stroke="#d2a8ff30" stroke-width="1"/>
+<text x="1001" y="759" text-anchor="middle" font-size="8.5" fill="#d2a8ff" font-family="'Courier New',monospace" font-weight="bold">Simulation Clock</text>
+<text x="924" y="775" font-size="8" fill="#3a2848" font-family="'Courier New',monospace">runSimulationTick() ①–⑦</text>
+<text x="924" y="788" font-size="8" fill="#3a2848" font-family="'Courier New',monospace">useEffect · setInterval</text>
+<text x="924" y="801" font-size="8" fill="#d2a8ff" font-family="'Courier New',monospace">drives all 5 layers / tick</text>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     UNIDIRECTIONAL FLOW LABEL — right margin
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Big right-side arrow bracket -->
+<line x1="1088" y1="70"  x2="1096" y2="70"  stroke="#2a2d32" stroke-width="1"/>
+<line x1="1088" y1="779" x2="1096" y2="779" stroke="#2a2d32" stroke-width="1"/>
+<line x1="1092" y1="70"  x2="1092" y2="779" stroke="#2a2d32" stroke-width="1.5"/>
+<!-- Arrow at bottom of bracket -->
+<polygon points="1088,779 1096,779 1092,790" fill="#2a2d32"/>
+<!-- Rotated label -->
+<text x="1092" y="430" text-anchor="middle" transform="rotate(90,1092,430)"
+      font-size="9" fill="#3a4048" font-family="'Courier New',monospace" letter-spacing="0.12em">
+  UNIDIRECTIONAL DATA FLOW  ↓
+</text>
+
+</svg>
+</div><!-- /diagram-card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>
