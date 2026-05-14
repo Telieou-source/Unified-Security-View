@@ -70,30 +70,44 @@ export function generateEvent(domainId: DomainId): RawEvent {
   };
 }
 
-/** Only raw packet bytes are stripped. All SIEM log metadata passes through. */
-export function sanitizeEvent(raw: RawEvent): SanitizedEvent {
-  const strippedFields = ["rawPacketBytes"];
-  const passedFields = [
-    "srcIp", "dstIp", "srcPort", "dstPort", "protocol",
-    "userId", "host", "eventType", "severity", "timestamp",
-  ];
+// CrossDomainGuard — throughput counters (atomic per JS single-thread model)
+let inCount   = 0;
+let outCount  = 0;
+let stripCount = 0;
 
-  return {
-    id: raw.id,
-    domainId: raw.domainId,
-    timestamp: raw.timestamp,
-    type: raw.type,
-    severity: raw.severity,
-    srcIp: raw.srcIp,
-    dstIp: raw.dstIp,
-    srcPort: raw.srcPort,
-    dstPort: raw.dstPort,
-    protocol: raw.protocol,
-    userId: raw.userId,
-    host: raw.host,
-    strippedFields,
+const GUARD_ID = "CDG-ALPHA-BRAVO-CHARLIE-v1.2";
+
+export function getGuardCounters() {
+  return { inCount, outCount, stripCount };
+}
+
+export function resetGuardCounters() {
+  inCount = outCount = stripCount = 0;
+}
+
+/** CrossDomainGuard sanitize() — strips rawPacketBytes via ES2018 rest-destructuring,
+ *  increments atomic throughput counters, and appends sanitizationTimestamp / guardId
+ *  audit fields before forwarding the SanitizedEvent to the unified high-side view. */
+export function sanitizeEvent(raw: RawEvent): SanitizedEvent {
+  inCount++;                                          // ① ingress counter
+
+  // ES2018 rest-destructuring: rawPacketBytes captured in _stripped, never forwarded
+  const { rawPacketBytes: _stripped, classification: _cls, ...rest } = raw;
+
+  stripCount++;                                       // ② strip counter (one field per event)
+
+  const passedFields = Object.keys(rest) as string[];
+
+  const sanitized: SanitizedEvent = {
+    ...rest,                                          // ③ all safe metadata fields
+    strippedFields:        ["rawPacketBytes"],
     passedFields,
+    sanitizationTimestamp: Date.now(),                // ④ audit: guard processing time (ms)
+    guardId:               GUARD_ID,                  // ⑤ audit: guard instance identifier
   };
+
+  outCount++;                                         // ⑥ egress counter
+  return sanitized;
 }
 
 const correlationCooldown: Map<string, number> = new Map();
