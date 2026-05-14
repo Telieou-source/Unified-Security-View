@@ -54,3 +54,9 @@ id = "JUbPOZnZWhLDaIes1JSvc"
 uri = "file://screenshots/Figure2_CrossDomainGuard_output.jpg"
 type = "image"
 title = "Figure 2 — CrossDomainGuard sanitized event + guard metrics (IN=OUT=300, STRIP=300)"
+
+[[outputs]]
+id = "4T1l_S5-0e9qUiEg8aWg0"
+uri = "file://screenshots/Figure3_CorrelationEngine_alert.jpg"
+type = "image"
+title = "Figure 3 — CorrelationEngine coordinated ExfilAttempt alert (Alpha + Bravo, confidence 0.94, Δ 2.32s)"
