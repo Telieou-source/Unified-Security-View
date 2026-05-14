@@ -60,3 +60,9 @@ id = "4T1l_S5-0e9qUiEg8aWg0"
 uri = "file://screenshots/Figure3_CorrelationEngine_alert.jpg"
 type = "image"
 title = "Figure 3 — CorrelationEngine coordinated ExfilAttempt alert (Alpha + Bravo, confidence 0.94, Δ 2.32s)"
+
+[[outputs]]
+id = "OOaalfp0qkImJuEXI5ifz"
+uri = "file://screenshots/CodeExcerpt2_sanitize_method.jpg"
+type = "image"
+title = "Code Excerpt 2 — CrossDomainGuard sanitize() with ES2018 destructuring, inCount/outCount/stripCount, and audit fields"
