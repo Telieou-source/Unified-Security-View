@@ -113,7 +113,7 @@ title = "Figure 8 — All six analytical views active simultaneously: Threat Ove
 id = "na9zNZ2CQb482wyeiu7U8"
 uri = "file://screenshots/Figure9_ConfidenceBarChart.jpg"
 type = "image"
-title = "Figure 9 — Correlation confidence scores for all 12 validated cross-domain ExfilAttempt alert pairs (0.82–0.95), dashed threshold line at 0.75, mean μ = 0.878, four-factor weight breakdown table"
+title = "Figure 9 — Confidence score bar chart: 12 ExfilAttempt pairs · x-axis pair 1–12 · y-axis 0.00–1.00 · dashed threshold at 0.75 · all bars 0.82–0.95 · colour-coded α×β / β×γ / α×γ / α×β×γ · mean 0.896 · min margin +0.146"
 
 [[outputs]]
 id = "pbtIJDN4jGJtgY9oaZ3ex"
