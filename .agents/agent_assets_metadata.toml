@@ -180,3 +180,9 @@ id = "8TTYUPgTFPzCIKqDDP4i1"
 uri = "file://screenshots/Figure10_ExecutiveSummary.jpg"
 type = "image"
 title = "Figure 10 — Executive Summary Dashboard · t=150 s live run · CRITICAL risk posture (34% threat rate) · 6-card KPI row (2,250 / 261 / 96 / 79 / 7 / 3) · severity breakdown · domain health · BandwidthHealthPanel (450 KB in → 306 KB sanitised → 144 KB stripped, 32% reduction, NOMINAL) · 4 analyst recommendations · confidence 0.91 avg"
+
+[[outputs]]
+id = "DPjwZPYZYeeAix23NPdbb"
+uri = "file://screenshots/CodeExcerpt1_Interfaces.jpg"
+type = "image"
+title = "Code Excerpt 1 — TypeScript interface definitions · src/types.ts · RawEvent (14 fields, rawPacketBytes line 28 → STRIP) · SanitizedEvent (rawPacketBytes absent, sanitizationTimestamp? / guardId? added) · CorrelatedAlert (confidence, domains: DomainId[], eventIds, ruleId) · stat strip: 3 interfaces · 2 stripped · 2 added · 12 forwarded · threshold 0.75"
