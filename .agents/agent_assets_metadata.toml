@@ -126,3 +126,9 @@ id = "a-7ldmEeF8OhdWxpxgF_Q"
 uri = "file://screenshots/CodeExcerpt6_BuildDeploy.jpg"
 type = "image"
 title = "Code Excerpt 6 — pnpm run build · pnpm run preview (localhost:4173) · npx netlify-cli deploy --prod --dir=dist · npx vercel --prod — annotated terminal with dist/ tree, simulated output, static-site note, and summary metadata"
+
+[[outputs]]
+id = "FLQpLwGTd_UUEJN4lhQqg"
+uri = "file://screenshots/Figure1_ArchitectureDiagram.jpg"
+type = "image"
+title = "Figure 1 — Five-layer architecture diagram: Domain Event Generators (Alpha · Bravo · Charlie) → CDS Sanitization (sanitizeEvent · rawPacketBytes stripped) → Correlation Engine (four-factor scorer · 0.75 threshold) → Unified Dashboard (6 views) → Health Telemetry (CDG counters · HealthMonitor · StatsBar)"
