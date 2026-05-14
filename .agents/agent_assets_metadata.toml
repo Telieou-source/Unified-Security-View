@@ -162,3 +162,9 @@ id = "RkACQbGnRzMplRDcmtNzv"
 uri = "file://screenshots/Figure6_UnifiedDashboard.jpg"
 type = "image"
 title = "Figure 6 — Unified six-dashboard live view: Threat Overview · Domain Activity Monitor · Network Connection Analysis · User Behavior Analytics · Incident Timeline · Executive Summary — all panels updating simultaneously · 4,500 events · 38 alerts · CRITICAL risk posture"
+
+[[outputs]]
+id = "RtPNA4B293raXUs5xRQFi"
+uri = "file://screenshots/Figure7_HealthMonitor.jpg"
+type = "image"
+title = "Figure 7 — HealthMonitor panel: 5-column bandwidth view · 15 evt/s aggregate (5 × 3) · CDG IN=OUT=STRIP=900 after 60-second run · zero event loss · invariant confirmed"
