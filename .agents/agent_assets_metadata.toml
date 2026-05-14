@@ -102,3 +102,9 @@ id = "WIExpNcV6_wGlhAKAue-Z"
 uri = "file://screenshots/Figure7_CorrelationLog_validation.jpg"
 type = "image"
 title = "Figure 7 — CorrelationEngine 5-minute validation run: 12/12 cross-domain ExfilAttempt pairs detected · confidence range 0.77–0.94 (threshold 0.75) · 0 same-domain false positives · subnet guard 100% effective"
+
+[[outputs]]
+id = "X6kBV8sCg5ALom4Hw2RgQ"
+uri = "file://screenshots/Figure8_UnifiedDashboard_allsix.jpg"
+type = "image"
+title = "Figure 8 — All six analytical views active simultaneously: Threat Overview · Domain Activity Monitor · Network Connection Analysis · User Behavior Analytics · Incident Timeline · Executive Summary — CDG IN=OUT=STRIP=4,500 telemetry footer · React 18 state, no page reload"
