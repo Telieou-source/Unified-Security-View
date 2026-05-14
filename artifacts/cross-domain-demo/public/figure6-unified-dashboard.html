@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 6 — Unified Six-Dashboard Live View</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 20px 24px 18px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 8px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.5; margin-bottom: 14px; }
+
+  /* ── app chrome ── */
+  .app-chrome {
+    background: #111315; border: 1px solid #21262d; border-radius: 6px;
+    overflow: hidden;
+  }
+  .chrome-bar {
+    background: #1a1c1f; border-bottom: 1px solid #2a2d32;
+    padding: 0 14px; height: 32px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .bar-title { font-size: 10.5px; color: #c8d0d8; font-weight: bold; margin-left: 4px; flex: 1; }
+  .badge { font-size: 8.5px; font-weight: bold; padding: 2px 7px; border-radius: 2px; }
+  .pulse { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 3px; }
+
+  /* stats bar */
+  .stats-bar {
+    background: #0f1318; border-bottom: 1px solid #1e2228;
+    padding: 5px 14px; display: flex; align-items: center; gap: 12px;
+  }
+  .sb-item { display: flex; flex-direction: column; gap: 1px; align-items: center; }
+  .sb-val  { font-size: 13px; font-weight: bold; line-height: 1; }
+  .sb-lbl  { font-size: 7px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.07em; }
+  .sb-sep  { width: 1px; height: 22px; background: #1e2228; }
+  .sb-live {
+    margin-left: auto; font-size: 8.5px; font-weight: bold; padding: 2px 8px;
+    border-radius: 2px; background: #2d0e0e; border: 1px solid #6a2020; color: #e55555;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* nav tabs */
+  .nav-tabs {
+    background: #111315; border-bottom: 1px solid #1e2228;
+    padding: 0 14px; display: flex; align-items: flex-end; gap: 2px; height: 28px;
+  }
+  .tab {
+    font-size: 8px; font-weight: bold; padding: 4px 9px;
+    border-radius: 2px 2px 0 0; cursor: default;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    border: 1px solid transparent; border-bottom: none;
+    color: #3a4048; background: transparent;
+    margin-bottom: -1px;
+  }
+  .tab.active {
+    background: #1a1c1f; border-color: #2a2d32;
+    color: #f58220;
+  }
+  .tab-all {
+    margin-left: auto; font-size: 8px; font-weight: bold; padding: 3px 9px;
+    border-radius: 2px; background: #1a2a18; color: #48c78e;
+    border: 1px solid #264a38; align-self: center; margin-bottom: 2px;
+  }
+
+  /* ── six-panel grid ── */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0;
+    border-top: 1px solid #1e2228;
+  }
+  .dash-panel {
+    border-right: 1px solid #1e2228;
+    border-bottom: 1px solid #1e2228;
+    overflow: hidden;
+  }
+  .dash-panel:nth-child(3),
+  .dash-panel:nth-child(6) { border-right: none; }
+  .dash-panel:nth-child(4),
+  .dash-panel:nth-child(5),
+  .dash-panel:nth-child(6) { border-bottom: none; }
+
+  .panel-header {
+    padding: 6px 10px 5px;
+    border-bottom: 1px solid #1e2228;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ph-num   { font-size: 7.5px; color: #3a4048; width: 14px; }
+  .ph-title { font-size: 9px; font-weight: bold; color: #c8d0d8; flex: 1; }
+  .ph-sub   { font-size: 7.5px; color: #3a4048; }
+  .ph-live  { font-size: 7px; font-weight: bold; padding: 1px 5px; border-radius: 2px;
+              background: #2d0e0e; color: #e55555; border: 1px solid #6a202040; }
+
+  .panel-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+
+  /* shared sub-components */
+  .section-lbl {
+    font-size: 7.5px; color: #3a4048; text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-lbl::after { content:''; flex:1; height:1px; background:#1e2228; }
+
+  .stat-row { display: flex; gap: 6px; }
+  .stat-box {
+    flex: 1; border-radius: 2px; padding: 5px 7px;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .stat-val { font-size: 18px; font-weight: bold; line-height: 1; }
+  .stat-lbl { font-size: 7px; color: #444850; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-sub { font-size: 7px; color: #3a4048; margin-top: 1px; }
+
+  /* bar charts */
+  .bar-list { display: flex; flex-direction: column; gap: 3px; }
+  .bar-item { display: flex; align-items: center; gap: 5px; }
+  .bar-label { font-size: 8px; width: 68px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 7px; background: #1a1c20; border-radius: 1px; overflow: hidden; }
+  .bar-fill  { height: 7px; border-radius: 1px; }
+  .bar-val   { font-size: 8px; font-weight: bold; width: 32px; text-align: right; flex-shrink: 0; }
+
+  /* mini table */
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 8px; }
+  .mini-table th {
+    font-size: 7px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em;
+    text-align: left; padding: 2px 5px; border-bottom: 1px solid #1e2228;
+    background: #0f1318;
+  }
+  .mini-table td { padding: 3px 5px; border-bottom: 1px solid #121518; }
+  .mini-table tr:last-child td { border-bottom: none; }
+
+  /* severity pills */
+  .sev { font-size: 7px; font-weight: bold; padding: 1px 4px; border-radius: 2px; }
+  .sv-F { background:#2d0e0e; color:#e55555; }
+  .sv-E { background:#2d1a08; color:#f58220; }
+  .sv-W { background:#2d2510; color:#e5c97a; }
+  .sv-I { background:#0e1e30; color:#8eb8d4; }
+  .dom-a { color:#4ea6dc; } .dom-b { color:#48c78e; } .dom-c { color:#c9a227; }
+
+  /* severity distribution block */
+  .sev-dist { display: flex; gap: 0; overflow: hidden; border-radius: 2px; height: 8px; }
+  .sev-seg  { height: 8px; }
+
+  /* timeline items */
+  .timeline-item {
+    display: flex; gap: 6px; align-items: flex-start;
+    padding: 4px 0; border-bottom: 1px solid #121518;
+    font-size: 8px;
+  }
+  .tl-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .tl-ts  { color: #444850; flex-shrink: 0; width: 52px; }
+  .tl-body { flex: 1; }
+  .tl-type { font-weight: bold; }
+
+  /* ring chart (exec summary) */
+  .ring-area { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+  .ring-svg  { width: 72px; height: 72px; }
+  .ring-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; line-height: 1.2;
+  }
+
+  /* kpi grid */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .kpi-box  {
+    border-radius: 2px; padding: 5px 7px; border: 1px solid;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .kpi-val { font-size: 16px; font-weight: bold; line-height: 1; }
+  .kpi-lbl { font-size: 7px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* recommendation rows */
+  .rec-item {
+    font-size: 7.5px; display: flex; gap: 5px; align-items: flex-start;
+    padding: 3px 0; border-bottom: 1px solid #121518;
+    color: #555a62;
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-icon { flex-shrink: 0; font-size: 8px; margin-top: 1px; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">FIGURE 6 — UNIFIED DASHBOARD · LIVE SIMULATION VIEW</div>
+<div class="fig-title">Unified Security Dashboard — All Six Analytical Panels · Live Simulation Run</div>
+<div class="fig-sub">
+  React 18 useReducer state · runSimulationTick() updates all panels simultaneously on every tick ·
+  4,500 events processed · 38 alerts raised · 3 domains · CRITICAL risk posture
+</div>
+
+<div class="app-chrome">
+
+  <!-- chrome bar -->
+  <div class="chrome-bar">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <div class="bar-title">Demo SIEM &nbsp;·&nbsp; Unified Security View &nbsp;·&nbsp; cross_domain_siem</div>
+    <span class="badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">
+      <span class="pulse" style="background:#e55555;box-shadow:0 0 3px #e5555588;"></span>SIMULATION RUNNING
+    </span>
+    <span class="badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">CDG ACTIVE</span>
+    <span class="badge" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">5 evt/s</span>
+  </div>
+
+  <!-- stats bar -->
+  <div class="stats-bar">
+    <div class="sb-item">
+      <span class="sb-val" style="color:#c8d0d8;">4,500</span>
+      <span class="sb-lbl">Total Events</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#e55555;">522</span>
+      <span class="sb-lbl">FATAL</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#f58220;">990</span>
+      <span class="sb-lbl">ERROR</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#e5c97a;">1,350</span>
+      <span class="sb-lbl">WARN</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#8eb8d4;">1,638</span>
+      <span class="sb-lbl">INFO</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#f58220;">38</span>
+      <span class="sb-lbl">Alerts</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#e55555;">14</span>
+      <span class="sb-lbl">CRITICAL</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#c9a227;">48</span>
+      <span class="sb-lbl">Users</span>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">
+      <span class="sb-val" style="color:#e55555;">7</span>
+      <span class="sb-lbl">Cross-Domain</span>
+    </div>
+    <div class="sb-live">
+      <span class="pulse" style="background:#e55555;box-shadow:0 0 4px #e55;"></span>LIVE
+    </div>
+  </div>
+
+  <!-- nav tabs -->
+  <div class="nav-tabs">
+    <div class="tab active">Threat Overview</div>
+    <div class="tab">Domain Activity</div>
+    <div class="tab">Network Analysis</div>
+    <div class="tab">User Behavior</div>
+    <div class="tab">Incident Timeline</div>
+    <div class="tab">Exec Summary</div>
+    <div class="tab-all">● ALL PANELS</div>
+  </div>
+
+  <!-- ── six-panel grid ── -->
+  <div class="dashboard-grid">
+
+    <!-- ═══════════════════════════════════
+         PANEL 1: Threat Overview
+    ════════════════════════════════════ -->
+    <div class="dash-panel" style="background:#0d0f11;">
+      <div class="panel-header" style="background:#12080a;border-bottom-color:#2a1010;">
+        <span class="ph-num">01</span>
+        <span class="ph-title" style="color:#e55555;">Threat Overview</span>
+        <span class="ph-sub">severity · alert types · recent FATAL</span>
+        <span class="ph-live">LIVE</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- severity stat row -->
+        <div class="stat-row">
+          <div class="stat-box" style="background:#1a0808;border:1px solid #e5555520;">
+            <span class="stat-val" style="color:#e55555;">522</span>
+            <span class="stat-lbl">FATAL</span>
+            <span class="stat-sub">11.6% of total</span>
+          </div>
+          <div class="stat-box" style="background:#1a1008;border:1px solid #f5822020;">
+            <span class="stat-val" style="color:#f58220;">990</span>
+            <span class="stat-lbl">ERROR</span>
+            <span class="stat-sub">22.0% of total</span>
+          </div>
+          <div class="stat-box" style="background:#181608;border:1px solid #e5c97a20;">
+            <span class="stat-val" style="color:#e5c97a;">1,350</span>
+            <span class="stat-lbl">WARN</span>
+            <span class="stat-sub">30.0% of total</span>
+          </div>
+        </div>
+
+        <!-- severity distribution bar -->
+        <div>
+          <div class="section-lbl">Severity Distribution</div>
+          <div class="sev-dist">
+            <div class="sev-seg" style="width:11.6%;background:#e55555;"></div>
+            <div class="sev-seg" style="width:22.0%;background:#f58220;"></div>
+            <div class="sev-seg" style="width:30.0%;background:#e5c97a;"></div>
+            <div class="sev-seg" style="width:36.4%;background:#2a3850;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px;">
+            <span style="font-size:7px;color:#e55555;">FATAL 11.6%</span>
+            <span style="font-size:7px;color:#f58220;">ERR 22.0%</span>
+            <span style="font-size:7px;color:#e5c97a;">WARN 30.0%</span>
+            <span style="font-size:7px;color:#2a5880;">INFO 36.4%</span>
+          </div>
+        </div>
+
+        <!-- top threat types -->
+        <div>
+          <div class="section-lbl">Top Threat Types (FATAL+ERROR)</div>
+          <div class="bar-list">
+            <div class="bar-item">
+              <span class="bar-label" style="color:#e55555;">ExfilAttempt</span>
+              <div class="bar-track"><div class="bar-fill" style="width:100%;background:#e55555;opacity:0.7;"></div></div>
+              <span class="bar-val" style="color:#e55555;">384</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#f58220;">PrivilegeEsc</span>
+              <div class="bar-track"><div class="bar-fill" style="width:82%;background:#f58220;opacity:0.7;"></div></div>
+              <span class="bar-val" style="color:#f58220;">316</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#e5c97a;">Authentication</span>
+              <div class="bar-track"><div class="bar-fill" style="width:58%;background:#e5c97a;opacity:0.7;"></div></div>
+              <span class="bar-val" style="color:#e5c97a;">224</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#8eb8d4;">AnomalyDetected</span>
+              <div class="bar-track"><div class="bar-fill" style="width:38%;background:#8eb8d4;opacity:0.7;"></div></div>
+              <span class="bar-val" style="color:#8eb8d4;">146</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#555a62;">NetworkConn</span>
+              <div class="bar-track"><div class="bar-fill" style="width:24%;background:#555a62;opacity:0.7;"></div></div>
+              <span class="bar-val" style="color:#555a62;">92</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- recent FATAL events -->
+        <div>
+          <div class="section-lbl">Recent FATAL Events</div>
+          <table class="mini-table">
+            <thead><tr><th>TIME</th><th>DOM</th><th>HOST</th><th>TYPE</th><th>USER</th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="color:#444850;">13:05:09</td>
+                <td class="dom-a">ALPHA</td>
+                <td>alpha-gw-04</td>
+                <td style="color:#ffa657;">ExfilAttempt</td>
+                <td style="color:#e55555;">svc_backup</td>
+              </tr>
+              <tr>
+                <td style="color:#444850;">13:05:08</td>
+                <td class="dom-b">BRAVO</td>
+                <td>bravo-srv-11</td>
+                <td style="color:#ffa657;">PrivilegeEsc</td>
+                <td style="color:#e55555;">root</td>
+              </tr>
+              <tr>
+                <td style="color:#444850;">13:05:07</td>
+                <td class="dom-c">CHARLIE</td>
+                <td>charlie-ids-B</td>
+                <td style="color:#ffa657;">ExfilAttempt</td>
+                <td style="color:#e55555;">usr_j.harris</td>
+              </tr>
+              <tr>
+                <td style="color:#444850;">13:05:06</td>
+                <td class="dom-a">ALPHA</td>
+                <td>alpha-auth-02</td>
+                <td style="color:#e5c97a;">Authentication</td>
+                <td style="color:#79c0ff;">usr_a.petrov</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PANEL 2: Domain Activity Monitor
+    ════════════════════════════════════ -->
+    <div class="dash-panel" style="background:#0d0f11;">
+      <div class="panel-header" style="background:#0a1210;border-bottom-color:#1e3a1e;">
+        <span class="ph-num">02</span>
+        <span class="ph-title" style="color:#48c78e;">Domain Activity Monitor</span>
+        <span class="ph-sub">per-domain volume · ingest rate</span>
+        <span class="ph-live">LIVE</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- three domain cards -->
+        <div class="stat-row">
+          <div class="stat-box" style="background:#0d1e2d;border:1px solid #4ea6dc30;">
+            <span class="stat-val" style="color:#4ea6dc;font-size:22px;">1,500</span>
+            <span class="stat-lbl" style="color:#4ea6dc;">ALPHA</span>
+            <span class="stat-sub">174 FATAL · 5.0/s</span>
+          </div>
+          <div class="stat-box" style="background:#0d2017;border:1px solid #48c78e30;">
+            <span class="stat-val" style="color:#48c78e;font-size:22px;">1,501</span>
+            <span class="stat-lbl" style="color:#48c78e;">BRAVO</span>
+            <span class="stat-sub">176 FATAL · 5.0/s</span>
+          </div>
+          <div class="stat-box" style="background:#2d2208;border:1px solid #c9a22730;">
+            <span class="stat-val" style="color:#c9a227;font-size:22px;">1,499</span>
+            <span class="stat-lbl" style="color:#c9a227;">CHARLIE</span>
+            <span class="stat-sub">172 FATAL · 5.0/s</span>
+          </div>
+        </div>
+
+        <!-- events by domain bar -->
+        <div>
+          <div class="section-lbl">Events by Domain</div>
+          <div class="bar-list">
+            <div class="bar-item">
+              <span class="bar-label dom-a">ALPHA</span>
+              <div class="bar-track"><div class="bar-fill" style="width:99.9%;background:#4ea6dc;opacity:0.7;"></div></div>
+              <span class="bar-val dom-a">1,500</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label dom-b">BRAVO</span>
+              <div class="bar-track"><div class="bar-fill" style="width:100%;background:#48c78e;opacity:0.7;"></div></div>
+              <span class="bar-val dom-b">1,501</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label dom-c">CHARLIE</span>
+              <div class="bar-track"><div class="bar-fill" style="width:99.8%;background:#c9a227;opacity:0.7;"></div></div>
+              <span class="bar-val dom-c">1,499</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- event type by domain table -->
+        <div>
+          <div class="section-lbl">FATAL Rate by Domain</div>
+          <div class="bar-list">
+            <div class="bar-item">
+              <span class="bar-label dom-a">α FATAL</span>
+              <div class="bar-track"><div class="bar-fill" style="width:99%;background:#4ea6dc;opacity:0.5;"></div></div>
+              <span class="bar-val dom-a">174</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label dom-b">β FATAL</span>
+              <div class="bar-track"><div class="bar-fill" style="width:100%;background:#48c78e;opacity:0.5;"></div></div>
+              <span class="bar-val dom-b">176</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label dom-c">γ FATAL</span>
+              <div class="bar-track"><div class="bar-fill" style="width:98%;background:#c9a227;opacity:0.5;"></div></div>
+              <span class="bar-val dom-c">172</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- top hosts per domain -->
+        <div>
+          <div class="section-lbl">Top Hosts by Event Count</div>
+          <table class="mini-table">
+            <thead><tr><th>HOST</th><th>DOMAIN</th><th>EVENTS</th><th>FATAL</th></tr></thead>
+            <tbody>
+              <tr><td style="color:#4ea6dc;">alpha-gw-04</td><td class="dom-a">ALPHA</td><td>312</td><td style="color:#e55555;">44</td></tr>
+              <tr><td style="color:#48c78e;">bravo-srv-11</td><td class="dom-b">BRAVO</td><td>308</td><td style="color:#e55555;">42</td></tr>
+              <tr><td style="color:#c9a227;">charlie-ids-B</td><td class="dom-c">CHARLIE</td><td>296</td><td style="color:#e55555;">38</td></tr>
+              <tr><td style="color:#4ea6dc;">alpha-auth-02</td><td class="dom-a">ALPHA</td><td>280</td><td style="color:#e55555;">31</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PANEL 3: Network Connection Analysis
+    ════════════════════════════════════ -->
+    <div class="dash-panel" style="background:#0d0f11;">
+      <div class="panel-header" style="background:#0a1018;border-bottom-color:#1a2a48;">
+        <span class="ph-num">03</span>
+        <span class="ph-title" style="color:#4ea6dc;">Network Connection Analysis</span>
+        <span class="ph-sub">src/dst IPs · ports · protocols</span>
+        <span class="ph-live">LIVE</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- protocol distribution -->
+        <div>
+          <div class="section-lbl">Protocol Distribution</div>
+          <div class="stat-row">
+            <div class="stat-box" style="background:#0d1a30;border:1px solid #4ea6dc30;">
+              <span class="stat-val" style="color:#4ea6dc;font-size:20px;">3,780</span>
+              <span class="stat-lbl" style="color:#4ea6dc;">TCP</span>
+              <span class="stat-sub">84.0% of traffic</span>
+            </div>
+            <div class="stat-box" style="background:#1a1808;border:1px solid #c9a22730;">
+              <span class="stat-val" style="color:#c9a227;font-size:20px;">612</span>
+              <span class="stat-lbl" style="color:#c9a227;">UDP</span>
+              <span class="stat-sub">13.6% of traffic</span>
+            </div>
+            <div class="stat-box" style="background:#1a1008;border:1px solid #f5822030;">
+              <span class="stat-val" style="color:#f58220;font-size:20px;">108</span>
+              <span class="stat-lbl" style="color:#f58220;">ICMP</span>
+              <span class="stat-sub">2.4% of traffic</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- top destination ports -->
+        <div>
+          <div class="section-lbl">Top Destination Ports</div>
+          <div class="bar-list">
+            <div class="bar-item">
+              <span class="bar-label" style="color:#48c78e;">443 HTTPS</span>
+              <div class="bar-track"><div class="bar-fill" style="width:100%;background:#48c78e;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#48c78e;">1,844</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#f58220;">445 SMB</span>
+              <div class="bar-track"><div class="bar-fill" style="width:58%;background:#f58220;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#f58220;">1,068</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#d2a8ff;">389 LDAP</span>
+              <div class="bar-track"><div class="bar-fill" style="width:38%;background:#d2a8ff;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#d2a8ff;">702</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#4ea6dc;">636 LDAPS</span>
+              <div class="bar-track"><div class="bar-fill" style="width:24%;background:#4ea6dc;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#4ea6dc;">444</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#e55555;">8443 ALT</span>
+              <div class="bar-track"><div class="bar-fill" style="width:16%;background:#e55555;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#e55555;">298</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- top external destinations -->
+        <div>
+          <div class="section-lbl">Top External Destinations</div>
+          <table class="mini-table">
+            <thead><tr><th>DST IP</th><th>PORT</th><th>HITS</th><th>RISK</th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="color:#e55555;">185.220.101.34</td>
+                <td>443</td><td>186</td>
+                <td><span class="sev sv-F">CRIT</span></td>
+              </tr>
+              <tr>
+                <td style="color:#e55555;">45.33.32.156</td>
+                <td>8443</td><td>142</td>
+                <td><span class="sev sv-E">HIGH</span></td>
+              </tr>
+              <tr>
+                <td style="color:#f58220;">91.108.4.12</td>
+                <td>443</td><td>118</td>
+                <td><span class="sev sv-E">HIGH</span></td>
+              </tr>
+              <tr>
+                <td style="color:#e5c97a;">91.108.56.10</td>
+                <td>443</td><td>96</td>
+                <td><span class="sev sv-W">MED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PANEL 4: User Behavior Analytics
+    ════════════════════════════════════ -->
+    <div class="dash-panel" style="background:#0d0f11;">
+      <div class="panel-header" style="background:#160a08;border-bottom-color:#3a1808;">
+        <span class="ph-num">04</span>
+        <span class="ph-title" style="color:#c9a227;">User Behavior Analytics</span>
+        <span class="ph-sub">48 users · 7 cross-domain · exfil actors</span>
+        <span class="ph-live">LIVE</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="stat-row">
+          <div class="stat-box" style="background:#1a1808;border:1px solid #c9a22730;">
+            <span class="stat-val" style="color:#c9a227;">48</span>
+            <span class="stat-lbl">Unique Users</span>
+          </div>
+          <div class="stat-box" style="background:#1a0808;border:1px solid #e5555530;">
+            <span class="stat-val" style="color:#e55555;">7</span>
+            <span class="stat-lbl">Cross-Domain</span>
+            <span class="stat-sub">HIGH RISK</span>
+          </div>
+          <div class="stat-box" style="background:#1a1008;border:1px solid #f5822030;">
+            <span class="stat-val" style="color:#f58220;">12</span>
+            <span class="stat-lbl">Exfil Actors</span>
+          </div>
+        </div>
+
+        <!-- top users by event count -->
+        <div>
+          <div class="section-lbl">Top Users by Event Count</div>
+          <div class="bar-list">
+            <div class="bar-item">
+              <span class="bar-label" style="color:#e55555;">svc_backup</span>
+              <div class="bar-track"><div class="bar-fill" style="width:100%;background:#e55555;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#e55555;">386</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#e55555;">usr_j.harris</span>
+              <div class="bar-track"><div class="bar-fill" style="width:78%;background:#e55555;opacity:0.5;"></div></div>
+              <span class="bar-val" style="color:#e55555;">301</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#f58220;">usr_m.okonkwo</span>
+              <div class="bar-track"><div class="bar-fill" style="width:60%;background:#f58220;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#f58220;">232</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#e5c97a;">usr_a.petrov</span>
+              <div class="bar-track"><div class="bar-fill" style="width:44%;background:#e5c97a;opacity:0.6;"></div></div>
+              <span class="bar-val" style="color:#e5c97a;">170</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label" style="color:#555a62;">svc_relay_01</span>
+              <div class="bar-track"><div class="bar-fill" style="width:32%;background:#555a62;opacity:0.7;"></div></div>
+              <span class="bar-val" style="color:#555a62;">124</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- cross-domain users -->
+        <div>
+          <div class="section-lbl">Cross-Domain Users (⚠ High Risk)</div>
+          <table class="mini-table">
+            <thead><tr><th>USER</th><th>DOMAINS</th><th>EVENTS</th><th>RISK</th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="color:#e55555;font-weight:bold;">svc_backup</td>
+                <td><span class="dom-a">α</span><span class="dom-b">β</span><span class="dom-c">γ</span></td>
+                <td>386</td>
+                <td><span class="sev sv-F">CRIT</span></td>
+              </tr>
+              <tr>
+                <td style="color:#e55555;">usr_j.harris</td>
+                <td><span class="dom-a">α</span><span class="dom-c">γ</span></td>
+                <td>301</td>
+                <td><span class="sev sv-F">CRIT</span></td>
+              </tr>
+              <tr>
+                <td style="color:#f58220;">usr_m.okonkwo</td>
+                <td><span class="dom-a">α</span><span class="dom-b">β</span></td>
+                <td>232</td>
+                <td><span class="sev sv-E">HIGH</span></td>
+              </tr>
+              <tr>
+                <td style="color:#e5c97a;">usr_a.petrov</td>
+                <td><span class="dom-b">β</span><span class="dom-c">γ</span></td>
+                <td>170</td>
+                <td><span class="sev sv-W">MED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PANEL 5: Incident Timeline
+    ════════════════════════════════════ -->
+    <div class="dash-panel" style="background:#0d0f11;">
+      <div class="panel-header" style="background:#120808;border-bottom-color:#2a1010;">
+        <span class="ph-num">05</span>
+        <span class="ph-title" style="color:#e55555;">Incident Timeline</span>
+        <span class="ph-sub">chronological FATAL + ERROR events</span>
+        <span class="ph-live">LIVE</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="stat-row">
+          <div class="stat-box" style="background:#1a0808;border:1px solid #e5555530;">
+            <span class="stat-val" style="color:#e55555;">1,512</span>
+            <span class="stat-lbl">Notable Events</span>
+            <span class="stat-sub">FATAL + ERROR</span>
+          </div>
+          <div class="stat-box" style="background:#1a1008;border:1px solid #f5822030;">
+            <span class="stat-val" style="color:#f58220;">3</span>
+            <span class="stat-lbl">Domains Affected</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-lbl">Incident Timeline — Most Recent</div>
+
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#e55555;box-shadow:0 0 4px #e55;"></div>
+            <span class="tl-ts">13:05:09.842</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#ffa657;">ExfilAttempt <span class="sev sv-F" style="font-size:7px;">FATAL</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-a">ALPHA</span> · alpha-gw-04 · <span style="color:#e55555;">svc_backup</span> → 185.220.101.34:443</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#e55555;box-shadow:0 0 4px #e55;"></div>
+            <span class="tl-ts">13:05:08.994</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#ffa657;">PrivilegeEsc <span class="sev sv-F" style="font-size:7px;">FATAL</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-b">BRAVO</span> · bravo-srv-11 · <span style="color:#e55555;">root</span> → 10.2.0.1:389</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#e55555;"></div>
+            <span class="tl-ts">13:05:08.116</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#ffa657;">ExfilAttempt <span class="sev sv-F" style="font-size:7px;">FATAL</span> <span style="font-size:7px;color:#e55555;">⚠ XDOM</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-c">CHARLIE</span> · charlie-ids-B · <span style="color:#e55555;">usr_j.harris</span> → 185.220.101.34:443</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#f58220;"></div>
+            <span class="tl-ts">13:05:07.640</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#f58220;">PolicyViolation <span class="sev sv-E" style="font-size:7px;">ERROR</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-b">BRAVO</span> · bravo-ctrl-01 · <span style="color:#79c0ff;">usr_m.okonkwo</span> → 10.2.1.1:445</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#f58220;"></div>
+            <span class="tl-ts">13:05:07.002</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#f58220;">AnomalyDetected <span class="sev sv-E" style="font-size:7px;">ERROR</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-c">CHARLIE</span> · charlie-ids-B · <span style="color:#79c0ff;">usr_l.santos</span> → 45.33.32.156:8443</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#e55555;"></div>
+            <span class="tl-ts">13:05:06.418</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#ffa657;">Authentication <span class="sev sv-F" style="font-size:7px;">FATAL</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-a">ALPHA</span> · alpha-auth-02 · <span style="color:#79c0ff;">usr_a.petrov</span> → 10.1.0.1:636</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="tl-dot" style="background:#f58220;"></div>
+            <span class="tl-ts">13:05:05.880</span>
+            <div class="tl-body">
+              <div class="tl-type" style="color:#f58220;">PrivilegeEsc <span class="sev sv-E" style="font-size:7px;">ERROR</span></div>
+              <div style="font-size:7.5px;color:#555a62;"><span class="dom-a">ALPHA</span> · alpha-ws-0044 · <span style="color:#79c0ff;">usr_m.okonkwo</span> → 10.1.0.1:389</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PANEL 6: Executive Summary
+    ════════════════════════════════════ -->
+    <div class="dash-panel" style="background:#0d0f11;">
+      <div class="panel-header" style="background:#100c08;border-bottom-color:#2a2010;">
+        <span class="ph-num">06</span>
+        <span class="ph-title" style="color:#f58220;">Executive Summary</span>
+        <span class="ph-sub">risk posture · KPIs · analyst recs</span>
+        <span class="ph-live">LIVE</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- risk posture + KPIs -->
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <!-- risk ring -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <div class="ring-area">
+              <svg class="ring-svg" viewBox="0 0 72 72">
+                <!-- background ring -->
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#1e2228" stroke-width="8"/>
+                <!-- threat rate 34% -->
+                <circle cx="36" cy="36" r="28" fill="none"
+                  stroke="#e55555" stroke-width="8"
+                  stroke-dasharray="59.7 115.9"
+                  stroke-dashoffset="29.0"
+                  stroke-linecap="round"/>
+                <!-- safe 66% -->
+                <circle cx="36" cy="36" r="28" fill="none"
+                  stroke="#264a38" stroke-width="8"
+                  stroke-dasharray="116 175.9"
+                  stroke-dashoffset="-30.7"
+                  stroke-linecap="round" opacity="0.5"/>
+              </svg>
+              <div class="ring-label">
+                <div style="font-size:14px;font-weight:bold;color:#e55555;">34%</div>
+                <div style="font-size:7px;color:#3a4048;">THREAT</div>
+              </div>
+            </div>
+            <div style="font-size:8px;font-weight:bold;padding:2px 8px;border-radius:2px;background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">CRITICAL</div>
+          </div>
+
+          <!-- KPI grid -->
+          <div class="kpi-grid" style="flex:1;">
+            <div class="kpi-box" style="background:#1a0808;border-color:#e5555530;">
+              <span class="kpi-val" style="color:#e55555;">38</span>
+              <span class="kpi-lbl" style="color:#e55555;">Correlated Alerts</span>
+            </div>
+            <div class="kpi-box" style="background:#1a0808;border-color:#e5555530;">
+              <span class="kpi-val" style="color:#e55555;">14</span>
+              <span class="kpi-lbl" style="color:#e55555;">CRITICAL Alerts</span>
+            </div>
+            <div class="kpi-box" style="background:#1a1008;border-color:#f5822030;">
+              <span class="kpi-val" style="color:#f58220;">522</span>
+              <span class="kpi-lbl" style="color:#f58220;">FATAL Events</span>
+            </div>
+            <div class="kpi-box" style="background:#1a1808;border-color:#c9a22730;">
+              <span class="kpi-val" style="color:#c9a227;">7</span>
+              <span class="kpi-lbl" style="color:#c9a227;">Cross-Dom Users</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- domain health -->
+        <div>
+          <div class="section-lbl">Domain Health</div>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:8.5px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:#48c78e;display:inline-block;"></span>
+              <span class="dom-a">ALPHA</span>
+              <span style="color:#4ea6dc;margin-left:4px;">TOP SECRET</span>
+              <span style="flex:1;"></span>
+              <span style="color:#e55555;">174 FATAL</span>
+              <span style="color:#48c78e;margin-left:8px;font-size:7.5px;">ONLINE</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:8.5px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:#48c78e;display:inline-block;"></span>
+              <span class="dom-b">BRAVO</span>
+              <span style="color:#48c78e;margin-left:4px;">SECRET</span>
+              <span style="flex:1;"></span>
+              <span style="color:#e55555;">176 FATAL</span>
+              <span style="color:#48c78e;margin-left:8px;font-size:7.5px;">ONLINE</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:8.5px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:#48c78e;display:inline-block;"></span>
+              <span class="dom-c">CHARLIE</span>
+              <span style="color:#c9a227;margin-left:4px;">CONFIDENTIAL</span>
+              <span style="flex:1;"></span>
+              <span style="color:#e55555;">172 FATAL</span>
+              <span style="color:#48c78e;margin-left:8px;font-size:7.5px;">ONLINE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- analyst recommendations -->
+        <div>
+          <div class="section-lbl">Analyst Recommendations</div>
+          <div class="rec-item">
+            <span class="rec-icon" style="color:#e55555;">⚠</span>
+            <span>Investigate <strong style="color:#e55555;">svc_backup</strong> — active across all 3 domains; 386 events, 14 correlated CRITICAL alerts</span>
+          </div>
+          <div class="rec-item">
+            <span class="rec-icon" style="color:#e55555;">⚠</span>
+            <span>Block egress to <strong style="color:#e55555;">185.220.101.34</strong> — 186 ExfilAttempt connections detected, CRITICAL exfil risk</span>
+          </div>
+          <div class="rec-item">
+            <span class="rec-icon" style="color:#f58220;">!</span>
+            <span>Review 384 ExfilAttempt events — validate data-loss controls and DLP policies on all boundary interfaces</span>
+          </div>
+          <div class="rec-item">
+            <span class="rec-icon" style="color:#e5c97a;">·</span>
+            <span>Audit 7 cross-domain user accounts — <strong style="color:#e55555;">usr_j.harris</strong>, <strong style="color:#f58220;">usr_m.okonkwo</strong> show coordinated patterns</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /dashboard-grid -->
+</div><!-- /app-chrome -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>
