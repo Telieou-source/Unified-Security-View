@@ -138,3 +138,9 @@ id = "Oi9jn2Ics7V-QLUOqB8cM"
 uri = "file://screenshots/Figure2_EventGeneratorLive.jpg"
 type = "image"
 title = "Figure 2 — DomainEventGenerator live output: 10 events from Alpha · Bravo · Charlie at 5 evt/s, all 14 RawEvent fields per record, rawPacketBytes highlighted ▶ STRIP on every row, cross-domain user flag on #4492, field-disposition sidebar (10× PASS · 1× STRIP)"
+
+[[outputs]]
+id = "kDxOUmfG5vdOMXnd30pAf"
+uri = "file://screenshots/Figure3_CrossDomainGuard.jpg"
+type = "image"
+title = "Figure 3 — CrossDomainGuard post-run report: IN = OUT = STRIP = 900 · 5 evt/s/domain × 3 domains × 60 s · 300 per domain · 100% strip yield · 0 violations · 60-second cumulative timeline · per-domain breakdown table"
