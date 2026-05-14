@@ -114,3 +114,9 @@ id = "na9zNZ2CQb482wyeiu7U8"
 uri = "file://screenshots/Figure9_ConfidenceBarChart.jpg"
 type = "image"
 title = "Figure 9 — Correlation confidence scores for all 12 validated cross-domain ExfilAttempt alert pairs (0.82–0.95), dashed threshold line at 0.75, mean μ = 0.878, four-factor weight breakdown table"
+
+[[outputs]]
+id = "pbtIJDN4jGJtgY9oaZ3ex"
+uri = "file://screenshots/CodeExcerpt5_CloneInstall.jpg"
+type = "image"
+title = "Code Excerpt 5 — git clone · cd · pnpm install · pnpm run dev — dev server starts at http://localhost:5173 · annotated terminal with simulated output and summary metadata"
