@@ -112,6 +112,49 @@ export function sanitizeEvent(raw: RawEvent): SanitizedEvent {
 
 const correlationCooldown: Map<string, number> = new Map();
 
+/** CorrelationEngine — four-factor weighted confidence scorer.
+ *
+ *  Factor                     Weight  Condition
+ *  ─────────────────────────  ──────  ──────────────────────────────────────────
+ *  Shared user identity        0.40   newEvent.userId present in ≥1 match
+ *  Matching event type         0.30   newEvent.type  present in ≥1 match
+ *  Destination subnet overlap  0.20   dstIp /16 prefix differs (cross-domain target)
+ *  Temporal proximity bonus    0.10   linear decay over the 10 000 ms window
+ *
+ *  Final score is capped at 1.0 to remain a valid probability. */
+export function computeConfidence(
+  newEvent: SanitizedEvent,
+  matches:  SanitizedEvent[],
+  windowMs: number = 10_000
+): number {
+  let score = 0;
+
+  // ① Shared user identity — weight 0.40
+  const sharedUser = matches.some((e) => e.userId === newEvent.userId);
+  if (sharedUser) score += 0.40;
+
+  // ② Matching event type — weight 0.30
+  const typeMatch = matches.some((e) => e.type === newEvent.type);
+  if (typeMatch) score += 0.30;
+
+  // ③ Destination subnet overlap — weight 0.20
+  //    Subnets differ by design (cross-domain), but converge on the same /16 gateway class
+  const newSubnet = newEvent.dstIp.split(".").slice(0, 2).join(".");
+  const subnetMatch = matches.some((e) => {
+    const mSubnet = e.dstIp.split(".").slice(0, 2).join(".");
+    return mSubnet !== newSubnet;           // cross-domain, same target address class
+  });
+  if (subnetMatch) score += 0.20;
+
+  // ④ Temporal proximity bonus — up to 0.10 (linear decay toward window edge)
+  const now = Date.now();
+  const minDeltaMs = Math.min(...matches.map((e) => Math.abs(now - e.timestamp)));
+  const temporalBonus = Math.max(0, 0.10 * (1 - minDeltaMs / windowMs));
+  score += temporalBonus;
+
+  return Math.min(1.0, score);              // cap at 1.0
+}
+
 const RULE_IDS: Record<EventType, string> = {
   Authentication:  "XDOM-AUTH-001",
   FileAccess:      "XDOM-FILE-002",
@@ -141,7 +184,7 @@ export function tryCorrelate(
 
   correlationCooldown.set(cooldownKey, now);
 
-  const confidence = Math.min(97, 50 + uniqueDomains.length * 18 + Math.min(domainMatches.length * 3, 15));
+  const confidence = Math.round(computeConfidence(newEvent, domainMatches, windowMs) * 100);
 
   const alertTypes: CorrelatedAlert["type"][] = [
     "CORRELATED_THREAT", "PATTERN_MATCH", "CROSS_DOMAIN_ANOMALY", "SYNCHRONIZED_ACTIVITY",
