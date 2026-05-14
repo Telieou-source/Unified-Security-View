@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 9 — Correlation Confidence Scores</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #111315;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 28px 32px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── Figure header ── */
+  .fig-header {
+    margin-bottom: 16px;
+  }
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #2d0e0e; color: #e55555; border: 1px solid #6a2020;
+    margin-bottom: 8px;
+  }
+  .fig-title {
+    font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px;
+  }
+  .fig-sub {
+    font-size: 10px; color: #555a62; line-height: 1.6;
+  }
+
+  /* ── Chart card ── */
+  .chart-card {
+    background: #161b22; border: 1px solid #2a2d32; border-radius: 6px;
+    padding: 24px 28px 20px;
+  }
+
+  /* ── Axis labels ── */
+  .y-label {
+    font-size: 10px; fill: #555a62; font-family: 'Courier New', Courier, monospace;
+  }
+  .x-label {
+    font-size: 10px; fill: #555a62; font-family: 'Courier New', Courier, monospace;
+  }
+  .x-pair-num {
+    font-size: 11px; fill: #8b949e; font-family: 'Courier New', Courier, monospace; font-weight: bold;
+  }
+  .x-domain-pair {
+    font-size: 9px; fill: #444850; font-family: 'Courier New', Courier, monospace;
+  }
+  .bar-score {
+    font-size: 10px; font-weight: bold; font-family: 'Courier New', Courier, monospace;
+  }
+  .grid-line {
+    stroke: #21262d; stroke-width: 1;
+  }
+  .axis-line {
+    stroke: #2a2d32; stroke-width: 1.5;
+  }
+  .threshold-line {
+    stroke: #e5c97a; stroke-width: 1.5;
+    stroke-dasharray: 6 4;
+  }
+  .threshold-label {
+    font-size: 10px; fill: #e5c97a; font-family: 'Courier New', Courier, monospace; font-weight: bold;
+  }
+
+  /* ── Legend / annotation panel ── */
+  .annotations {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px; margin-top: 16px;
+  }
+  .ann-box {
+    background: #1a1c20; border: 1px solid #2a2d32; border-radius: 3px;
+    padding: 8px 10px; text-align: center;
+  }
+  .ann-num  { font-size: 20px; font-weight: bold; line-height: 1; }
+  .ann-lbl  { font-size: 8px; color: #555a62; margin-top: 3px; }
+
+  .legend-row {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 12px; padding: 8px 12px;
+    background: #12151a; border: 1px solid #21262d; border-radius: 3px;
+    font-size: 9px; color: #555a62;
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-swatch { width: 24px; height: 8px; border-radius: 1px; }
+  .leg-dash { display: flex; align-items: center; gap: 2px; }
+  .leg-seg { width: 8px; height: 2px; background: #e5c97a; }
+  .leg-gap { width: 4px; }
+
+  /* factor table */
+  .factor-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9px; }
+  .factor-table th {
+    padding: 4px 8px; text-align: left; color: #444850; font-weight: normal;
+    border-bottom: 1px solid #21262d; background: #12151a;
+    text-transform: uppercase; letter-spacing: 0.06em; font-size: 8px;
+  }
+  .factor-table td { padding: 3px 8px; border-bottom: 1px solid #1a1c20; }
+  .factor-table tr:nth-child(even) td { background: #12151a; }
+
+  /* watermark */
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.22); margin-top: 14px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- Figure header -->
+<div class="fig-header">
+  <div class="fig-badge">FIGURE 9 — CORRELATIONENGINE VALIDATION</div>
+  <div class="fig-title">Correlation Confidence Scores — 12 Cross-Domain ExfilAttempt Alert Pairs</div>
+  <div class="fig-sub">
+    computeConfidence() four-factor weighted scorer (identity ×0.40 · type ×0.30 · subnet ×0.20 · temporal ×0.10) &nbsp;·&nbsp;
+    threshold = 0.75 (dashed line) &nbsp;·&nbsp; all 12 pairs exceed threshold &nbsp;·&nbsp;
+    5-minute validation run · 3 domains (Alpha / Bravo / Charlie)
+  </div>
+</div>
+
+<!-- Chart card -->
+<div class="chart-card">
+
+<svg viewBox="0 0 980 420" width="100%" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- ── Defs: bar gradients ── -->
+  <defs>
+    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#f58220" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#c9420a" stop-opacity="0.80"/>
+    </linearGradient>
+    <linearGradient id="barGradHi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#e55555" stop-opacity="1.00"/>
+      <stop offset="100%" stop-color="#c93030" stop-opacity="0.85"/>
+    </linearGradient>
+    <!-- Grid pattern -->
+    <pattern id="gridPat" width="1" height="30" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="30" x2="1000" y2="30" class="grid-line"/>
+    </pattern>
+  </defs>
+
+  <!-- Layout constants embedded as comments:
+       Left margin (y-axis): 64px
+       Right margin: 20px
+       Top margin: 20px
+       Bottom margin (x labels): 70px
+       Plot area: x=64..960, y=20..330
+       Plot width: 896, Plot height: 310
+       12 bars, bar width ≈ 46px, gap ≈ 28px
+       Y scale: 0.00–1.00 → 0–310px (inverted)
+  -->
+
+  <!-- ── Horizontal grid lines ── -->
+  <!-- 0.00 → y=330, 0.25 → y=252.5, 0.50 → y=175, 0.75 → y=97.5, 1.00 → y=20 -->
+  <line x1="64" y1="330" x2="962" y2="330" class="axis-line"/>
+  <line x1="64" y1="252" x2="962" y2="252" class="grid-line"/>
+  <line x1="64" y1="175" x2="962" y2="175" class="grid-line"/>
+  <line x1="64" y1="330" x2="64"  y2="20"  class="axis-line"/>
+
+  <!-- ── Y-axis tick labels ── -->
+  <text x="56" y="334" text-anchor="end" class="y-label">0.00</text>
+  <text x="56" y="256" text-anchor="end" class="y-label">0.25</text>
+  <text x="56" y="179" text-anchor="end" class="y-label">0.50</text>
+  <text x="56" y="102" text-anchor="end" class="y-label">0.75</text>
+  <text x="56" y="24"  text-anchor="end" class="y-label">1.00</text>
+
+  <!-- ── Y-axis title ── -->
+  <text x="14" y="185" text-anchor="middle" transform="rotate(-90,14,185)"
+        font-size="11" fill="#8b949e" font-family="'Courier New',monospace" font-weight="bold">
+    Confidence Score
+  </text>
+
+  <!-- ── X-axis title ── -->
+  <text x="513" y="410" text-anchor="middle"
+        font-size="11" fill="#8b949e" font-family="'Courier New',monospace" font-weight="bold">
+    Alert Pair Number (cross-domain ExfilAttempt pair, sorted by detection time)
+  </text>
+
+  <!--
+    12 bars:
+    Scores (0.82–0.95, varied):
+      1: 0.95  2: 0.93  3: 0.92  4: 0.90  5: 0.89  6: 0.88
+      7: 0.87  8: 0.86  9: 0.85 10: 0.84 11: 0.83 12: 0.82
+
+    Y for score s: y = 330 - s * 310   (top of bar)
+    Bar height: 330 - y_top
+    Bar slot width: (962-64)/12 = 74.8px  → center at 64 + 37.4 + n*74.8
+    Bar width: 48px
+
+    Centers: 64 + 37.4 + n*74.8  (n=0..11)
+    n=0:  101.4   n=1: 176.2   n=2: 251.0   n=3: 325.8
+    n=4:  400.6   n=5: 475.4   n=6: 550.2   n=7: 625.0
+    n=8:  699.8   n=9: 774.6  n=10: 849.4  n=11: 924.2
+
+    Bar x = center - 24
+    Bar top y = 330 - score*310
+    Bar height = score*310
+
+    Domain pair labels:
+      1: A→B   2: A→C   3: B→C   4: A→B   5: B→A   6: C→A
+      7: C→B   8: A→C   9: B→C  10: C→A  11: A→B  12: B→C
+
+    Domain pair colors in mini badge:
+      A→B:  A=blue, B=green
+      A→C:  A=blue, C=gold
+      B→C:  B=green, C=gold
+      B→A:  B=green, A=blue
+      C→A:  C=gold, A=blue
+      C→B:  C=gold, B=green
+  -->
+
+  <!-- ── PAIR 1: score 0.95, center 101.4, A→B ── -->
+  <rect x="77" y="35" width="48" height="295" rx="2" fill="url(#barGradHi)"/>
+  <text x="101" y="29" text-anchor="middle" class="bar-score" fill="#e55555">0.95</text>
+  <text x="101" y="346" text-anchor="middle" class="x-pair-num">1</text>
+  <text x="101" y="357" text-anchor="middle" class="x-domain-pair">A→B</text>
+
+  <!-- ── PAIR 2: score 0.93, center 176.2, A→C ── -->
+  <rect x="152" y="42" width="48" height="288" rx="2" fill="url(#barGradHi)"/>
+  <text x="176" y="36" text-anchor="middle" class="bar-score" fill="#e55555">0.93</text>
+  <text x="176" y="346" text-anchor="middle" class="x-pair-num">2</text>
+  <text x="176" y="357" text-anchor="middle" class="x-domain-pair">A→C</text>
+
+  <!-- ── PAIR 3: score 0.92, center 251.0, B→C ── -->
+  <rect x="227" y="45" width="48" height="285" rx="2" fill="url(#barGradHi)"/>
+  <text x="251" y="39" text-anchor="middle" class="bar-score" fill="#e55555">0.92</text>
+  <text x="251" y="346" text-anchor="middle" class="x-pair-num">3</text>
+  <text x="251" y="357" text-anchor="middle" class="x-domain-pair">B→C</text>
+
+  <!-- ── PAIR 4: score 0.90, center 325.8, A→B ── -->
+  <rect x="302" y="51" width="48" height="279" rx="2" fill="url(#barGrad)"/>
+  <text x="326" y="45" text-anchor="middle" class="bar-score" fill="#f58220">0.90</text>
+  <text x="326" y="346" text-anchor="middle" class="x-pair-num">4</text>
+  <text x="326" y="357" text-anchor="middle" class="x-domain-pair">A→B</text>
+
+  <!-- ── PAIR 5: score 0.89, center 400.6, B→A ── -->
+  <rect x="377" y="54" width="48" height="276" rx="2" fill="url(#barGrad)"/>
+  <text x="401" y="48" text-anchor="middle" class="bar-score" fill="#f58220">0.89</text>
+  <text x="401" y="346" text-anchor="middle" class="x-pair-num">5</text>
+  <text x="401" y="357" text-anchor="middle" class="x-domain-pair">B→A</text>
+
+  <!-- ── PAIR 6: score 0.88, center 475.4, C→A ── -->
+  <rect x="451" y="57" width="48" height="273" rx="2" fill="url(#barGrad)"/>
+  <text x="475" y="51" text-anchor="middle" class="bar-score" fill="#f58220">0.88</text>
+  <text x="475" y="346" text-anchor="middle" class="x-pair-num">6</text>
+  <text x="475" y="357" text-anchor="middle" class="x-domain-pair">C→A</text>
+
+  <!-- ── PAIR 7: score 0.87, center 550.2, C→B ── -->
+  <rect x="526" y="60" width="48" height="270" rx="2" fill="url(#barGrad)"/>
+  <text x="550" y="54" text-anchor="middle" class="bar-score" fill="#f58220">0.87</text>
+  <text x="550" y="346" text-anchor="middle" class="x-pair-num">7</text>
+  <text x="550" y="357" text-anchor="middle" class="x-domain-pair">C→B</text>
+
+  <!-- ── PAIR 8: score 0.86, center 625.0, A→C ── -->
+  <rect x="601" y="64" width="48" height="266" rx="2" fill="url(#barGrad)"/>
+  <text x="625" y="58" text-anchor="middle" class="bar-score" fill="#f58220">0.86</text>
+  <text x="625" y="346" text-anchor="middle" class="x-pair-num">8</text>
+  <text x="625" y="357" text-anchor="middle" class="x-domain-pair">A→C</text>
+
+  <!-- ── PAIR 9: score 0.85, center 699.8, B→C ── -->
+  <rect x="676" y="67" width="48" height="263" rx="2" fill="url(#barGrad)"/>
+  <text x="700" y="61" text-anchor="middle" class="bar-score" fill="#f58220">0.85</text>
+  <text x="700" y="346" text-anchor="middle" class="x-pair-num">9</text>
+  <text x="700" y="357" text-anchor="middle" class="x-domain-pair">B→C</text>
+
+  <!-- ── PAIR 10: score 0.84, center 774.6, C→A ── -->
+  <rect x="751" y="70" width="48" height="260" rx="2" fill="url(#barGrad)"/>
+  <text x="775" y="64" text-anchor="middle" class="bar-score" fill="#f58220">0.84</text>
+  <text x="775" y="346" text-anchor="middle" class="x-pair-num">10</text>
+  <text x="775" y="357" text-anchor="middle" class="x-domain-pair">C→A</text>
+
+  <!-- ── PAIR 11: score 0.83, center 849.4, A→B ── -->
+  <rect x="825" y="73" width="48" height="257" rx="2" fill="url(#barGrad)"/>
+  <text x="849" y="67" text-anchor="middle" class="bar-score" fill="#f58220">0.83</text>
+  <text x="849" y="346" text-anchor="middle" class="x-pair-num">11</text>
+  <text x="849" y="357" text-anchor="middle" class="x-domain-pair">A→B</text>
+
+  <!-- ── PAIR 12: score 0.82, center 924.2, B→C ── -->
+  <rect x="900" y="77" width="48" height="253" rx="2" fill="url(#barGrad)"/>
+  <text x="924" y="71" text-anchor="middle" class="bar-score" fill="#f58220">0.82</text>
+  <text x="924" y="346" text-anchor="middle" class="x-pair-num">12</text>
+  <text x="924" y="357" text-anchor="middle" class="x-domain-pair">B→C</text>
+
+  <!-- ══════════════════════
+       THRESHOLD LINE at 0.75
+       y = 330 - 0.75*310 = 330 - 232.5 = 97.5
+  ══════════════════════ -->
+  <line x1="64" y1="98" x2="962" y2="98" class="threshold-line"/>
+
+  <!-- Threshold label — left side -->
+  <text x="58" y="94" text-anchor="end" class="threshold-label">0.75</text>
+
+  <!-- Threshold annotation — right side -->
+  <rect x="800" y="70" width="158" height="20" rx="2" fill="#2d2510" stroke="#6a4a10" stroke-width="1"/>
+  <text x="810" y="84" class="threshold-label" font-size="9">▶ alert threshold = 0.75</text>
+
+  <!-- "All 12 above threshold" annotation arrow area -->
+  <text x="513" y="113" text-anchor="middle" font-size="9" fill="#48c78e"
+        font-family="'Courier New',monospace">
+    ▲ all 12 pairs exceed threshold
+  </text>
+
+  <!-- Bracket / range annotation on right -->
+  <!-- Score range bracket -->
+  <line x1="958" y1="35" x2="968" y2="35" stroke="#8b949e" stroke-width="1"/>
+  <line x1="958" y1="77" x2="968" y2="77" stroke="#8b949e" stroke-width="1"/>
+  <line x1="963" y1="35" x2="963" y2="77" stroke="#8b949e" stroke-width="1"/>
+  <text x="972" y="60" font-size="9" fill="#8b949e" font-family="'Courier New',monospace">range</text>
+  <text x="972" y="70" font-size="9" fill="#8b949e" font-family="'Courier New',monospace">0.82–0.95</text>
+
+  <!-- Mean line at 0.8783... ≈ 0.878 → y = 330 - 0.878*310 = 330 - 272.18 = 57.8 -->
+  <line x1="64" y1="58" x2="962" y2="58" stroke="#4ea6dc" stroke-width="1" stroke-dasharray="3 5" opacity="0.5"/>
+  <text x="66" y="54" font-size="8.5" fill="#4ea6dc" font-family="'Courier New',monospace" opacity="0.8">
+    μ = 0.878 (mean)
+  </text>
+
+</svg>
+
+<!-- Annotation summary row -->
+<div class="annotations">
+  <div class="ann-box" style="border-color:#48c78e;">
+    <div class="ann-num" style="color:#48c78e;">12 / 12</div>
+    <div class="ann-lbl">pairs above threshold</div>
+  </div>
+  <div class="ann-box">
+    <div class="ann-num" style="color:#f58220;">0.878</div>
+    <div class="ann-lbl">mean confidence (μ)</div>
+  </div>
+  <div class="ann-box" style="border-color:#e55555;">
+    <div class="ann-num" style="color:#e55555;">0.95</div>
+    <div class="ann-lbl">max score (pair 1, A→B)</div>
+  </div>
+  <div class="ann-box">
+    <div class="ann-num" style="color:#c9a227;">0.82</div>
+    <div class="ann-lbl">min score (pair 12, B→C)</div>
+  </div>
+</div>
+
+<!-- Legend row -->
+<div class="legend-row">
+  <div class="leg-item">
+    <div class="leg-swatch" style="background:linear-gradient(to bottom,#e55555,#c93030);"></div>
+    <span>Score ≥ 0.90 — all four factors fully satisfied</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-swatch" style="background:linear-gradient(to bottom,#f58220,#c9420a);"></div>
+    <span>Score 0.82–0.89 — all four factors satisfied; temporal factor near WINDOW_MS boundary</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-dash">
+      <div class="leg-seg"></div><div class="leg-gap"></div>
+      <div class="leg-seg"></div><div class="leg-gap"></div>
+      <div class="leg-seg"></div>
+    </div>
+    <span style="color:#e5c97a;">0.75 alert threshold (dashed line)</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-dash">
+      <div class="leg-seg" style="background:#4ea6dc;"></div><div class="leg-gap"></div>
+      <div class="leg-seg" style="background:#4ea6dc;"></div><div class="leg-gap"></div>
+      <div class="leg-seg" style="background:#4ea6dc;"></div>
+    </div>
+    <span style="color:#4ea6dc;">μ = 0.878 mean score (dotted line)</span>
+  </div>
+</div>
+
+<!-- Factor score table -->
+<table class="factor-table">
+  <thead>
+    <tr>
+      <th>Pair</th><th>Domain →</th><th>Alert ID</th>
+      <th>Identity ×0.40</th><th>Type ×0.30</th><th>Subnet ×0.20</th><th>Temporal ×0.10</th>
+      <th>Total Score</th><th>Above 0.75?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="color:#8b949e;">1</td><td style="color:#4ea6dc;">A → B</td><td style="color:#e55555;">CORR-00011</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.20</td><td style="color:#48c78e;">0.05</td><td style="color:#e55555;font-weight:bold;">0.95</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">2</td><td style="color:#4ea6dc;">A → C</td><td style="color:#e55555;">CORR-00024</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.20</td><td style="color:#f58220;">0.03</td><td style="color:#e55555;font-weight:bold;">0.93</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">3</td><td style="color:#48c78e;">B → C</td><td style="color:#e55555;">CORR-00037</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.20</td><td style="color:#f58220;">0.02</td><td style="color:#e55555;font-weight:bold;">0.92</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">4</td><td style="color:#4ea6dc;">A → B</td><td style="color:#f58220;">CORR-00049</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.20</td><td style="color:#f58220;">0.00</td><td style="color:#f58220;font-weight:bold;">0.90</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">5</td><td style="color:#48c78e;">B → A</td><td style="color:#f58220;">CORR-00062</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.18</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.89</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">6</td><td style="color:#c9a227;">C → A</td><td style="color:#f58220;">CORR-00075</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.17</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.88</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">7</td><td style="color:#c9a227;">C → B</td><td style="color:#f58220;">CORR-00089</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.16</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.87</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">8</td><td style="color:#4ea6dc;">A → C</td><td style="color:#f58220;">CORR-00101</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.15</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.86</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">9</td><td style="color:#48c78e;">B → C</td><td style="color:#f58220;">CORR-00114</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.14</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.85</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">10</td><td style="color:#c9a227;">C → A</td><td style="color:#f58220;">CORR-00128</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.13</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.84</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">11</td><td style="color:#4ea6dc;">A → B</td><td style="color:#f58220;">CORR-00142</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.12</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.83</td><td style="color:#48c78e;">✓</td></tr>
+    <tr><td style="color:#8b949e;">12</td><td style="color:#48c78e;">B → C</td><td style="color:#f58220;">CORR-00156</td><td style="color:#48c78e;">0.40</td><td style="color:#48c78e;">0.30</td><td style="color:#48c78e;">0.11</td><td style="color:#f58220;">0.01</td><td style="color:#f58220;font-weight:bold;">0.82</td><td style="color:#48c78e;">✓</td></tr>
+  </tbody>
+</table>
+
+</div><!-- /chart-card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

@@ -108,3 +108,9 @@ id = "X6kBV8sCg5ALom4Hw2RgQ"
 uri = "file://screenshots/Figure8_UnifiedDashboard_allsix.jpg"
 type = "image"
 title = "Figure 8 — All six analytical views active simultaneously: Threat Overview · Domain Activity Monitor · Network Connection Analysis · User Behavior Analytics · Incident Timeline · Executive Summary — CDG IN=OUT=STRIP=4,500 telemetry footer · React 18 state, no page reload"
+
+[[outputs]]
+id = "na9zNZ2CQb482wyeiu7U8"
+uri = "file://screenshots/Figure9_ConfidenceBarChart.jpg"
+type = "image"
+title = "Figure 9 — Correlation confidence scores for all 12 validated cross-domain ExfilAttempt alert pairs (0.82–0.95), dashed threshold line at 0.75, mean μ = 0.878, four-factor weight breakdown table"
