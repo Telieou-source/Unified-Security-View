@@ -96,3 +96,9 @@ id = "Vq6we_gW5YLLtqrFQmEcM"
 uri = "file://screenshots/Figure6_HealthMonitor_60s.jpg"
 type = "image"
 title = "Figure 6 — HealthMonitor after 60-second run: 15 evt/s aggregate throughput · IN = OUT = STRIP = 900 guard invariant confirmed · sanitizeEvent() audit trail showing guardId + sanitizationTimestamp on every event"
+
+[[outputs]]
+id = "WIExpNcV6_wGlhAKAue-Z"
+uri = "file://screenshots/Figure7_CorrelationLog_validation.jpg"
+type = "image"
+title = "Figure 7 — CorrelationEngine 5-minute validation run: 12/12 cross-domain ExfilAttempt pairs detected · confidence range 0.77–0.94 (threshold 0.75) · 0 same-domain false positives · subnet guard 100% effective"
