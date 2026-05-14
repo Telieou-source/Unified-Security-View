@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 4 — CorrelationEngine Alert Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 26px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 10px;
+  }
+  .fig-title { font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px; }
+  .fig-sub   { font-size: 10px; color: #555a62; line-height: 1.6; margin-bottom: 16px; }
+
+  /* outer wrapper */
+  .outer {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  /* ── engine status bar ── */
+  .engine-bar {
+    background: #111315; border: 1px solid #21262d; border-radius: 4px;
+    padding: 8px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .eng-name { font-size: 11px; font-weight: bold; color: #48c78e; }
+  .eng-sep  { width: 1px; height: 20px; background: #21262d; }
+  .eng-stat { display: flex; flex-direction: column; gap: 1px; align-items: center; }
+  .eng-stat-val { font-size: 11px; font-weight: bold; }
+  .eng-stat-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.07em; }
+  .eng-badge { font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 2px; }
+  .pulse { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+
+  /* ── alert card ── */
+  .alert-card {
+    background: #140808; border: 1.5px solid #e5555560; border-radius: 6px;
+    overflow: hidden;
+  }
+
+  /* alert header */
+  .alert-header {
+    background: #1e0808; border-bottom: 1px solid #3a1010;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .ah-crit {
+    font-size: 10px; font-weight: bold; padding: 3px 10px; border-radius: 2px;
+    background: #e55555; color: #fff; letter-spacing: 0.07em;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ah-type {
+    font-size: 10px; font-weight: bold; color: #e55555; letter-spacing: 0.05em;
+  }
+  .ah-id   { font-size: 9px; color: #6a3030; flex: 1; }
+  .ah-ts   { font-size: 9px; color: #8b949e; flex-shrink: 0; }
+  .ah-domains {
+    display: flex; gap: 5px; flex-shrink: 0;
+  }
+  .dom-pill {
+    font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* summary strip */
+  .alert-summary {
+    background: #180a0a; border-bottom: 1px solid #2a1010;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .as-icon { font-size: 16px; }
+  .as-text { font-size: 11px; color: #c8d0d8; font-weight: bold; flex: 1; }
+  .as-conf {
+    font-size: 10px; font-weight: bold; padding: 3px 12px; border-radius: 2px;
+    background: #2d0e0e; border: 1px solid #6a2020; color: #e55555;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .conf-big { font-size: 20px; font-weight: bold; color: #e55555; }
+
+  /* body: two events + scoring */
+  .alert-body {
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 14px;
+  }
+
+  /* section labels */
+  .sect-lbl {
+    font-size: 8.5px; color: #3a4048; text-transform: uppercase;
+    letter-spacing: 0.09em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sect-lbl::after { content:''; flex:1; height:1px; background:#1e2228; }
+
+  /* matched events grid */
+  .events-grid {
+    display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; align-items: start;
+  }
+  .event-card {
+    border-radius: 3px; border: 1px solid; overflow: hidden;
+  }
+  .ec-head {
+    padding: 5px 10px; font-size: 9px;
+    display: flex; align-items: center; gap: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .ec-fields {
+    padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px;
+  }
+  .ec-fld { display: flex; flex-direction: column; gap: 1px; }
+  .ec-key { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+  .ec-val { font-size: 9px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* matched fields highlights */
+  .ec-match-row {
+    padding: 5px 10px; background: rgba(255,255,255,0.025);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .mf-lbl { font-size: 7.5px; color: #264a38; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+  .mf-row { display: flex; align-items: center; gap: 5px; font-size: 8.5px; }
+  .mf-check { color: #48c78e; font-size: 10px; }
+  .mf-field { color: #48c78e; }
+  .mf-val   { color: #8b949e; }
+
+  /* connector arrow in middle */
+  .event-connector {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 8px 0; gap: 4px;
+  }
+  .conn-delta {
+    font-size: 8px; color: #3a4048; text-align: center; line-height: 1.5;
+    writing-mode: vertical-lr; transform: rotate(180deg);
+    white-space: nowrap;
+  }
+  .conn-arrow { font-size: 14px; color: #3a4048; }
+
+  /* ── confidence scoring ── */
+  .scoring-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr) 1px 200px; gap: 0;
+    background: #0f1318; border: 1px solid #1e2228; border-radius: 3px; overflow: hidden;
+  }
+  .score-factor {
+    padding: 10px 12px; border-right: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .sf-label { font-size: 8px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.08em; }
+  .sf-weight { font-size: 9px; color: #555a62; }
+  .sf-match  { font-size: 8.5px; margin-top: 2px; }
+  .sf-contrib-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .sf-track { flex: 1; height: 6px; background: #1a1c20; border-radius: 1px; overflow: hidden; }
+  .sf-fill  { height: 6px; border-radius: 1px; }
+  .sf-score { font-size: 13px; font-weight: bold; margin-top: 4px; }
+
+  .score-sep  { background: #1e2228; }
+
+  .score-total {
+    padding: 10px 14px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    background: #1a0a0a;
+  }
+  .st-label { font-size: 8px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.08em; }
+  .st-formula { font-size: 9px; color: #444850; margin-top: 2px; }
+  .st-num { font-size: 36px; font-weight: bold; color: #e55555; line-height: 1; }
+  .st-threshold { font-size: 8px; color: #555a62; margin-top: 2px; }
+  .st-verdict {
+    font-size: 9px; font-weight: bold; padding: 2px 10px; border-radius: 2px;
+    margin-top: 4px; background: #2d0e0e; color: #e55555; border: 1px solid #6a2020;
+  }
+
+  /* ── temporal delta detail ── */
+  .temporal-row {
+    background: #0f1318; border: 1px solid #1e2228; border-radius: 3px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 0;
+  }
+  .tr-block { display: flex; flex-direction: column; gap: 2px; padding: 0 16px; }
+  .tr-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.07em; }
+  .tr-val { font-size: 13px; font-weight: bold; }
+  .tr-sep { width: 1px; height: 32px; background: #1e2228; }
+  .tr-timeline {
+    flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .tr-bar-row { position: relative; height: 14px; background: #1a1c20; border-radius: 2px; overflow: visible; }
+  .tr-bar-a { position: absolute; left: 0; top: 0; height: 100%; border-radius: 2px; }
+  .tr-bar-b { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+  .tr-delta-span { position: absolute; top: 0; height: 100%; border: 1px dashed; }
+  .tr-bar-labels { display: flex; justify-content: space-between; font-size: 7.5px; color: #3a4048; }
+  .tr-window-label { font-size: 7.5px; color: #3a4048; text-align: right; }
+
+  /* ── alert metadata footer ── */
+  .alert-footer {
+    background: #0f1318; border-top: 1px solid #1e2228;
+    padding: 8px 16px; display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  .af-item { display: flex; gap: 6px; align-items: baseline; }
+  .af-key { font-size: 8px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.07em; }
+  .af-val { font-size: 9px; color: #8b949e; font-weight: bold; }
+
+  .sev-badge { font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 2px; }
+  .sv-FATAL { background: #2d0e0e; color: #e55555; }
+  .dom-a { color: #4ea6dc; }
+  .dom-b { color: #48c78e; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 14px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">FIGURE 4 — CORRELATION ENGINE ALERT PANEL</div>
+<div class="fig-title">CorrelationEngine — CRITICAL Alert: Coordinated ExfilAttempt Across Domains Alpha &amp; Bravo</div>
+<div class="fig-sub">
+  computeConfidence() four-factor score: identity ×0.40 + event type ×0.30 + subnet ×0.20 + temporal ×0.10 &nbsp;·&nbsp;
+  shared user <strong style="color:#e55555;">svc_backup</strong> detected across classification boundary &nbsp;·&nbsp;
+  confidence <strong style="color:#e55555;">0.91</strong> &gt; threshold 0.75 &nbsp;·&nbsp; temporal delta <strong style="color:#f58220;">3.2 s</strong> within 30 s window
+</div>
+
+<div class="outer">
+
+  <!-- engine status bar -->
+  <div class="engine-bar">
+    <span class="eng-name">CorrelationEngine</span>
+    <div class="eng-sep"></div>
+    <div class="eng-stat">
+      <span class="eng-stat-val" style="color:#48c78e;">ACTIVE</span>
+      <span class="eng-stat-lbl">State</span>
+    </div>
+    <div class="eng-sep"></div>
+    <div class="eng-stat">
+      <span class="eng-stat-val" style="color:#f58220;">38</span>
+      <span class="eng-stat-lbl">Total Alerts</span>
+    </div>
+    <div class="eng-sep"></div>
+    <div class="eng-stat">
+      <span class="eng-stat-val" style="color:#e55555;">14</span>
+      <span class="eng-stat-lbl">CRITICAL</span>
+    </div>
+    <div class="eng-sep"></div>
+    <div class="eng-stat">
+      <span class="eng-stat-val" style="color:#4ea6dc;">0.75</span>
+      <span class="eng-stat-lbl">Threshold</span>
+    </div>
+    <div class="eng-sep"></div>
+    <div class="eng-stat">
+      <span class="eng-stat-val" style="color:#c8d0d8;">30,000 ms</span>
+      <span class="eng-stat-lbl">Window</span>
+    </div>
+    <div class="eng-sep"></div>
+    <div class="eng-stat">
+      <span class="eng-stat-val" style="color:#79c0ff;">0.878</span>
+      <span class="eng-stat-lbl">Mean Score</span>
+    </div>
+    <span class="eng-badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;margin-left:auto;">
+      <span class="pulse" style="background:#48c78e;"></span>RUNNING
+    </span>
+  </div>
+
+  <!-- alert card -->
+  <div class="alert-card">
+
+    <!-- alert header -->
+    <div class="alert-header">
+      <div class="ah-crit">
+        <span style="font-size:12px;">⚠</span> CRITICAL
+      </div>
+      <span class="ah-type">CORRELATED_THREAT</span>
+      <div class="ah-domains">
+        <div class="dom-pill" style="background:#0d1e2d;color:#4ea6dc;border:1px solid #4ea6dc40;">ALPHA</div>
+        <span style="font-size:14px;color:#3a4048;padding: 0 2px;">↔</span>
+        <div class="dom-pill" style="background:#0d2017;color:#48c78e;border:1px solid #48c78e40;">BRAVO</div>
+      </div>
+      <span class="ah-id">id: alert_9f4e2a1b-7c8d-4b3e-a2f5-d6e1c3b9a04f &nbsp;·&nbsp; ruleId: CDG-XDOM-EXFIL-001</span>
+      <span class="ah-ts">13:05:13.042 UTC</span>
+    </div>
+
+    <!-- summary strip -->
+    <div class="alert-summary">
+      <span class="as-icon">🔴</span>
+      <span class="as-text">
+        Coordinated <strong style="color:#ffa657;">ExfilAttempt</strong> detected across classification boundary &nbsp;·&nbsp;
+        shared service account <strong style="color:#e55555;">svc_backup</strong> active in both domains within 3.2 seconds &nbsp;·&nbsp;
+        identical external destination <strong style="color:#e55555;">185.220.101.34:443</strong>
+      </span>
+      <div class="as-conf">
+        <div>
+          <div style="font-size:8px;color:#6a3030;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:2px;">Confidence</div>
+          <div style="display:flex;align-items:baseline;gap:3px;">
+            <span class="conf-big">0.91</span>
+            <span style="font-size:9px;color:#6a3030;">/ 1.00</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;margin-left:8px;">
+          <span style="font-size:8px;color:#6a3030;">≥ 0.90 = CRITICAL</span>
+          <span style="font-size:8px;color:#6a3030;">≥ 0.75 = triggered</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-body">
+
+      <!-- matched events -->
+      <div>
+        <div class="sect-lbl">Matched Event Pair</div>
+        <div class="events-grid">
+
+          <!-- Event A: Alpha -->
+          <div class="event-card" style="background:#0d1e2d;border-color:#4ea6dc40;">
+            <div class="ec-head" style="background:#0f2535;">
+              <span style="font-size:8.5px;font-weight:bold;color:#4ea6dc;">EVENT A</span>
+              <div class="dom-pill" style="background:#0d1e2d;color:#4ea6dc;border:1px solid #4ea6dc40;font-size:8px;">ALPHA</div>
+              <span class="sev-badge sv-FATAL">FATAL</span>
+              <span style="font-size:8px;color:#3a5a6a;margin-left:auto;">13:05:09.842</span>
+            </div>
+            <div class="ec-fields">
+              <div class="ec-fld">
+                <span class="ec-key">type</span>
+                <span class="ec-val" style="color:#ffa657;">ExfilAttempt</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">userId</span>
+                <span class="ec-val" style="color:#e55555;font-weight:bold;">svc_backup</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">host</span>
+                <span class="ec-val" style="color:#4ea6dc;">alpha-gw-04</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">srcIp</span>
+                <span class="ec-val">10.1.4.22</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">dstIp</span>
+                <span class="ec-val" style="color:#e55555;">185.220.101.34</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">dstPort / proto</span>
+                <span class="ec-val">443 / TCP</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">classification</span>
+                <span class="ec-val" style="color:#e55555;">TOP SECRET</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">severity</span>
+                <span class="ec-val" style="color:#e55555;">FATAL</span>
+              </div>
+            </div>
+            <div class="ec-match-row">
+              <div class="mf-lbl">Matched fields</div>
+              <div class="mf-row"><span class="mf-check">✓</span><span class="mf-field">userId:</span><span class="mf-val">&nbsp;svc_backup</span></div>
+              <div class="mf-row"><span class="mf-check">✓</span><span class="mf-field">type:</span><span class="mf-val">&nbsp;ExfilAttempt</span></div>
+              <div class="mf-row"><span class="mf-check">~</span><span class="mf-field">dstIp:</span><span class="mf-val">&nbsp;185.220.101.34 (shared external)</span></div>
+              <div class="mf-row"><span class="mf-check">✓</span><span class="mf-field">dstPort:</span><span class="mf-val">&nbsp;443</span></div>
+            </div>
+          </div>
+
+          <!-- connector -->
+          <div class="event-connector">
+            <span class="conn-arrow" style="transform:rotate(0deg);font-size:18px;color:#3a4048;">⟷</span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+              <span style="font-size:8px;color:#f58220;font-weight:bold;">Δt = 3.2 s</span>
+              <span style="font-size:7.5px;color:#3a4048;">within</span>
+              <span style="font-size:7.5px;color:#3a4048;">30 s</span>
+              <span style="font-size:7.5px;color:#3a4048;">window</span>
+            </div>
+            <div style="width:1px;flex:1;background:repeating-linear-gradient(to bottom,#3a4048 0,#3a4048 4px,transparent 4px,transparent 8px);margin:4px 0;"></div>
+            <span style="font-size:22px;color:#e55555;font-weight:bold;">⚠</span>
+          </div>
+
+          <!-- Event B: Bravo -->
+          <div class="event-card" style="background:#0d2017;border-color:#48c78e40;">
+            <div class="ec-head" style="background:#0d2818;">
+              <span style="font-size:8.5px;font-weight:bold;color:#48c78e;">EVENT B</span>
+              <div class="dom-pill" style="background:#0d2017;color:#48c78e;border:1px solid #48c78e40;font-size:8px;">BRAVO</div>
+              <span class="sev-badge sv-FATAL">FATAL</span>
+              <span style="font-size:8px;color:#264a2a;margin-left:auto;">13:05:13.042</span>
+            </div>
+            <div class="ec-fields">
+              <div class="ec-fld">
+                <span class="ec-key">type</span>
+                <span class="ec-val" style="color:#ffa657;">ExfilAttempt</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">userId</span>
+                <span class="ec-val" style="color:#e55555;font-weight:bold;">svc_backup</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">host</span>
+                <span class="ec-val" style="color:#48c78e;">bravo-srv-08</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">srcIp</span>
+                <span class="ec-val">10.2.5.31</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">dstIp</span>
+                <span class="ec-val" style="color:#e55555;">185.220.101.34</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">dstPort / proto</span>
+                <span class="ec-val">443 / TCP</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">classification</span>
+                <span class="ec-val" style="color:#c9a227;">SECRET</span>
+              </div>
+              <div class="ec-fld">
+                <span class="ec-key">severity</span>
+                <span class="ec-val" style="color:#e55555;">FATAL</span>
+              </div>
+            </div>
+            <div class="ec-match-row">
+              <div class="mf-lbl">Matched fields</div>
+              <div class="mf-row"><span class="mf-check">✓</span><span class="mf-field">userId:</span><span class="mf-val">&nbsp;svc_backup</span></div>
+              <div class="mf-row"><span class="mf-check">✓</span><span class="mf-field">type:</span><span class="mf-val">&nbsp;ExfilAttempt</span></div>
+              <div class="mf-row"><span class="mf-check">~</span><span class="mf-field">dstIp:</span><span class="mf-val">&nbsp;185.220.101.34 (shared external)</span></div>
+              <div class="mf-row"><span class="mf-check">✓</span><span class="mf-field">dstPort:</span><span class="mf-val">&nbsp;443</span></div>
+            </div>
+          </div>
+
+        </div><!-- /events-grid -->
+      </div>
+
+      <!-- confidence scoring breakdown -->
+      <div>
+        <div class="sect-lbl">computeConfidence() — Four-Factor Score Breakdown</div>
+        <div class="scoring-grid">
+
+          <!-- Factor 1: Identity -->
+          <div class="score-factor" style="background:#0d1a08;">
+            <span class="sf-label">① Identity</span>
+            <span class="sf-weight" style="color:#48c78e;">weight × 0.40</span>
+            <span class="sf-match" style="color:#48c78e;">
+              ✓ <strong>svc_backup</strong> = <strong>svc_backup</strong>
+            </span>
+            <span style="font-size:8px;color:#264a38;margin-top:1px;">userId exact match</span>
+            <div class="sf-contrib-row">
+              <div class="sf-track"><div class="sf-fill" style="width:100%;background:#48c78e;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <span style="font-size:7.5px;color:#264a38;">factor = 1.00</span>
+              <span class="sf-score" style="color:#48c78e;">+0.40</span>
+            </div>
+          </div>
+
+          <!-- Factor 2: Event Type -->
+          <div class="score-factor" style="background:#0d1a08;">
+            <span class="sf-label">② Event Type</span>
+            <span class="sf-weight" style="color:#48c78e;">weight × 0.30</span>
+            <span class="sf-match" style="color:#48c78e;">
+              ✓ <strong>ExfilAttempt</strong> = <strong>ExfilAttempt</strong>
+            </span>
+            <span style="font-size:8px;color:#264a38;margin-top:1px;">type exact match</span>
+            <div class="sf-contrib-row">
+              <div class="sf-track"><div class="sf-fill" style="width:100%;background:#48c78e;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <span style="font-size:7.5px;color:#264a38;">factor = 1.00</span>
+              <span class="sf-score" style="color:#48c78e;">+0.30</span>
+            </div>
+          </div>
+
+          <!-- Factor 3: Subnet -->
+          <div class="score-factor" style="background:#141008;">
+            <span class="sf-label">③ Subnet / Dst</span>
+            <span class="sf-weight" style="color:#e5c97a;">weight × 0.20</span>
+            <span class="sf-match" style="color:#e5c97a;">
+              ~ 10.1.4.x ≠ 10.2.5.x
+            </span>
+            <span style="font-size:8px;color:#4a3a18;margin-top:1px;">dstIp match: 185.220.101.34 ✓</span>
+            <div class="sf-contrib-row">
+              <div class="sf-track"><div class="sf-fill" style="width:70%;background:#e5c97a;opacity:0.8;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <span style="font-size:7.5px;color:#4a3a18;">factor = 0.70</span>
+              <span class="sf-score" style="color:#e5c97a;">+0.14</span>
+            </div>
+          </div>
+
+          <!-- Factor 4: Temporal -->
+          <div class="score-factor" style="background:#141008;">
+            <span class="sf-label">④ Temporal</span>
+            <span class="sf-weight" style="color:#e5c97a;">weight × 0.10</span>
+            <span class="sf-match" style="color:#e5c97a;">
+              Δt = 3,200 ms
+            </span>
+            <span style="font-size:8px;color:#4a3a18;margin-top:1px;">1 − (3200 / 30000) = 0.893</span>
+            <div class="sf-contrib-row">
+              <div class="sf-track"><div class="sf-fill" style="width:70%;background:#e5c97a;opacity:0.8;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <span style="font-size:7.5px;color:#4a3a18;">factor ≈ 0.70</span>
+              <span class="sf-score" style="color:#e5c97a;">+0.07</span>
+            </div>
+          </div>
+
+          <div class="score-sep"></div>
+
+          <!-- Total -->
+          <div class="score-total">
+            <span class="st-label">Total Score</span>
+            <span class="st-formula" style="color:#3a4048;font-size:8px;">0.40 + 0.30 + 0.14 + 0.07</span>
+            <span class="st-num">0.91</span>
+            <span class="st-threshold">threshold: ≥ 0.75 &nbsp;·&nbsp; CRITICAL: ≥ 0.90</span>
+            <span class="st-verdict">✓ ALERT RAISED · CRITICAL</span>
+          </div>
+
+        </div><!-- /scoring-grid -->
+      </div>
+
+      <!-- temporal delta visualisation -->
+      <div>
+        <div class="sect-lbl">Temporal Correlation — 30-Second Window</div>
+        <div class="temporal-row">
+          <div class="tr-block" style="padding-left:0;">
+            <span class="tr-lbl">Event A timestamp</span>
+            <span class="tr-val" style="color:#4ea6dc;">13:05:09.842</span>
+            <span style="font-size:8px;color:#264a2a;margin-top:1px;">ALPHA · ExfilAttempt</span>
+          </div>
+          <div class="tr-sep"></div>
+          <div class="tr-block">
+            <span class="tr-lbl">Temporal Delta</span>
+            <span class="tr-val" style="color:#f58220;">3,200 ms</span>
+            <span style="font-size:8px;color:#4a3010;margin-top:1px;">3.2 s / 30 s window</span>
+          </div>
+          <div class="tr-sep"></div>
+          <div class="tr-block">
+            <span class="tr-lbl">Event B timestamp</span>
+            <span class="tr-val" style="color:#48c78e;">13:05:13.042</span>
+            <span style="font-size:8px;color:#264a2a;margin-top:1px;">BRAVO · ExfilAttempt</span>
+          </div>
+          <div class="tr-sep"></div>
+          <div class="tr-timeline">
+            <div style="font-size:7.5px;color:#3a4048;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.07em;">30-Second Correlation Window</div>
+            <div class="tr-bar-row" style="background:#1a1c20;">
+              <!-- Event A marker at t=0 (left edge) -->
+              <div class="tr-bar-a" style="left:0;width:2px;background:#4ea6dc;"></div>
+              <!-- Event B marker at 3200/30000 = 10.7% -->
+              <div class="tr-bar-b" style="left:10.7%;width:2px;background:#48c78e;"></div>
+              <!-- Delta span -->
+              <div class="tr-delta-span" style="left:0;width:10.7%;border-color:#f5822050;background:rgba(245,130,32,0.08);"></div>
+              <!-- Window fill -->
+              <div style="position:absolute;left:0;top:0;width:100%;height:100%;background:repeating-linear-gradient(to right,transparent,transparent 9px,rgba(255,255,255,0.02) 9px,rgba(255,255,255,0.02) 10px);"></div>
+            </div>
+            <div class="tr-bar-labels">
+              <span style="color:#4ea6dc;">▲ A: 09.842</span>
+              <span style="color:#f58220;">←  3.2 s  →</span>
+              <span style="color:#48c78e;">▲ B: 13.042</span>
+              <span style="color:#3a4048;">window end: 39.842</span>
+            </div>
+            <div class="tr-window-label">10.7% of window consumed · 89.3% remaining</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /alert-body -->
+
+    <!-- footer -->
+    <div class="alert-footer">
+      <div class="af-item"><span class="af-key">Alert ID</span><span class="af-val" style="color:#8b949e;">alert_9f4e2a1b…c3b9a04f</span></div>
+      <div class="af-item"><span class="af-key">Rule</span><span class="af-val" style="color:#f58220;">CDG-XDOM-EXFIL-001</span></div>
+      <div class="af-item"><span class="af-key">Type</span><span class="af-val">CORRELATED_THREAT</span></div>
+      <div class="af-item"><span class="af-key">Severity</span><span class="af-val" style="color:#e55555;">CRITICAL</span></div>
+      <div class="af-item"><span class="af-key">Confidence</span><span class="af-val" style="color:#e55555;">0.91</span></div>
+      <div class="af-item"><span class="af-key">Domains</span><span class="af-val"><span class="dom-a">ALPHA</span> &amp; <span class="dom-b">BRAVO</span></span></div>
+      <div class="af-item"><span class="af-key">Shared User</span><span class="af-val" style="color:#e55555;">svc_backup</span></div>
+      <div class="af-item"><span class="af-key">Δt</span><span class="af-val" style="color:#f58220;">3,200 ms</span></div>
+      <div class="af-item"><span class="af-key">Timestamp</span><span class="af-val">13:05:13.042 UTC</span></div>
+      <div class="af-item" style="margin-left:auto;"><span class="af-key">Event IDs</span><span class="af-val" style="color:#4ea6dc;">evt_a4f82c1d</span><span style="color:#3a4048;padding:0 4px;">·</span><span class="af-val" style="color:#48c78e;">evt_b7c31f2a</span></div>
+    </div>
+
+  </div><!-- /alert-card -->
+
+</div><!-- /outer -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>
