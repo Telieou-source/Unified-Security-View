@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 5 — tryCorrelate()</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 24px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 9px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.6; margin-bottom: 14px; }
+
+  /* ── card ── */
+  .card { background: #111315; border: 1px solid #21262d; border-radius: 6px; overflow: hidden; }
+  .card-header {
+    background: #16191e; border-bottom: 1px solid #21262d;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .file-path { font-size: 10px; color: #79c0ff; margin-left: 4px; }
+  .file-sub  { font-size: 9px; color: #555a62; }
+  .lang-badge {
+    margin-left: auto; font-size: 8px; font-weight: bold; padding: 1px 7px;
+    border-radius: 2px; background: #1f2937; color: #79c0ff; border: 1px solid #2a3a60;
+  }
+
+  /* ── layout ── */
+  .layout { display: grid; grid-template-columns: 1fr 312px; }
+
+  /* ── CODE PANE ── */
+  .code-pane { border-right: 1px solid #1e2228; overflow-x: auto; }
+
+  .block-sep {
+    background: #16191e; border-top: 1px solid #1e2228; border-bottom: 1px solid #1e2228;
+    padding: 4px 12px 4px 48px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .bs-label { font-size: 8px; font-weight: bold; color: #3a4048;
+              text-transform: uppercase; letter-spacing: 0.09em; }
+  .bs-badge { font-size: 8px; font-weight: bold; padding: 1px 7px; border-radius: 2px; }
+
+  table { border-collapse: collapse; width: 100%; }
+  tr { line-height: 1.65; }
+  tr:hover { background: #14161a; }
+
+  tr.hl-rule    { background: #111820; }
+  tr.hl-gate    { background: #2d0e0e20; }
+  tr.hl-window  { background: #28240a20; }
+  tr.hl-domain  { background: #180e2a20; }
+  tr.hl-conf    { background: #0e1a2a20; }
+  tr.hl-sev     { background: #2a1a0820; }
+  tr.hl-build   { background: #0e2a1820; }
+
+  td.ln {
+    width: 40px; min-width: 40px; text-align: right;
+    padding: 0 10px 0 0; color: #2a2d38; font-size: 11px;
+    user-select: none; vertical-align: top; padding-top: 1px;
+    border-right: 1px solid #1e2228;
+  }
+  td.code { padding: 0 16px 0 14px; font-size: 11.5px; white-space: pre; vertical-align: top; }
+  tr.spacer td.code { height: 5px; }
+
+  /* ── syntax ── */
+  .kw  { color: #f97583; }
+  .fn  { color: #d2a8ff; }
+  .par { color: #ffa657; }
+  .tn  { color: #79c0ff; }
+  .fld { color: #cdd9e5; }
+  .tv  { color: #a5d6ff; }
+  .sl  { color: #9ecbff; }
+  .cm  { color: #555a62; font-style: italic; }
+  .op  { color: #8a9aaa; }
+  .num { color: #f0a050; }
+  .mth { color: #79c0ff; }
+
+  /* semantic colours */
+  .h-gate   { color: #e55555; font-weight: bold; }   /* guards / early return */
+  .h-window { color: #e5c97a; font-weight: bold; }   /* temporal buffer */
+  .h-domain { color: #a371f7; font-weight: bold; }   /* domain-exclusion */
+  .h-conf   { color: #4ea6dc; font-weight: bold; }   /* computeConfidence */
+  .h-sev    { color: #f58220; font-weight: bold; }   /* severity escalation */
+  .h-build  { color: #48c78e; font-weight: bold; }   /* alert output fields */
+  .h-rule   { color: #79c0ff; font-weight: bold; }   /* ruleId / RULE_IDS */
+
+  /* ── ANNOTATION PANE ── */
+  .ann-pane { display: flex; flex-direction: column; }
+
+  .ann-section {
+    padding: 10px 13px; border-bottom: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .ann-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 2px;
+  }
+  .ann-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+  .ann-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* gate cards */
+  .gate-card {
+    padding: 6px 9px; border-radius: 3px; margin-bottom: 4px;
+  }
+  .gate-cond  { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
+  .gate-desc  { font-size: 8.5px; color: #555a62; line-height: 1.45; }
+  .gate-ret   { font-size: 8.5px; font-weight: bold; margin-top: 3px; }
+
+  /* pipeline steps */
+  .pipe-step  { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 5px; }
+  .ps-num {
+    width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: bold;
+  }
+  .ps-body  { flex: 1; }
+  .ps-call  { font-size: 9.5px; font-weight: bold; }
+  .ps-desc  { font-size: 8.5px; color: #555a62; line-height: 1.4; margin-top: 1px; }
+
+  /* rule table */
+  .rule-table { width: 100%; border-collapse: collapse; font-size: 8.5px; }
+  .rule-table td { padding: 2px 5px; }
+  .rule-table tr:nth-child(odd) td { background: #111315; }
+  .rule-table tr:nth-child(even) td { background: #0d0f11; }
+
+  /* severity map */
+  .sev-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 9px; }
+  .sev-from{ width: 52px; }
+  .sev-arr { color: #3a4048; }
+  .sev-tag {
+    font-size: 8px; font-weight: bold; padding: 1px 6px;
+    border-radius: 2px;
+  }
+  .sev-src { font-size: 8px; color: #555a62; flex: 1; }
+
+  /* alert output fields */
+  .alert-field { display: flex; align-items: baseline; gap: 5px; margin-bottom: 3px; font-size: 8.5px; }
+  .af-key  { min-width: 90px; font-weight: bold; }
+  .af-val  { color: #555a62; flex: 1; line-height: 1.4; }
+
+  /* ── stat strip ── */
+  .stat-strip { display: flex; border-top: 1px solid #1e2228; }
+  .ss-item {
+    flex: 1; padding: 7px 8px; border-right: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .ss-item:last-child { border-right: none; }
+  .ss-val { font-size: 14px; font-weight: bold; line-height: 1; }
+  .ss-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">CODE EXCERPT 5 — tryCorrelate() · CorrelationEngine · src/lib/simulation.ts · lines 158–220</div>
+<div class="fig-title"><code style="color:#d2a8ff;">tryCorrelate(sanitized, newEvent)</code> — Cooldown Gate, 10 s Temporal Buffer, Cross-Domain Guard, Confidence Threshold, and Alert Construction</div>
+<div class="fig-sub">
+  artifacts/cross-domain-demo/src/lib/simulation.ts ·
+  gate ① <code style="color:#e55555;">cooldown 4 s</code> ·
+  window ② <code style="color:#e5c97a;">now − timestamp &lt; 10 000 ms</code> ·
+  guard ③ <code style="color:#a371f7;">uniqueDomains.length &lt; 2 → null</code> ·
+  scorer ④ <code style="color:#4ea6dc;">computeConfidence() × 100</code> ·
+  escalate ⑤ <code style="color:#f58220;">FATAL→CRITICAL · ERROR→HIGH · else MEDIUM</code> ·
+  build ⑥ <code style="color:#48c78e;">CorrelatedAlert</code> · <code style="color:#79c0ff;">RULE_IDS[type]</code>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <span class="file-path">src/lib/simulation.ts</span>
+    <span class="file-sub">— CorrelationEngine · lines 158–220 · returns CorrelatedAlert | null</span>
+    <span class="lang-badge">TypeScript 5.9</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ════════════════════════════════
+         CODE PANE
+    ════════════════════════════════ -->
+    <div class="code-pane">
+
+      <!-- RULE_IDS -->
+      <div class="block-sep">
+        <span class="bs-label">RULE_IDS lookup table · lines 158–167</span>
+        <span class="bs-badge" style="background:#111820;color:#79c0ff;border:1px solid #2a3a60;">EventType → ruleId · 8 rules</span>
+      </div>
+      <table>
+        <tr class="hl-rule">
+          <td class="ln">158</td>
+          <td class="code"><span class="kw">const</span> <span class="h-rule">RULE_IDS</span><span class="op">:</span> <span class="tn">Record</span><span class="op">&lt;</span><span class="tn">EventType</span><span class="op">,</span> <span class="tv">string</span><span class="op">&gt;</span> <span class="op">= {</span></td>
+        </tr>
+        <tr class="hl-rule">
+          <td class="ln">159</td>
+          <td class="code">  <span class="fld">Authentication</span><span class="op">:</span>  <span class="sl">"XDOM-AUTH-001"</span><span class="op">,</span>   <span class="fld">FileAccess</span><span class="op">:</span>      <span class="sl">"XDOM-FILE-002"</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-rule">
+          <td class="ln">160</td>
+          <td class="code">  <span class="fld">NetworkConn</span><span class="op">:</span>     <span class="sl">"XDOM-NET-003"</span><span class="op">,</span>    <span class="fld">AnomalyDetected</span><span class="op">:</span> <span class="sl">"XDOM-ANOM-004"</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-rule">
+          <td class="ln">161</td>
+          <td class="code">  <span class="fld">PolicyViolation</span><span class="op">:</span> <span class="sl">"XDOM-POL-005"</span><span class="op">,</span>   <span class="fld">ProcessSpawn</span><span class="op">:</span>    <span class="sl">"XDOM-PROC-006"</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-rule">
+          <td class="ln">162</td>
+          <td class="code">  <span class="h-rule">ExfilAttempt</span><span class="op">:</span>    <span class="sl">"<span class="h-rule">XDOM-EXFIL-007</span>"</span><span class="op">,</span>  <span class="fld">PrivilegeEsc</span><span class="op">:</span>    <span class="sl">"XDOM-PRIV-008"</span><span class="op">,</span>    <span class="cm">// ← highest-severity rules</span></td>
+        </tr>
+        <tr class="hl-rule">
+          <td class="ln">163</td>
+          <td class="code"><span class="op">};</span></td>
+        </tr>
+      </table>
+
+      <!-- Function signature + gate -->
+      <div class="block-sep">
+        <span class="bs-label">Function signature + cooldown gate · lines 169–175</span>
+        <span class="bs-badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">Early return: 4 s per-type cooldown</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">169</td>
+          <td class="code"><span class="kw">export function</span> <span class="fn">tryCorrelate</span><span class="op">(</span></td>
+        </tr>
+        <tr>
+          <td class="ln">170</td>
+          <td class="code">  <span class="par">sanitized</span><span class="op">:</span> <span class="tn">SanitizedEvent</span><span class="op">[],</span>                         <span class="cm">// full high-side event buffer</span></td>
+        </tr>
+        <tr>
+          <td class="ln">171</td>
+          <td class="code">  <span class="par">newEvent</span><span class="op">:</span>  <span class="tn">SanitizedEvent</span>                              <span class="cm">// newly arrived event under test</span></td>
+        </tr>
+        <tr>
+          <td class="ln">172</td>
+          <td class="code"><span class="op">):</span> <span class="tn">CorrelatedAlert</span> <span class="op">|</span> <span class="tv">null</span> <span class="op">{</span></td>
+        </tr>
+        <tr>
+          <td class="ln">173</td>
+          <td class="code">  <span class="kw">const</span> <span class="par">now</span> <span class="op">=</span> <span class="tn">Date</span><span class="op">.</span><span class="mth">now</span><span class="op">();</span></td>
+        </tr>
+        <tr class="hl-gate">
+          <td class="ln">174</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-gate">cooldownKey</span> <span class="op">=</span> <span class="op">`${</span><span class="par">newEvent</span><span class="op">.</span><span class="fld">type</span><span class="op">}-${</span><span class="par">newEvent</span><span class="op">.</span><span class="fld">domainId</span><span class="op">}`;</span>  <span class="cm">// key: "ExfilAttempt-ALPHA"</span></td>
+        </tr>
+        <tr class="hl-gate">
+          <td class="ln">175</td>
+          <td class="code">  <span class="kw">if</span> <span class="op">((</span><span class="par">correlationCooldown</span><span class="op">.</span><span class="mth">get</span><span class="op">(</span><span class="h-gate">cooldownKey</span><span class="op">)</span> <span class="op">??</span> <span class="num">0</span><span class="op">)</span> <span class="op">&gt;</span> <span class="par">now</span> <span class="op">-</span> <span class="h-gate">4000</span><span class="op">)</span> <span class="kw">return</span> <span class="tv">null</span><span class="op">;</span>  <span class="cm">// ① gate</span></td>
+        </tr>
+        <!-- annotation row -->
+        <tr style="background:#1a0808;">
+          <td class="ln" style="color:transparent;">·</td>
+          <td class="code" style="font-size:8.5px;padding-top:1px;padding-bottom:3px;color:#555a62;">
+            <span style="margin-left:2px;">╰── suppress duplicate alerts for the same <code style="color:#e55555;">type+domain</code> key within a 4 000 ms window — prevents alert storms on rapid event bursts</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Temporal buffer query -->
+      <div class="block-sep">
+        <span class="bs-label">Temporal buffer query · lines 177–180</span>
+        <span class="bs-badge" style="background:#28240a;color:#e5c97a;border:1px solid #605020;">10 s sliding window · same EventType</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">177</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-window">windowMs</span> <span class="op">=</span> <span class="h-window">10_000</span><span class="op">;</span>                              <span class="cm">// 10 second correlation window</span></td>
+        </tr>
+        <tr class="hl-window">
+          <td class="ln">178</td>
+          <td class="code">  <span class="kw">const</span> <span class="par">domainMatches</span> <span class="op">=</span> <span class="par">sanitized</span><span class="op">.</span><span class="mth">filter</span><span class="op">((</span><span class="par">e</span><span class="op">) =></span></td>
+        </tr>
+        <tr class="hl-window">
+          <td class="ln">179</td>
+          <td class="code">    <span class="par">e</span><span class="op">.</span><span class="h-window">type</span> <span class="op">===</span> <span class="par">newEvent</span><span class="op">.</span><span class="h-window">type</span>                          <span class="cm">// ② same EventType (ExfilAttempt, Auth…)</span></td>
+        </tr>
+        <tr class="hl-window">
+          <td class="ln">180</td>
+          <td class="code">    <span class="op">&amp;&amp;</span> <span class="par">now</span> <span class="op">-</span> <span class="par">e</span><span class="op">.</span><span class="h-window">timestamp</span> <span class="op">&lt;</span> <span class="h-window">windowMs</span>                 <span class="cm">// ② deltaMs &lt; 10 000 — inside temporal window</span></td>
+        </tr>
+        <tr>
+          <td class="ln">181</td>
+          <td class="code">  <span class="op">);</span></td>
+        </tr>
+        <!-- annotation -->
+        <tr style="background:#18160a;">
+          <td class="ln" style="color:transparent;">·</td>
+          <td class="code" style="font-size:8.5px;padding-top:1px;padding-bottom:3px;color:#555a62;">
+            <span style="margin-left:2px;">╰── <code style="color:#e5c97a;">deltaMs = now − e.timestamp</code> evaluated per-event; only events with deltaMs &lt; 10 000 pass into <code>domainMatches</code> — the same <code>windowMs</code> that bounds temporal bonus in computeConfidence()</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Domain-exclusion guard -->
+      <div class="block-sep">
+        <span class="bs-label">Cross-domain guard · lines 182–183</span>
+        <span class="bs-badge" style="background:#180e2a;color:#a371f7;border:1px solid #3a1a60;">≥ 2 distinct domainIds required</span>
+        <span class="bs-badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">Early return: single-domain pattern</span>
+      </div>
+      <table>
+        <tr class="hl-domain">
+          <td class="ln">182</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-domain">uniqueDomains</span> <span class="op">=</span> <span class="op">[...</span><span class="kw">new</span> <span class="tn">Set</span><span class="op">(</span><span class="par">domainMatches</span><span class="op">.</span><span class="mth">map</span><span class="op">((</span><span class="par">e</span><span class="op">) =></span> <span class="par">e</span><span class="op">.</span><span class="h-domain">domainId</span><span class="op">))];</span></td>
+        </tr>
+        <tr class="hl-domain">
+          <td class="ln">183</td>
+          <td class="code">  <span class="kw">if</span> <span class="op">(</span><span class="h-domain">uniqueDomains</span><span class="op">.</span><span class="fld">length</span> <span class="op">&lt;</span> <span class="num">2</span><span class="op">)</span> <span class="kw">return</span> <span class="tv">null</span><span class="op">;</span>          <span class="cm">// ③ guard: e.domainId !== newEvent.domainId implied</span></td>
+        </tr>
+        <!-- annotation -->
+        <tr style="background:#110c1a;">
+          <td class="ln" style="color:transparent;">·</td>
+          <td class="code" style="font-size:8.5px;padding-top:1px;padding-bottom:3px;color:#555a62;">
+            <span style="margin-left:2px;">╰── Set deduplication enforces cross-domain constraint: at least one match must originate from a <em>different</em> domainId than newEvent — equivalent to <code style="color:#a371f7;">e.domainId !== newEvent.domainId</code></span>
+          </td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <tr>
+          <td class="ln">185</td>
+          <td class="code">  <span class="par">correlationCooldown</span><span class="op">.</span><span class="mth">set</span><span class="op">(</span><span class="h-gate">cooldownKey</span><span class="op">,</span> <span class="par">now</span><span class="op">);</span>           <span class="cm">// arm cooldown — all gates passed</span></td>
+        </tr>
+      </table>
+
+      <!-- computeConfidence + severity + buildAlert -->
+      <div class="block-sep">
+        <span class="bs-label">Confidence scoring, severity escalation, alert construction · lines 187–219</span>
+        <span class="bs-badge" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a3a60;">computeConfidence() → integer 0–100</span>
+        <span class="bs-badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">CorrelatedAlert return</span>
+      </div>
+      <table>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <!-- computeConfidence -->
+        <tr class="hl-conf">
+          <td class="ln">187</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-conf">confidence</span> <span class="op">=</span> <span class="tn">Math</span><span class="op">.</span><span class="mth">round</span><span class="op">(</span><span class="h-conf">computeConfidence</span><span class="op">(</span><span class="par">newEvent</span><span class="op">,</span> <span class="par">domainMatches</span><span class="op">,</span> <span class="par">windowMs</span><span class="op">) *</span> <span class="num">100</span><span class="op">);</span>  <span class="cm">// ④</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- alertTypes pool (abbreviated) -->
+        <tr>
+          <td class="ln">189</td>
+          <td class="code">  <span class="kw">const</span> <span class="par">alertTypes</span><span class="op">:</span> <span class="tn">CorrelatedAlert</span><span class="op">["</span><span class="fld">type</span><span class="op">"][] = [</span></td>
+        </tr>
+        <tr>
+          <td class="ln">190</td>
+          <td class="code">    <span class="sl">"CORRELATED_THREAT"</span><span class="op">,</span> <span class="sl">"PATTERN_MATCH"</span><span class="op">,</span> <span class="sl">"CROSS_DOMAIN_ANOMALY"</span><span class="op">,</span> <span class="sl">"SYNCHRONIZED_ACTIVITY"</span><span class="op">,</span></td>
+        </tr>
+        <tr>
+          <td class="ln">191</td>
+          <td class="code">  <span class="op">];</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- severity escalation -->
+        <tr class="hl-sev">
+          <td class="ln">204</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-sev">severity</span><span class="op">:</span> <span class="tn">CorrelatedAlert</span><span class="op">["</span><span class="fld">severity</span><span class="op">"] =</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">205</td>
+          <td class="code">    <span class="par">newEvent</span><span class="op">.</span><span class="fld">severity</span> <span class="op">===</span> <span class="sl">"FATAL"</span> <span class="op">?</span> <span class="h-sev">"CRITICAL"</span>       <span class="cm">// ⑤ ExfilAttempt / PrivilegeEsc</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">206</td>
+          <td class="code">    <span class="op">:</span> <span class="par">newEvent</span><span class="op">.</span><span class="fld">severity</span> <span class="op">===</span> <span class="sl">"ERROR"</span> <span class="op">?</span> <span class="h-sev">"HIGH"</span>           <span class="cm">// ⑤ AnomalyDetected / PolicyViolation</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">207</td>
+          <td class="code">    <span class="op">:</span> <span class="h-sev">"MEDIUM"</span><span class="op">;</span>                                   <span class="cm">// ⑤ Authentication / NetworkConn / other</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- return / buildAlert -->
+        <tr class="hl-build">
+          <td class="ln">209</td>
+          <td class="code">  <span class="kw">return</span> <span class="op">{</span>                                          <span class="cm">// ⑥ inline buildAlert — CorrelatedAlert shape</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">210</td>
+          <td class="code">    <span class="fld">id</span><span class="op">:</span>         <span class="fn">nextId</span><span class="op">(</span><span class="sl">"CORR"</span><span class="op">),</span>                    <span class="cm">// CORR-00001..CORR-nnnnn</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">211</td>
+          <td class="code">    <span class="fld">timestamp</span><span class="op">:</span>  <span class="par">now</span><span class="op">,</span>                              <span class="cm">// ms epoch at alert creation</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">212</td>
+          <td class="code">    <span class="fld">type</span><span class="op">:</span>       <span class="fn">randomFrom</span><span class="op">(</span><span class="par">alertTypes</span><span class="op">),</span>            <span class="cm">// one of 4 alert categories</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">213</td>
+          <td class="code">    <span class="h-sev">severity</span><span class="op">,</span>                                  <span class="cm">// CRITICAL | HIGH | MEDIUM (⑤ escalated)</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">214</td>
+          <td class="code">    <span class="fld">domains</span><span class="op">:</span>    <span class="h-domain">uniqueDomains</span> <span class="kw">as</span> <span class="tn">DomainId</span><span class="op">[],</span>     <span class="cm">// ≥ 2 domainIds (cross-domain confirmed)</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">215</td>
+          <td class="code">    <span class="fld">summary</span><span class="op">:</span>    <span class="par">summaries</span><span class="op">[</span><span class="par">newEvent</span><span class="op">.</span><span class="fld">type</span><span class="op">],</span>          <span class="cm">// per-type narrative (lines 193–202)</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">216</td>
+          <td class="code">    <span class="fld">eventIds</span><span class="op">:</span>   <span class="par">domainMatches</span><span class="op">.</span><span class="mth">slice</span><span class="op">(-</span><span class="num">6</span><span class="op">).</span><span class="mth">map</span><span class="op">((</span><span class="par">e</span><span class="op">) =></span> <span class="par">e</span><span class="op">.</span><span class="fld">id</span><span class="op">),</span>  <span class="cm">// up to 6 contributing events</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">217</td>
+          <td class="code">    <span class="h-conf">confidence</span><span class="op">,</span>                                 <span class="cm">// integer 0–100 from computeConfidence()</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">218</td>
+          <td class="code">    <span class="fld">ruleId</span><span class="op">:</span>     <span class="h-rule">RULE_IDS</span><span class="op">[</span><span class="par">newEvent</span><span class="op">.</span><span class="fld">type</span><span class="op">],</span>            <span class="cm">// e.g. "XDOM-EXFIL-007"</span></td>
+        </tr>
+        <tr class="hl-build">
+          <td class="ln">219</td>
+          <td class="code">  <span class="op">};</span></td>
+        </tr>
+        <tr>
+          <td class="ln">220</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+    </div><!-- /code-pane -->
+
+    <!-- ════════════════════════════════
+         ANNOTATION PANE
+    ════════════════════════════════ -->
+    <div class="ann-pane">
+
+      <!-- Gate conditions -->
+      <div class="ann-section" style="background:#0d0f14;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#e55555;"></div>
+          Two early-return gates
+        </div>
+
+        <div class="gate-card" style="background:#1a0808;border:1px solid #4a1515;border-left:3px solid #e55555;">
+          <div class="gate-cond" style="color:#e55555;">① Cooldown · line 175</div>
+          <div class="gate-desc">Key = <code style="color:#ffa657;">type + "-" + domainId</code><br/>
+          Blocks re-firing for the same type+domain pair within <strong style="color:#e55555;">4 000 ms</strong>. Prevents alert storms on rapid consecutive events of the same class.</div>
+          <div class="gate-ret" style="color:#e55555;">→ return null (suppressed)</div>
+        </div>
+
+        <div class="gate-card" style="background:#110c1a;border:1px solid #381a50;border-left:3px solid #a371f7;">
+          <div class="gate-cond" style="color:#a371f7;">③ Cross-domain guard · line 183</div>
+          <div class="gate-desc">After temporal filter, deduplicate domainIds with <code style="color:#79c0ff;">Set</code>. Require <strong style="color:#a371f7;">≥ 2 unique domains</strong> — a single-domain event cluster cannot be a cross-domain threat by definition.</div>
+          <div class="gate-ret" style="color:#a371f7;">→ return null (intra-domain only)</div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="ann-section" style="background:#0d1018;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#e5c97a;"></div>
+          Six-step processing pipeline
+        </div>
+
+        <div class="pipe-step">
+          <div class="ps-num" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">①</div>
+          <div class="ps-body">
+            <div class="ps-call" style="color:#e55555;">Cooldown gate</div>
+            <div class="ps-desc"><code style="font-size:8px;">correlationCooldown.get(key) &gt; now − 4000</code> → null</div>
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="ps-num" style="background:#28240a;color:#e5c97a;border:1px solid #605020;">②</div>
+          <div class="ps-body">
+            <div class="ps-call" style="color:#e5c97a;">Temporal buffer filter</div>
+            <div class="ps-desc"><code style="font-size:8px;">now − e.timestamp &lt; 10 000</code> on matching type. ΔMs per event evaluated at filter time.</div>
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="ps-num" style="background:#180e2a;color:#a371f7;border:1px solid #3a1a60;">③</div>
+          <div class="ps-body">
+            <div class="ps-call" style="color:#a371f7;">Cross-domain guard</div>
+            <div class="ps-desc"><code style="font-size:8px;">[...new Set(matches.map(e =&gt; e.domainId))].length &lt; 2</code> → null</div>
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="ps-num" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a4060;">④</div>
+          <div class="ps-body">
+            <div class="ps-call" style="color:#4ea6dc;">computeConfidence() × 100</div>
+            <div class="ps-desc">4-factor scorer (userId/type/subnet/temporal) → float 0–1 → <code style="font-size:8px;">Math.round(…×100)</code> → integer.</div>
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="ps-num" style="background:#2a1a08;color:#f58220;border:1px solid #603010;">⑤</div>
+          <div class="ps-body">
+            <div class="ps-call" style="color:#f58220;">Severity escalation</div>
+            <div class="ps-desc">RawEvent severity → CorrelatedAlert severity via ternary chain. FATAL→CRITICAL, ERROR→HIGH, else MEDIUM.</div>
+          </div>
+        </div>
+
+        <div class="pipe-step" style="margin-bottom:0;">
+          <div class="ps-num" style="background:#0e2a1a;color:#48c78e;border:1px solid #1a5030;">⑥</div>
+          <div class="ps-body">
+            <div class="ps-call" style="color:#48c78e;">Inline buildAlert → return</div>
+            <div class="ps-desc">Object literal constructs <code style="color:#79c0ff;">CorrelatedAlert</code> with all 9 fields. No separate function — construction is co-located with scoring context.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Severity escalation map -->
+      <div class="ann-section">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#f58220;"></div>
+          ⑤ Severity escalation · lines 204–207
+        </div>
+
+        <div class="sev-row">
+          <span class="sev-from" style="color:#e55555;">FATAL</span>
+          <span class="sev-arr">→</span>
+          <span class="sev-tag" style="background:#2d0808;color:#e55555;border:1px solid #6a2020;">CRITICAL</span>
+          <span class="sev-src">ExfilAttempt · PrivilegeEsc</span>
+        </div>
+        <div class="sev-row">
+          <span class="sev-from" style="color:#f58220;">ERROR</span>
+          <span class="sev-arr">→</span>
+          <span class="sev-tag" style="background:#2d1408;color:#f58220;border:1px solid #6a3010;">HIGH</span>
+          <span class="sev-src">AnomalyDetected · PolicyViolation</span>
+        </div>
+        <div class="sev-row">
+          <span class="sev-from" style="color:#e5c97a;">WARN / INFO</span>
+          <span class="sev-arr">→</span>
+          <span class="sev-tag" style="background:#28240a;color:#e5c97a;border:1px solid #605020;">MEDIUM</span>
+          <span class="sev-src">Auth · Network · File · Process</span>
+        </div>
+
+        <div style="margin-top:5px;font-size:8px;color:#555a62;font-style:italic;border-left:2px solid #f5822040;padding-left:7px;line-height:1.5;">
+          Escalation promotes raw event severity to alert severity. A correlated cluster of <code style="color:#e55555;">FATAL</code> events always produces a <code style="color:#e55555;">CRITICAL</code> alert regardless of individual confidence score.
+        </div>
+      </div>
+
+      <!-- Alert output fields -->
+      <div class="ann-section" style="border-bottom:none;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#48c78e;"></div>
+          ⑥ CorrelatedAlert output · 9 fields
+        </div>
+
+        <div class="alert-field">
+          <span class="af-key" style="color:#48c78e;">id</span>
+          <span class="af-val"><code style="font-size:8px;color:#79c0ff;">nextId("CORR")</code> → CORR-00001…</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#48c78e;">timestamp</span>
+          <span class="af-val">ms epoch at alert creation</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#48c78e;">type</span>
+          <span class="af-val"><code style="font-size:8px;">randomFrom(alertTypes)</code> — 4 categories</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#f58220;">severity</span>
+          <span class="af-val">CRITICAL | HIGH | MEDIUM (⑤ escalated)</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#a371f7;">domains</span>
+          <span class="af-val">uniqueDomains as DomainId[] — ≥ 2</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#48c78e;">summary</span>
+          <span class="af-val">Per-type threat narrative string</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#48c78e;">eventIds</span>
+          <span class="af-val"><code style="font-size:8px;">.slice(-6).map(e =&gt; e.id)</code> — up to 6</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#4ea6dc;">confidence</span>
+          <span class="af-val">Integer 0–100 from computeConfidence()</span>
+        </div>
+        <div class="alert-field">
+          <span class="af-key" style="color:#79c0ff;">ruleId</span>
+          <span class="af-val"><code style="font-size:8px;">RULE_IDS[type]</code> e.g. XDOM-EXFIL-007</span>
+        </div>
+      </div>
+
+    </div><!-- /ann-pane -->
+
+  </div><!-- /layout -->
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="ss-item">
+      <span class="ss-val" style="color:#c8d0d8;">6</span>
+      <span class="ss-lbl">Pipeline steps</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e55555;">2</span>
+      <span class="ss-lbl">Early-return gates</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e5c97a;">10 s</span>
+      <span class="ss-lbl">Temporal window</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#a371f7;">≥ 2</span>
+      <span class="ss-lbl">Domains required</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e55555;">4 s</span>
+      <span class="ss-lbl">Cooldown per key</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#48c78e;">9</span>
+      <span class="ss-lbl">Alert output fields</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#79c0ff;">8</span>
+      <span class="ss-lbl">XDOM rule IDs</span>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>
