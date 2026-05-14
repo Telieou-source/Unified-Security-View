@@ -120,3 +120,9 @@ id = "pbtIJDN4jGJtgY9oaZ3ex"
 uri = "file://screenshots/CodeExcerpt5_CloneInstall.jpg"
 type = "image"
 title = "Code Excerpt 5 — git clone · cd · pnpm install · pnpm run dev — dev server starts at http://localhost:5173 · annotated terminal with simulated output and summary metadata"
+
+[[outputs]]
+id = "a-7ldmEeF8OhdWxpxgF_Q"
+uri = "file://screenshots/CodeExcerpt6_BuildDeploy.jpg"
+type = "image"
+title = "Code Excerpt 6 — pnpm run build · pnpm run preview (localhost:4173) · npx netlify-cli deploy --prod --dir=dist · npx vercel --prod — annotated terminal with dist/ tree, simulated output, static-site note, and summary metadata"
