@@ -168,3 +168,9 @@ id = "RtPNA4B293raXUs5xRQFi"
 uri = "file://screenshots/Figure7_HealthMonitor.jpg"
 type = "image"
 title = "Figure 7 — HealthMonitor panel: 5-column bandwidth view · 15 evt/s aggregate (5 × 3) · CDG IN=OUT=STRIP=900 after 60-second run · zero event loss · invariant confirmed"
+
+[[outputs]]
+id = "lFIiy4aaqRXqg44eVucVF"
+uri = "file://screenshots/Figure8_CorrelationAlertLog.jpg"
+type = "image"
+title = "Figure 8 — CorrelationEngine alert log: 12/12 seeded cross-domain ExfilAttempt pairs detected · confidence 0.86–0.99, all above 0.75 threshold · 0 same-domain false positives · 2 three-domain (α×β×γ) alerts · 100% detection rate · XDOM-EXFIL-007"
