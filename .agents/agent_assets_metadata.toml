@@ -210,3 +210,9 @@ id = "ljRsfHnz3q4sbN9tNWnMq"
 uri = "file://screenshots/CodeExcerpt5_TryCorrelate.jpg"
 type = "image"
 title = "Code Excerpt 5 — tryCorrelate() · simulation.ts lines 158–220 · RULE_IDS table (8 XDOM rules) · ① cooldown gate 4 s (type+domainId key) · ② temporal buffer now−e.timestamp<10000 · ③ uniqueDomains.length<2→null (cross-domain guard) · ④ computeConfidence()×100 · ⑤ FATAL→CRITICAL / ERROR→HIGH / else MEDIUM · ⑥ inline buildAlert 9-field CorrelatedAlert return"
+
+[[outputs]]
+id = "esfqI2_Acitj6qGhRWim5"
+uri = "file://screenshots/CodeExcerpt6_SimulationTick.jpg"
+type = "image"
+title = "Code Excerpt 6 — runSimulationTick() · App.tsx lines 17–76 · ① generateEvent() · ② setRawEvents (MAX_RAW=80) · ③ sanitizeEvent() · ④ setSanitizedEvents (MAX_SANITIZED=160) · ⑤ tryCorrelate() · ⑥ conditional setAlerts (MAX_ALERTS=60) · ⑦ HealthMonitor reactive · useCallback(fn,[]) + sanitizedRef stale-closure escape · setInterval clock useEffect deps"
