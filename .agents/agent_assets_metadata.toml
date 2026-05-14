@@ -174,3 +174,9 @@ id = "lFIiy4aaqRXqg44eVucVF"
 uri = "file://screenshots/Figure8_CorrelationAlertLog.jpg"
 type = "image"
 title = "Figure 8 — CorrelationEngine alert log: 12/12 seeded cross-domain ExfilAttempt pairs detected · confidence 0.86–0.99, all above 0.75 threshold · 0 same-domain false positives · 2 three-domain (α×β×γ) alerts · 100% detection rate · XDOM-EXFIL-007"
+
+[[outputs]]
+id = "8TTYUPgTFPzCIKqDDP4i1"
+uri = "file://screenshots/Figure10_ExecutiveSummary.jpg"
+type = "image"
+title = "Figure 10 — Executive Summary Dashboard · t=150 s live run · CRITICAL risk posture (34% threat rate) · 6-card KPI row (2,250 / 261 / 96 / 79 / 7 / 3) · severity breakdown · domain health · BandwidthHealthPanel (450 KB in → 306 KB sanitised → 144 KB stripped, 32% reduction, NOMINAL) · 4 analyst recommendations · confidence 0.91 avg"
