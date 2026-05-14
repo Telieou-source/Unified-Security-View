@@ -78,3 +78,9 @@ id = "XouiVmObU-zFqKVtrlcMu"
 uri = "file://screenshots/Figure4_TypeScript_compilation.jpg"
 type = "image"
 title = "Figure 4 — TypeScript 5.9.2 strict-mode compilation: 0 errors · 0 warnings · 9 simulator modules · 79 files checked"
+
+[[outputs]]
+id = "kWHimohfY4_QuDs7WKKeh"
+uri = "file://screenshots/CodeExcerpt4_runSimulationTick.jpg"
+type = "image"
+title = "Code Excerpt 4 — SimulationController runSimulationTick() showing all seven pipeline stages: generate → sanitize → process → dispatch to six panels + HealthMonitor"
