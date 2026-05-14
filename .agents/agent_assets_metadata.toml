@@ -36,3 +36,9 @@ id = "1HURK4vAGkTmdtf-rg-a_"
 uri = "file://screenshots/B3_correlation_test_log.jpg"
 type = "image"
 title = "Figure 6 — B-3: CorrelationEngine test log — confidence 0.91, ALPHA+BRAVO ExfilAttempt"
+
+[[outputs]]
+id = "SRq2VQZZeiHvYdI8fftFr"
+uri = "file://screenshots/CodeExcerpt1_interface_definitions.jpg"
+type = "image"
+title = "Code Excerpt 1 — TypeScript Interface Definitions (SecurityEvent, SanitizedEvent, CorrelatedAlert)"
