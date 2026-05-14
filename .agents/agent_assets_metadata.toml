@@ -66,3 +66,9 @@ id = "OOaalfp0qkImJuEXI5ifz"
 uri = "file://screenshots/CodeExcerpt2_sanitize_method.jpg"
 type = "image"
 title = "Code Excerpt 2 — CrossDomainGuard sanitize() with ES2018 destructuring, inCount/outCount/stripCount, and audit fields"
+
+[[outputs]]
+id = "g5j5e0iPL_g22qsNy8VIk"
+uri = "file://screenshots/CodeExcerpt3_computeConfidence.jpg"
+type = "image"
+title = "Code Excerpt 3 — CorrelationEngine computeConfidence() with four-factor weighted scoring (0.40 + 0.30 + 0.20 + up to 0.10, capped at 1.0)"
