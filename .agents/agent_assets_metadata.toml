@@ -204,3 +204,9 @@ id = "1er5yfOtgl4bvnSy8UvBV"
 uri = "file://screenshots/CodeExcerpt4_ComputeConfidence.jpg"
 type = "image"
 title = "Code Excerpt 4 — computeConfidence() · simulation.ts lines 115–156 · ① userId +0.40 (binary) · ② type +0.30 (binary) · ③ dstIp /16 cross-domain +0.20 (binary) · ④ temporal 0.10×(1−Δt/10000) linear decay · Math.min(1.0) cap · weight bar chart · all-match 100% + partial 55% examples · decay table 0–10 s · tryCorrelate() ×100 caller"
+
+[[outputs]]
+id = "ljRsfHnz3q4sbN9tNWnMq"
+uri = "file://screenshots/CodeExcerpt5_TryCorrelate.jpg"
+type = "image"
+title = "Code Excerpt 5 — tryCorrelate() · simulation.ts lines 158–220 · RULE_IDS table (8 XDOM rules) · ① cooldown gate 4 s (type+domainId key) · ② temporal buffer now−e.timestamp<10000 · ③ uniqueDomains.length<2→null (cross-domain guard) · ④ computeConfidence()×100 · ⑤ FATAL→CRITICAL / ERROR→HIGH / else MEDIUM · ⑥ inline buildAlert 9-field CorrelatedAlert return"
