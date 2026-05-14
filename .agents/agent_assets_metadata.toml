@@ -42,3 +42,9 @@ id = "SRq2VQZZeiHvYdI8fftFr"
 uri = "file://screenshots/CodeExcerpt1_interface_definitions.jpg"
 type = "image"
 title = "Code Excerpt 1 — TypeScript Interface Definitions (SecurityEvent, SanitizedEvent, CorrelatedAlert)"
+
+[[outputs]]
+id = "F8nM25eU1A2j8CbJqqK3v"
+uri = "file://screenshots/Figure1_DomainEventGenerator_output.jpg"
+type = "image"
+title = "Figure 1 — DomainEventGenerator live output, all three domains, all fields including rawPacketBytes"
