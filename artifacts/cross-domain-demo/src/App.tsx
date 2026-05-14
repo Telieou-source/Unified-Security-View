@@ -36,28 +36,44 @@ export default function App() {
   const sanitizedRef = useRef<SanitizedEvent[]>([]);
   sanitizedRef.current = sanitizedEvents;
 
-  const fireEvent = useCallback(() => {
-    const domainId: DomainId = DOMAINS[Math.floor(Math.random() * DOMAINS.length)].id;
-    const raw = generateEvent(domainId);
+  /** SimulationController — orchestrates the full per-tick pipeline:
+   *  DomainEventGenerator.generate() → CrossDomainGuard.sanitize()
+   *  → CorrelationEngine.process() → dispatch to all six panels + HealthMonitor */
+  const runSimulationTick = useCallback((): void => {
 
+    // ① DomainEventGenerator.generate() — synthesize one RawEvent per domain tick
+    const domainId: DomainId = DOMAINS[Math.floor(Math.random() * DOMAINS.length)].id;
+    const raw: RawEvent = generateEvent(domainId);
+
+    // ② Dispatch raw event → DomainPanel (Alpha / Bravo / Charlie) + StatsBar
     setRawEvents((prev) => [raw, ...prev].slice(0, MAX_RAW));
 
-    const sanitized = sanitizeEvent(raw);
-    const newSanitized = [sanitized, ...sanitizedRef.current].slice(0, MAX_SANITIZED);
-    setSanitizedEvents(newSanitized);
+    // ③ CrossDomainGuard.sanitize() — strip rawPacketBytes, append audit fields
+    const sanitized: SanitizedEvent = sanitizeEvent(raw);
+    const updatedSanitized = [sanitized, ...sanitizedRef.current].slice(0, MAX_SANITIZED);
+
+    // ④ Dispatch sanitized event → BoundaryLayer + StatsBar panels
+    setSanitizedEvents(updatedSanitized);
     setStrippedFieldCount((c) => c + sanitized.strippedFields.length);
 
-    const alert = tryCorrelate(newSanitized, sanitized);
+    // ⑤ CorrelationEngine.process() — run pattern match across 10-second window
+    const alert: CorrelatedAlert | null = tryCorrelate(updatedSanitized, sanitized);
+
+    // ⑥ Dispatch alert (when fired) → CorrelatedView + AlertDetailModal panels
     if (alert) {
       setAlerts((prev) => [alert, ...prev].slice(0, MAX_ALERTS));
     }
+
+    // ⑦ HealthMonitor telemetry driven reactively from rawEvents + sanitizedEvents state
+
   }, []);
 
+  // SimulationController clock — fires runSimulationTick at configurable ms interval
   useEffect(() => {
     if (!isRunning) return;
-    const interval = setInterval(fireEvent, speed);
+    const interval = setInterval(runSimulationTick, speed);
     return () => clearInterval(interval);
-  }, [isRunning, speed, fireEvent]);
+  }, [isRunning, speed, runSimulationTick]);
 
   const handleReset = useCallback(() => {
     setIsRunning(false);
