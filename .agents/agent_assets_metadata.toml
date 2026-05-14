@@ -48,3 +48,9 @@ id = "F8nM25eU1A2j8CbJqqK3v"
 uri = "file://screenshots/Figure1_DomainEventGenerator_output.jpg"
 type = "image"
 title = "Figure 1 — DomainEventGenerator live output, all three domains, all fields including rawPacketBytes"
+
+[[outputs]]
+id = "JUbPOZnZWhLDaIes1JSvc"
+uri = "file://screenshots/Figure2_CrossDomainGuard_output.jpg"
+type = "image"
+title = "Figure 2 — CrossDomainGuard sanitized event + guard metrics (IN=OUT=300, STRIP=300)"
