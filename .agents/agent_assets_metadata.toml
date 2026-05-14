@@ -192,3 +192,9 @@ id = "y6y6fr8I5rmkoW-wfjznN"
 uri = "file://screenshots/CodeExcerpt2_GenerateEvent.jpg"
 type = "image"
 title = "Code Excerpt 2 — generateEvent(domainId) · simulation.ts lines 19–71 · ① randomFrom() seed selection · ② domain.subnet /16 prefix map (ALPHA=10.1, BRAVO=10.2, CHARLIE=10.3) · ③ randomIp() octet synthesis · ④ Date.now() timestamp · ⑤ randomHex(32) packet payload · ⑥ severityForType() deterministic classification · severity map + call graph annotations"
+
+[[outputs]]
+id = "_1TVBMZfJsU02GWfap0cP"
+uri = "file://screenshots/CodeExcerpt3_SanitizeEvent.jpg"
+type = "image"
+title = "Code Excerpt 3 — sanitizeEvent() · simulation.ts lines 73–111 · ES2018 const { rawPacketBytes: _stripped, classification: _cls, ...rest } = raw · ① inCount++ · ② stripCount++ · ⑥ outCount++ · sanitizationTimestamp / guardId appended · typed SanitizedEvent return · IN=OUT=STRIP invariant · TS2322 safety guarantee"
