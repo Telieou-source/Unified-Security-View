@@ -198,3 +198,9 @@ id = "_1TVBMZfJsU02GWfap0cP"
 uri = "file://screenshots/CodeExcerpt3_SanitizeEvent.jpg"
 type = "image"
 title = "Code Excerpt 3 — sanitizeEvent() · simulation.ts lines 73–111 · ES2018 const { rawPacketBytes: _stripped, classification: _cls, ...rest } = raw · ① inCount++ · ② stripCount++ · ⑥ outCount++ · sanitizationTimestamp / guardId appended · typed SanitizedEvent return · IN=OUT=STRIP invariant · TS2322 safety guarantee"
+
+[[outputs]]
+id = "1er5yfOtgl4bvnSy8UvBV"
+uri = "file://screenshots/CodeExcerpt4_ComputeConfidence.jpg"
+type = "image"
+title = "Code Excerpt 4 — computeConfidence() · simulation.ts lines 115–156 · ① userId +0.40 (binary) · ② type +0.30 (binary) · ③ dstIp /16 cross-domain +0.20 (binary) · ④ temporal 0.10×(1−Δt/10000) linear decay · Math.min(1.0) cap · weight bar chart · all-match 100% + partial 55% examples · decay table 0–10 s · tryCorrelate() ×100 caller"
