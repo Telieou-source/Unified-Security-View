@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 2 — generateEvent()</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 24px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 9px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.6; margin-bottom: 14px; }
+
+  /* ── card chrome ── */
+  .card { background: #111315; border: 1px solid #21262d; border-radius: 6px; overflow: hidden; }
+  .card-header {
+    background: #16191e; border-bottom: 1px solid #21262d;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .file-path { font-size: 10px; color: #79c0ff; margin-left: 4px; }
+  .file-sub  { font-size: 9px; color: #555a62; }
+  .lang-badge {
+    margin-left: auto; font-size: 8px; font-weight: bold; padding: 1px 7px;
+    border-radius: 2px; background: #1f2937; color: #79c0ff; border: 1px solid #2a3a60;
+  }
+
+  /* ── two-column layout ── */
+  .layout { display: grid; grid-template-columns: 1fr 296px; }
+
+  /* ── CODE PANE ── */
+  .code-pane { border-right: 1px solid #1e2228; overflow-x: auto; }
+
+  .block-sep {
+    background: #16191e; border-top: 1px solid #1e2228; border-bottom: 1px solid #1e2228;
+    padding: 4px 12px 4px 48px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .bs-label { font-size: 8px; font-weight: bold; color: #3a4048; text-transform: uppercase; letter-spacing: 0.09em; }
+  .bs-badge { font-size: 8px; font-weight: bold; padding: 1px 6px; border-radius: 2px; }
+
+  table { border-collapse: collapse; width: 100%; }
+  tr { line-height: 1.65; }
+  tr:hover { background: #14161a; }
+
+  /* row highlight variants */
+  tr.hl-seed    { background: #0e1a2a18; }
+  tr.hl-subnet  { background: #180e2a18; }
+  tr.hl-ip      { background: #0e2a1820; }
+  tr.hl-time    { background: #2a1e0e18; }
+  tr.hl-bytes   { background: #2a0e0e18; }
+  tr.hl-sev     { background: #2a1a0820; }
+
+  td.ln {
+    width: 40px; min-width: 40px; text-align: right;
+    padding: 0 10px 0 0; color: #2a2d38; font-size: 11px;
+    user-select: none; vertical-align: top; padding-top: 1px;
+    border-right: 1px solid #1e2228;
+  }
+  td.code { padding: 0 16px 0 14px; font-size: 11.5px; white-space: pre; vertical-align: top; }
+
+  /* empty row spacer */
+  tr.spacer td.code { height: 6px; }
+
+  /* ── syntax tokens ── */
+  .kw    { color: #f97583; }            /* export function const */
+  .fn    { color: #d2a8ff; }            /* function name */
+  .param { color: #ffa657; }            /* parameter name */
+  .tn    { color: #79c0ff; }            /* type name */
+  .fld   { color: #cdd9e5; }            /* field name */
+  .tv    { color: #a5d6ff; }            /* primitive types: string number */
+  .sl    { color: #9ecbff; }            /* string literal */
+  .cm    { color: #555a62; font-style: italic; }
+  .op    { color: #8a9aaa; }            /* punctuation */
+  .num   { color: #f0a050; }            /* numeric literals */
+  .mth   { color: #79c0ff; }            /* method call */
+
+  /* semantic highlights matching caption concepts */
+  .h-seed   { color: #4ea6dc; font-weight: bold; }   /* ① seed / randomFrom */
+  .h-subnet { color: #a371f7; font-weight: bold; }   /* ② subnet assignment */
+  .h-ip     { color: #48c78e; font-weight: bold; }   /* ③ randomIp */
+  .h-time   { color: #e5c97a; font-weight: bold; }   /* ④ timestamp */
+  .h-bytes  { color: #e55555; font-weight: bold; }   /* ⑤ rawPacketBytes */
+  .h-sev    { color: #f58220; font-weight: bold; }   /* ⑥ severityForType */
+
+  /* ── ANNOTATION PANE ── */
+  .ann-pane { display: flex; flex-direction: column; }
+
+  /* subnet map at top */
+  .subnet-map {
+    padding: 10px 12px; border-bottom: 1px solid #1e2228;
+    background: #0d0f14;
+  }
+  .sm-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 7px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sm-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+  .sm-row {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 4px; font-size: 9px;
+  }
+  .sm-dom  { width: 54px; font-weight: bold; }
+  .sm-arrow{ color: #3a4048; margin: 0 5px; }
+  .sm-sub  { width: 100px; }
+  .sm-pfx  { color: #555a62; font-size: 8.5px; margin-left: 4px; }
+  .sm-sys  { font-size: 8px; color: #3a4048; margin-top: 1px; }
+
+  /* call graph */
+  .callgraph {
+    padding: 10px 12px; border-bottom: 1px solid #1e2228;
+    background: #0d1018;
+  }
+  .cg-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cg-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+  .cg-row {
+    display: flex; align-items: flex-start; gap: 7px;
+    margin-bottom: 5px; font-size: 9px;
+  }
+  .cg-num  {
+    width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: bold; margin-top: 0px;
+  }
+  .cg-body { flex: 1; }
+  .cg-call { font-weight: bold; font-size: 9.5px; }
+  .cg-desc { font-size: 8.5px; color: #555a62; line-height: 1.4; margin-top: 1px; }
+
+  /* annotation blocks */
+  .ann-block {
+    padding: 10px 12px; border-bottom: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .ann-block:last-child { border-bottom: none; }
+  .ann-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    display: flex; align-items: center; gap: 5px; margin-bottom: 2px;
+  }
+  .ann-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .ann-item {
+    font-size: 9px; color: #8a9aaa; line-height: 1.55;
+    padding-left: 10px; border-left: 2px solid; margin-bottom: 2px;
+  }
+  .ann-rule {
+    font-size: 8.5px; padding: 5px 8px; border-radius: 2px; margin-top: 2px;
+    line-height: 1.4; color: #8a9aaa; font-style: italic;
+  }
+  .tag {
+    font-size: 7.5px; font-weight: bold; padding: 1px 5px; border-radius: 2px;
+    display: inline-block; margin-bottom: 1px;
+  }
+
+  /* ── stat strip ── */
+  .stat-strip { display: flex; border-top: 1px solid #1e2228; }
+  .ss-item {
+    flex: 1; padding: 7px 10px; border-right: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .ss-item:last-child { border-right: none; }
+  .ss-val { font-size: 16px; font-weight: bold; line-height: 1; }
+  .ss-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">CODE EXCERPT 2 — generateEvent() · src/lib/simulation.ts · lines 19–71</div>
+<div class="fig-title"><code style="color:#d2a8ff;">generateEvent(domainId)</code> — Domain Event Generator with Subnet-Scoped IP Synthesis and Severity Classification</div>
+<div class="fig-sub">
+  artifacts/cross-domain-demo/src/lib/simulation.ts · TypeScript 5.9 ·
+  ① <code style="color:#4ea6dc;">randomFrom()</code> uniform seed selection ·
+  ② <code style="color:#a371f7;">domain.subnet</code> /16 prefix routing ·
+  ③ <code style="color:#48c78e;">randomIp()</code> octet synthesis ·
+  ④ <code style="color:#e5c97a;">Date.now()</code> epoch timestamp ·
+  ⑤ <code style="color:#e55555;">randomHex(32)</code> packet payload ·
+  ⑥ <code style="color:#f58220;">severityForType()</code> type-driven classification
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <span class="file-path">src/lib/simulation.ts</span>
+    <span class="file-sub">— 221 lines · no external dependencies · pure functions</span>
+    <span class="lang-badge">TypeScript 5.9</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ══════════════════════════════════════════
+         CODE PANE
+    ══════════════════════════════════════════ -->
+    <div class="code-pane">
+
+      <!-- Helper utilities -->
+      <div class="block-sep">
+        <span class="bs-label">Helper utilities · lines 19–40</span>
+        <span class="bs-badge" style="background:#0e1e30;color:#79c0ff;border:1px solid #2a3a60;">Pure functions · no side effects</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">19</td>
+          <td class="code"><span class="kw">function</span> <span class="h-ip">randomIp</span><span class="op">(</span><span class="param">subnet</span><span class="op">:</span> <span class="tv">string</span><span class="op">):</span> <span class="tv">string</span> <span class="op">{</span></td>
+        </tr>
+        <tr class="hl-subnet">
+          <td class="ln">20</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">base</span> <span class="op">=</span> <span class="param">subnet</span><span class="op">.</span><span class="mth">split</span><span class="op">(</span><span class="sl">"."</span><span class="op">).</span><span class="mth">slice</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="num">2</span><span class="op">).</span><span class="mth">join</span><span class="op">(</span><span class="sl">"."</span><span class="op">);</span>     <span class="cm">// ← extract /16 prefix ("10.1", "10.2", "10.3")</span></td>
+        </tr>
+        <tr class="hl-ip">
+          <td class="ln">21</td>
+          <td class="code">  <span class="kw">return</span> <span class="op">`</span><span class="sl">${</span><span class="param">base</span><span class="sl">}</span><span class="op">.</span><span class="sl">${</span><span class="tn">Math</span><span class="op">.</span><span class="mth">floor</span><span class="op">(</span><span class="tn">Math</span><span class="op">.</span><span class="mth">random</span><span class="op">() *</span> <span class="num">254</span><span class="op">) +</span> <span class="num">1</span><span class="sl">}</span><span class="op">.</span><span class="sl">${</span><span class="tn">Math</span><span class="op">.</span><span class="mth">floor</span><span class="op">(</span><span class="tn">Math</span><span class="op">.</span><span class="mth">random</span><span class="op">() *</span> <span class="num">254</span><span class="op">) +</span> <span class="num">1</span><span class="sl">}</span><span class="op">`;</span>  <span class="cm">// ← random octets 3–4: 1..254</span></td>
+        </tr>
+        <tr>
+          <td class="ln">22</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <tr>
+          <td class="ln">24</td>
+          <td class="code"><span class="kw">function</span> <span class="fn">randomPort</span><span class="op">(</span><span class="param">wellKnown</span> <span class="op">=</span> <span class="kw">false</span><span class="op">):</span> <span class="tv">number</span> <span class="op">{</span></td>
+        </tr>
+        <tr>
+          <td class="ln">25</td>
+          <td class="code">  <span class="kw">if</span> <span class="op">(</span><span class="param">wellKnown</span><span class="op">)</span> <span class="kw">return</span> <span class="h-seed">randomFrom</span><span class="op">([</span><span class="num">22</span><span class="op">,</span> <span class="num">80</span><span class="op">,</span> <span class="num">443</span><span class="op">,</span> <span class="num">445</span><span class="op">,</span> <span class="num">3389</span><span class="op">,</span> <span class="num">1433</span><span class="op">,</span> <span class="num">5985</span><span class="op">,</span> <span class="num">636</span><span class="op">,</span> <span class="num">389</span><span class="op">]);</span></td>
+        </tr>
+        <tr>
+          <td class="ln">26</td>
+          <td class="code">  <span class="kw">return</span> <span class="tn">Math</span><span class="op">.</span><span class="mth">floor</span><span class="op">(</span><span class="tn">Math</span><span class="op">.</span><span class="mth">random</span><span class="op">() *</span> <span class="num">60000</span><span class="op">) +</span> <span class="num">1024</span><span class="op">;</span>         <span class="cm">// ephemeral: 1024..61023</span></td>
+        </tr>
+        <tr>
+          <td class="ln">27</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <tr>
+          <td class="ln">29</td>
+          <td class="code"><span class="kw">function</span> <span class="h-bytes">randomHex</span><span class="op">(</span><span class="param">len</span><span class="op">:</span> <span class="tv">number</span><span class="op">):</span> <span class="tv">string</span> <span class="op">{</span></td>
+        </tr>
+        <tr class="hl-bytes">
+          <td class="ln">30</td>
+          <td class="code">  <span class="kw">return</span> <span class="tn">Array</span><span class="op">.</span><span class="mth">from</span><span class="op">({</span> <span class="fld">length</span><span class="op">:</span> <span class="param">len</span> <span class="op">},</span> <span class="op">() =></span>                   <span class="cm">// ← len=32 → 64-char hex string</span></td>
+        </tr>
+        <tr class="hl-bytes">
+          <td class="ln">31</td>
+          <td class="code">    <span class="tn">Math</span><span class="op">.</span><span class="mth">floor</span><span class="op">(</span><span class="tn">Math</span><span class="op">.</span><span class="mth">random</span><span class="op">() *</span> <span class="num">256</span><span class="op">).</span><span class="mth">toString</span><span class="op">(</span><span class="num">16</span><span class="op">).</span><span class="mth">padStart</span><span class="op">(</span><span class="num">2</span><span class="op">,</span> <span class="sl">"0"</span><span class="op">)</span>      <span class="cm">// ← each byte: 0x00..0xff, zero-padded</span></td>
+        </tr>
+        <tr>
+          <td class="ln">32</td>
+          <td class="code">  <span class="op">).</span><span class="mth">join</span><span class="op">(</span><span class="sl">""</span><span class="op">);</span></td>
+        </tr>
+        <tr>
+          <td class="ln">33</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <tr>
+          <td class="ln">35</td>
+          <td class="code"><span class="kw">function</span> <span class="h-sev">severityForType</span><span class="op">(</span><span class="param">type</span><span class="op">:</span> <span class="tn">EventType</span><span class="op">):</span> <span class="tn">RawEvent</span><span class="op">["</span><span class="fld">severity</span><span class="op">"]</span> <span class="op">{</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">36</td>
+          <td class="code">  <span class="kw">if</span> <span class="op">(</span><span class="param">type</span> <span class="op">===</span> <span class="sl">"ExfilAttempt"</span> <span class="op">||</span> <span class="param">type</span> <span class="op">===</span> <span class="sl">"PrivilegeEsc"</span><span class="op">)</span>   <span class="kw">return</span> <span class="sl">"FATAL"</span><span class="op">;</span>   <span class="cm">// threat types</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">37</td>
+          <td class="code">  <span class="kw">if</span> <span class="op">(</span><span class="param">type</span> <span class="op">===</span> <span class="sl">"AnomalyDetected"</span> <span class="op">||</span> <span class="param">type</span> <span class="op">===</span> <span class="sl">"PolicyViolation"</span><span class="op">)</span> <span class="kw">return</span> <span class="sl">"ERROR"</span><span class="op">;</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">38</td>
+          <td class="code">  <span class="kw">if</span> <span class="op">(</span><span class="param">type</span> <span class="op">===</span> <span class="sl">"Authentication"</span> <span class="op">||</span> <span class="param">type</span> <span class="op">===</span> <span class="sl">"NetworkConn"</span><span class="op">)</span>      <span class="kw">return</span> <span class="sl">"WARN"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">39</td>
+          <td class="code">  <span class="kw">return</span> <span class="sl">"INFO"</span><span class="op">;</span>                                                       <span class="cm">// FileAccess, NetworkConn, ProcessSpawn</span></td>
+        </tr>
+        <tr>
+          <td class="ln">40</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+      <!-- USER_POOL -->
+      <div class="block-sep">
+        <span class="bs-label">User pool · lines 42–46</span>
+        <span class="bs-badge" style="background:#1a1408;color:#c9a227;border:1px solid #4a3810;">15 identities · sampled uniformly by randomFrom()</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">42</td>
+          <td class="code"><span class="kw">const</span> <span class="h-seed">USER_POOL</span> <span class="op">=</span> <span class="op">[</span></td>
+        </tr>
+        <tr class="hl-seed">
+          <td class="ln">43</td>
+          <td class="code">  <span class="sl">"jsmith"</span><span class="op">,</span>  <span class="sl">"alopez"</span><span class="op">,</span>    <span class="sl">"rchandra"</span><span class="op">,</span>   <span class="sl">"mwilliams"</span><span class="op">,</span>  <span class="sl">"kberg"</span><span class="op">,</span>    <span class="cm">// ← workstation users</span></td>
+        </tr>
+        <tr class="hl-seed">
+          <td class="ln">44</td>
+          <td class="code">  <span class="sl">"tpatel"</span><span class="op">,</span>  <span class="sl">"schen"</span><span class="op">,</span>     <span class="sl">"dnguyen"</span><span class="op">,</span>    <span class="sl">"efoster"</span><span class="op">,</span>    <span class="sl">"lmartin"</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-seed">
+          <td class="ln">45</td>
+          <td class="code">  <span class="sl">"svc-backup"</span><span class="op">,</span> <span class="sl">"svc-monitor"</span><span class="op">,</span> <span class="sl">"svc-deploy"</span><span class="op">,</span> <span class="sl">"admin"</span><span class="op">,</span> <span class="sl">"root"</span><span class="op">,</span>  <span class="cm">// ← service accounts</span></td>
+        </tr>
+        <tr>
+          <td class="ln">46</td>
+          <td class="code"><span class="op">];</span></td>
+        </tr>
+      </table>
+
+      <!-- generateEvent() main function -->
+      <div class="block-sep">
+        <span class="bs-label">Domain event generator · lines 48–71</span>
+        <span class="bs-badge" style="background:#0d1a0d;color:#48c78e;border:1px solid #264a38;">generateEvent(domainId) → RawEvent</span>
+        <span class="bs-badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">rawPacketBytes present — low-side only</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">48</td>
+          <td class="code"><span class="kw">export function</span> <span class="h-ip">generateEvent</span><span class="op">(</span><span class="param">domainId</span><span class="op">:</span> <span class="tn">DomainId</span><span class="op">):</span> <span class="tn">RawEvent</span> <span class="op">{</span></td>
+        </tr>
+        <tr class="hl-subnet">
+          <td class="ln">49</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">domain</span> <span class="op">=</span> <span class="tn">DOMAINS</span><span class="op">.</span><span class="mth">find</span><span class="op">((</span><span class="param">d</span><span class="op">) =></span> <span class="param">d</span><span class="op">.</span><span class="fld">id</span> <span class="op">===</span> <span class="param">domainId</span><span class="op">)!;</span>   <span class="cm">// ← resolve DomainConfig (subnet, systems…)</span></td>
+        </tr>
+        <tr class="hl-seed">
+          <td class="ln">50</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">type</span>   <span class="op">=</span> <span class="h-seed">randomFrom</span><span class="op">(</span><span class="tn">EVENT_TYPES</span><span class="op">);</span>                    <span class="cm">// ① seed: uniform draw from 8 EventType values</span></td>
+        </tr>
+        <tr class="hl-seed">
+          <td class="ln">51</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">host</span>   <span class="op">=</span> <span class="h-seed">randomFrom</span><span class="op">(</span><span class="param">domain</span><span class="op">.</span><span class="fld">systems</span><span class="op">);</span>              <span class="cm">// ① seed: one of 4 domain-specific hostnames</span></td>
+        </tr>
+        <tr class="hl-seed">
+          <td class="ln">52</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">userId</span> <span class="op">=</span> <span class="h-seed">randomFrom</span><span class="op">(</span><span class="h-seed">USER_POOL</span><span class="op">);</span>                    <span class="cm">// ① seed: one of 15 user identities</span></td>
+        </tr>
+        <tr>
+          <td class="ln">53</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">proto</span>  <span class="op">=</span> <span class="h-seed">randomFrom</span><span class="op">([</span><span class="sl">"TCP"</span><span class="op">,</span> <span class="sl">"TCP"</span><span class="op">,</span> <span class="sl">"TCP"</span><span class="op">,</span> <span class="sl">"UDP"</span><span class="op">,</span> <span class="sl">"ICMP"</span><span class="op">]</span> <span class="kw">as const</span><span class="op">);</span>  <span class="cm">// 3:1:1 TCP bias</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <tr>
+          <td class="ln">55</td>
+          <td class="code">  <span class="kw">return</span> <span class="op">{</span></td>
+        </tr>
+        <tr>
+          <td class="ln">56</td>
+          <td class="code">    <span class="fld">id</span><span class="op">:</span>               <span class="fn">nextId</span><span class="op">(</span><span class="sl">`EVT`</span><span class="op">),</span>                  <span class="cm">// EVT-00001..EVT-nnnnn (module-scoped counter)</span></td>
+        </tr>
+        <tr>
+          <td class="ln">57</td>
+          <td class="code">    <span class="fld">domainId</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-time">
+          <td class="ln">58</td>
+          <td class="code">    <span class="fld">timestamp</span><span class="op">:</span>       <span class="h-time">Date</span><span class="op">.</span><span class="h-time">now</span><span class="op">(),</span>                 <span class="cm">// ④ ms epoch — wall clock at generation time</span></td>
+        </tr>
+        <tr>
+          <td class="ln">59</td>
+          <td class="code">    <span class="fld">type</span><span class="op">,</span></td>
+        </tr>
+        <tr>
+          <td class="ln">60</td>
+          <td class="code">    <span class="fld">classification</span><span class="op">:</span>  <span class="sl">"UNCLASSIFIED"</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-subnet">
+          <td class="ln">61</td>
+          <td class="code">    <span class="fld">srcIp</span><span class="op">:</span>           <span class="h-ip">randomIp</span><span class="op">(</span><span class="h-subnet">domain</span><span class="op">.</span><span class="h-subnet">subnet</span><span class="op">),</span>     <span class="cm">// ②③ subnet-scoped src: domain.subnet → /16 prefix</span></td>
+        </tr>
+        <tr class="hl-subnet">
+          <td class="ln">62</td>
+          <td class="code">    <span class="fld">dstIp</span><span class="op">:</span>           <span class="h-ip">randomIp</span><span class="op">(</span><span class="h-subnet">domain</span><span class="op">.</span><span class="h-subnet">subnet</span><span class="op">),</span>     <span class="cm">// ②③ subnet-scoped dst: same /16 as srcIp</span></td>
+        </tr>
+        <tr>
+          <td class="ln">63</td>
+          <td class="code">    <span class="fld">srcPort</span><span class="op">:</span>         <span class="fn">randomPort</span><span class="op">(</span><span class="kw">false</span><span class="op">),</span>            <span class="cm">// ephemeral 1024–61023</span></td>
+        </tr>
+        <tr>
+          <td class="ln">64</td>
+          <td class="code">    <span class="fld">dstPort</span><span class="op">:</span>         <span class="fn">randomPort</span><span class="op">(</span><span class="kw">true</span><span class="op">),</span>             <span class="cm">// well-known: 22/80/443/445/3389/…</span></td>
+        </tr>
+        <tr>
+          <td class="ln">65</td>
+          <td class="code">    <span class="fld">protocol</span><span class="op">:</span>        <span class="param">proto</span><span class="op">,</span></td>
+        </tr>
+        <tr>
+          <td class="ln">66</td>
+          <td class="code">    <span class="fld">userId</span><span class="op">,</span></td>
+        </tr>
+        <tr>
+          <td class="ln">67</td>
+          <td class="code">    <span class="fld">host</span><span class="op">,</span></td>
+        </tr>
+        <tr class="hl-bytes">
+          <td class="ln">68</td>
+          <td class="code">    <span class="fld">rawPacketBytes</span><span class="op">:</span>  <span class="h-bytes">randomHex</span><span class="op">(</span><span class="num">32</span><span class="op">),</span>               <span class="cm">// ⑤ 32 bytes → 64-char hex · STRIPPED at guard</span></td>
+        </tr>
+        <tr class="hl-sev">
+          <td class="ln">69</td>
+          <td class="code">    <span class="fld">severity</span><span class="op">:</span>        <span class="h-sev">severityForType</span><span class="op">(</span><span class="param">type</span><span class="op">),</span>       <span class="cm">// ⑥ deterministic: type → FATAL|ERROR|WARN|INFO</span></td>
+        </tr>
+        <tr>
+          <td class="ln">70</td>
+          <td class="code">  <span class="op">};</span></td>
+        </tr>
+        <tr>
+          <td class="ln">71</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+    </div><!-- /code-pane -->
+
+    <!-- ══════════════════════════════════════════
+         ANNOTATION PANE
+    ══════════════════════════════════════════ -->
+    <div class="ann-pane">
+
+      <!-- Subnet Map -->
+      <div class="subnet-map">
+        <div class="sm-title">domain.subnet → /16 prefix map</div>
+
+        <div class="sm-row">
+          <span class="sm-dom" style="color:#4ea6dc;">ALPHA</span>
+          <span class="sm-arrow">→</span>
+          <span class="sm-sub" style="color:#a371f7;">10.1.0.0/16</span>
+          <span class="sm-pfx">prefix "10.1"</span>
+        </div>
+        <div class="sm-sys" style="padding-left:54px;margin-bottom:5px;">
+          WS-001 · SRV-002 · DB-003 · GW-004
+        </div>
+
+        <div class="sm-row">
+          <span class="sm-dom" style="color:#48c78e;">BRAVO</span>
+          <span class="sm-arrow">→</span>
+          <span class="sm-sub" style="color:#a371f7;">10.2.0.0/16</span>
+          <span class="sm-pfx">prefix "10.2"</span>
+        </div>
+        <div class="sm-sys" style="padding-left:54px;margin-bottom:5px;">
+          CTRL-01 · APP-02 · VPN-03 · MAIL-04
+        </div>
+
+        <div class="sm-row">
+          <span class="sm-dom" style="color:#c9a227;">CHARLIE</span>
+          <span class="sm-arrow">→</span>
+          <span class="sm-sub" style="color:#a371f7;">10.3.0.0/16</span>
+          <span class="sm-pfx">prefix "10.3"</span>
+        </div>
+        <div class="sm-sys" style="padding-left:54px;">
+          FW-A · IDS-B · LOG-C · AD-D
+        </div>
+
+        <div style="margin-top:8px;font-size:8px;color:#3a4048;padding:4px 6px;background:#111315;border-radius:2px;border:1px solid #1e2228;">
+          <code style="color:#48c78e;">randomIp("10.2.0.0/16")</code>
+          <span style="color:#555a62;"> → </span>
+          <code style="color:#79c0ff;">"10.2.{1‥254}.{1‥254}"</code>
+        </div>
+      </div>
+
+      <!-- Call graph -->
+      <div class="callgraph">
+        <div class="cg-title">generateEvent() call graph</div>
+
+        <div class="cg-row">
+          <div class="cg-num" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a4060;">①</div>
+          <div class="cg-body">
+            <div class="cg-call" style="color:#4ea6dc;">randomFrom(array)</div>
+            <div class="cg-desc">Uniform draw — type, host, userId, protocol. <code style="font-size:8px;">Math.floor(Math.random() * arr.length)</code></div>
+          </div>
+        </div>
+
+        <div class="cg-row">
+          <div class="cg-num" style="background:#180e2a;color:#a371f7;border:1px solid #3a1a60;">②</div>
+          <div class="cg-body">
+            <div class="cg-call" style="color:#a371f7;">domain.subnet</div>
+            <div class="cg-desc">DomainConfig lookup via <code style="font-size:8px;">DOMAINS.find()</code>. Supplies /16 CIDR string to randomIp().</div>
+          </div>
+        </div>
+
+        <div class="cg-row">
+          <div class="cg-num" style="background:#0e2a1a;color:#48c78e;border:1px solid #1a5030;">③</div>
+          <div class="cg-body">
+            <div class="cg-call" style="color:#48c78e;">randomIp(subnet)</div>
+            <div class="cg-desc">Splits CIDR, keeps first 2 octets, appends two random octets 1–254. Both srcIp and dstIp scoped to same /16.</div>
+          </div>
+        </div>
+
+        <div class="cg-row">
+          <div class="cg-num" style="background:#2a1e0e;color:#e5c97a;border:1px solid #604010;">④</div>
+          <div class="cg-body">
+            <div class="cg-call" style="color:#e5c97a;">Date.now()</div>
+            <div class="cg-desc">Wall-clock ms epoch at event creation. Used as correlation window anchor in <code style="font-size:8px;">tryCorrelate()</code>.</div>
+          </div>
+        </div>
+
+        <div class="cg-row">
+          <div class="cg-num" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">⑤</div>
+          <div class="cg-body">
+            <div class="cg-call" style="color:#e55555;">randomHex(32)</div>
+            <div class="cg-desc">32 random bytes → 64-char hex string. Fixed length regardless of type. <em>Stripped at guard transit.</em></div>
+          </div>
+        </div>
+
+        <div class="cg-row" style="margin-bottom:0;">
+          <div class="cg-num" style="background:#2a1a08;color:#f58220;border:1px solid #603010;">⑥</div>
+          <div class="cg-body">
+            <div class="cg-call" style="color:#f58220;">severityForType(type)</div>
+            <div class="cg-desc">Deterministic lookup — ExfilAttempt / PrivilegeEsc → <code style="font-size:8px;color:#e55555;">FATAL</code>; Anomaly / Policy → <code style="font-size:8px;color:#f58220;">ERROR</code>; Auth / Net → <code style="font-size:8px;color:#e5c97a;">WARN</code>; else <code style="font-size:8px;color:#8eb8d4;">INFO</code>.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Severity table annotation -->
+      <div class="ann-block" style="border-left:3px solid #f58220;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#f58220;"></div>
+          severityForType() — type → severity map
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">ExfilAttempt</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">FATAL</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">PrivilegeEsc</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">FATAL</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">AnomalyDetected</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#2d1408;color:#f58220;border:1px solid #6a3010;">ERROR</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">PolicyViolation</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#2d1408;color:#f58220;border:1px solid #6a3010;">ERROR</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">Authentication</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#28240a;color:#e5c97a;border:1px solid #605020;">WARN</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">NetworkConn</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#28240a;color:#e5c97a;border:1px solid #605020;">WARN</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:9px;">
+            <span style="width:110px;color:#555a62;">FileAccess / other</span>
+            <span style="color:#8a9aaa;">→</span>
+            <span class="tag" style="background:#0e1a28;color:#8eb8d4;border:1px solid #1a3a58;">INFO</span>
+          </div>
+        </div>
+
+        <div class="ann-rule" style="background:#2a1a0820;border:1px solid #f5822020;">
+          No randomness — type fully determines severity. Drives ExecSummary FATAL/ERROR KPI counts.
+        </div>
+      </div>
+
+    </div><!-- /ann-pane -->
+
+  </div><!-- /layout -->
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="ss-item">
+      <span class="ss-val" style="color:#4ea6dc;">3</span>
+      <span class="ss-lbl">randomFrom() calls</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#a371f7;">3</span>
+      <span class="ss-lbl">Domain subnets /16</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#48c78e;">254²</span>
+      <span class="ss-lbl">IP space per domain</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e55555;">64</span>
+      <span class="ss-lbl">Hex chars (32 bytes)</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#f58220;">4</span>
+      <span class="ss-lbl">Severity levels</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e5c97a;">15</span>
+      <span class="ss-lbl">User pool size</span>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

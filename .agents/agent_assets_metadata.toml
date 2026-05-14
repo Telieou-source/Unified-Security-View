@@ -186,3 +186,9 @@ id = "DPjwZPYZYeeAix23NPdbb"
 uri = "file://screenshots/CodeExcerpt1_Interfaces.jpg"
 type = "image"
 title = "Code Excerpt 1 — TypeScript interface definitions · src/types.ts · RawEvent (14 fields, rawPacketBytes line 28 → STRIP) · SanitizedEvent (rawPacketBytes absent, sanitizationTimestamp? / guardId? added) · CorrelatedAlert (confidence, domains: DomainId[], eventIds, ruleId) · stat strip: 3 interfaces · 2 stripped · 2 added · 12 forwarded · threshold 0.75"
+
+[[outputs]]
+id = "y6y6fr8I5rmkoW-wfjznN"
+uri = "file://screenshots/CodeExcerpt2_GenerateEvent.jpg"
+type = "image"
+title = "Code Excerpt 2 — generateEvent(domainId) · simulation.ts lines 19–71 · ① randomFrom() seed selection · ② domain.subnet /16 prefix map (ALPHA=10.1, BRAVO=10.2, CHARLIE=10.3) · ③ randomIp() octet synthesis · ④ Date.now() timestamp · ⑤ randomHex(32) packet payload · ⑥ severityForType() deterministic classification · severity map + call graph annotations"
