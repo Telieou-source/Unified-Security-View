@@ -54,9 +54,7 @@ jobs:
         run: python scripts/fix_workspace_for_windows.py
 
       - name: Install Node dependencies
-        run: |
-          rm -f pnpm-lock.yaml
-          pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --force
 
       - name: Install Python and Pillow (icon generation)
         run: pip install Pillow
