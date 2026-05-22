@@ -1,0 +1,111 @@
+Instructions
+This assignment will assess your knowledge and skills about:  
+
+Conducting comprehensive system testing and document outcomes. 
+
+Preparing a maintenance plan to ensure system longevity post-deployment. 
+
+Developing initial project report.  
+
+ 
+
+Assignment: System Testing, Maintenance Planning, and Project Reporting 
+
+This assignment focuses on the final stages of the software development process—testing, maintenance planning, and reporting. You will test the integrated system to ensure its reliability, create a plan for post-deployment maintenance, and develop a preliminary version of your final project report summarizing your work to date. 
+
+Part A: System Testing and Documentation 
+
+Conduct comprehensive testing of your integrated software system to verify its functionality, performance, and stability. In this regard, perform the following three tasks: 
+
+System Testing: 
+
+Execute multiple levels of testing such as integration, system, and acceptance testing as appropriate for your project. 
+
+Include screenshots or log files that demonstrate testing in action and outputs for passed/failed test cases. 
+
+Test Documentation: 
+
+Prepare a test summary report outlining the testing objectives, scope, test cases, procedures, and results. 
+
+Identify any bugs, issues, or system limitations found during testing, and explain how these were resolved or documented for future improvement. 
+
+Evaluation: 
+
+Reflect briefly on how comprehensive testing contributes to ensuring the reliability and quality of your project. 
+
+Part B: System Maintenance Plan 
+
+Prepare a maintenance plan to ensure the system’s long-term performance and adaptability post-deployment. In this regard, complete the following three tasks: 
+
+Maintenance Strategy: 
+
+Discuss different types of maintenance, corrective, adaptive, perfective, and preventive, and their relevance to your project. 
+
+Outline a proposed schedule or approach for monitoring, updates, and performance assessments. 
+
+Maintenance Documentation: 
+
+Describe how you will manage version updates, bug fixes, and enhancement requests. 
+
+Explain how version control and configuration management tools will support your maintenance strategy. 
+
+Risk Identification and Mitigation: 
+
+Identify likely post-deployment risks (e.g., security vulnerabilities, data inconsistencies, or usability issues). 
+
+Suggest appropriate mitigation or contingency measures to manage these risks effectively. 
+
+ 
+
+Part C: Initial Project Report Development 
+
+Develop an initial version of your final project report by integrating all major components completed thus far (Units 1–7). Combine the documents submitted in Week 3 and Week 6, ensuring consistency and coherence throughout the report. You are encouraged to enhance each chapter by adding any missing details, incorporating your instructor’s feedback from previous weeks, and including the testing results from Week 7 in the Results section. The report should be contain the following three sections: 
+
+Preliminary Sections: 
+
+Title Page 
+
+Abstract 
+
+Acknowledgements  
+
+Table of Contents 
+
+List of tables, figures 
+
+Abbreviations and symbols 
+
+Core Chapters: 
+
+Chapter 1: Introduction – including background, objectives, and scope. 
+
+Chapter 2: Literature Review – summarize key studies or technologies influencing your project. 
+
+Chapter 3: System Design and Methodology – outline architecture including system architecture diagram, algorithms, and tools used. 
+
+Chapter 4: Results and Evaluation – summarize testing outcomes and metrics. 
+
+Chapter 5: Discussion – interpret results and address limitations. 
+
+Chapter 6: Conclusion and Future Work – summarize contributions and suggest improvements. 
+
+Additional Sections: 
+
+References (APA 7th Edition) 
+
+Appendices (if applicable: screenshots, logs, data samples) 
+
+Submission Instructions:  
+Read the rubric on how your assignment will be graded.   
+
+Compile parts (A, and B) into a single, well-organized Word document and label each section clearly using the provided part titles (e.g., Part A: System Testing and Documentation). 
+
+ Include all code and output screenshots within the report. Screenshots should be clear, properly captioned, and relevant. 
+
+Your assignment should be a minimum of 1000 words and not more than 1500 words (not including the reference list or the title); double-spaced in Times New Roman font, which is no greater than 12 points in size.   
+
+In a separate Word document, submit Part C, compiling all chapters from one to 6, preliminary and additional sections as given in  the Capstone Project Report Template. The report should be a minimum of 8000 words and a maximum of 12,000 words. 
+
+You should use the course readings when creating your assignment. You may also locate and use additional sources provided you cite them according to APA with a correct and clickable link. 
+
+Remember to cite and list references to validate statements of fact or information that is not considered common knowledge and to corroborate personal opinions/points of view.
