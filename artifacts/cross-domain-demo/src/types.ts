@@ -44,6 +44,8 @@ export interface SanitizedEvent {
   host: string;
   strippedFields: string[];
   passedFields: string[];
+  sanitizationTimestamp?: number;
+  guardId?: string;
 }
 
 export interface CorrelatedAlert {

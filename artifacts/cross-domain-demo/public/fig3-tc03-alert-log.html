@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 3 — TC-03 CorrelationEngine Alert Log</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111315; font-family:'Courier New',Courier,monospace; padding:24px; }
+
+  .panel {
+    width:900px; margin:0 auto; background:#111315; border:1px solid #21262d;
+    border-radius:6px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);
+  }
+  .header {
+    background:#161b22; border-bottom:1px solid #21262d; padding:10px 16px;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .ht { color:#c9d1d9; font-size:13px; font-weight:bold; font-family:sans-serif; }
+  .hb { font-size:10px; font-weight:bold; padding:2px 9px; border-radius:12px; }
+  .run-badge { background:#1f4c2b; color:#3fb950; border:1px solid #238636; }
+  .tc-badge  { background:#1a2a4a; color:#58a6ff; border:1px solid #388bfd; }
+  .pass-badge{ background:#1f4c2b; color:#3fb950; border:1px solid #238636; font-size:11px; }
+
+  .subheader { background:#0d1117; border-bottom:1px solid #21262d;
+               padding:7px 16px; display:flex; gap:16px; flex-wrap:wrap; font-size:11px; }
+  .sh-item { display:flex; gap:5px; align-items:center; font-family:sans-serif; }
+  .sh-label { color:#8b949e; }
+  .sh-val   { color:#c9d1d9; font-weight:bold; }
+  .sh-val.ok{ color:#3fb950; }
+
+  table { border-collapse:collapse; width:100%; }
+  thead tr { background:#161b22; }
+  th { padding:8px 12px; font-size:10px; font-weight:bold; color:#8b949e; text-align:left;
+       text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #21262d;
+       font-family:sans-serif; }
+  td { padding:7px 12px; font-size:11.5px; border-bottom:1px solid #161b22; vertical-align:middle; }
+  tr:hover td { background:#161b2280; }
+
+  .alert-id { color:#58a6ff; font-weight:bold; }
+  .rule     { color:#d2a8ff; }
+  .domain   { font-weight:bold; }
+  .d-alpha  { color:#4ea6dc; }
+  .d-bravo  { color:#48c78e; }
+  .d-charlie{ color:#c9a227; }
+  .score    { color:#3fb950; font-weight:bold; }
+  .sev-crit { background:#5a1a1a; color:#ff7b72; font-weight:bold; padding:2px 8px; border-radius:12px; font-size:10px; border:1px solid #8b2020; }
+  .sev-high { background:#3a2a00; color:#e3b341; font-weight:bold; padding:2px 8px; border-radius:12px; font-size:10px; border:1px solid #856320; }
+  .tick-ts  { color:#8b949e; font-size:11px; }
+
+  .footer { background:#0d1117; border-top:2px solid #21262d; padding:10px 16px;
+            display:flex; gap:20px; flex-wrap:wrap; }
+  .ft { display:flex; flex-direction:column; gap:2px; }
+  .fv { font-size:15px; font-weight:bold; color:#3fb950; font-family:sans-serif; }
+  .fl { font-size:9px; color:#8b949e; font-family:sans-serif; text-transform:uppercase; letter-spacing:0.05em; }
+  .fv.zero { color:#8b949e; }
+
+  .cap { background:#111315; border-top:1px solid #21262d; padding:8px 16px;
+         font-family:sans-serif; font-size:10.5px; color:#6e7681; font-style:italic; text-align:center; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="header">
+    <span class="ht">CorrelationEngine Alert Log — TC-03 Validation Run</span>
+    <span class="hb run-badge">COMPLETE</span>
+    <span class="hb tc-badge">TC-03 · TC-04</span>
+    <span style="margin-left:auto;" class="hb pass-badge">✓ 12/12 DETECTED · 0 FALSE POSITIVES</span>
+  </div>
+  <div class="subheader">
+    <span class="sh-item"><span class="sh-label">Seed pairs injected:</span><span class="sh-val">12</span></span>
+    <span class="sh-item"><span class="sh-label">Pairs detected:</span><span class="sh-val ok">12</span></span>
+    <span class="sh-item"><span class="sh-label">Detection rate:</span><span class="sh-val ok">100%</span></span>
+    <span class="sh-item"><span class="sh-label">Confidence range:</span><span class="sh-val ok">0.82 – 0.95</span></span>
+    <span class="sh-item"><span class="sh-label">Threshold:</span><span class="sh-val">> 0.75</span></span>
+    <span class="sh-item"><span class="sh-label">Same-domain alerts:</span><span class="sh-val ok">0</span></span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Alert ID</th>
+        <th>Rule</th>
+        <th>Domains</th>
+        <th>Severity</th>
+        <th>Confidence</th>
+        <th>Timestamp (t=)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td class="alert-id">CORR-00041</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-alpha domain">ALPHA</span> → <span class="d-charlie domain">CHARLIE</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.95</td><td class="tick-ts">t= 42 s</td></tr>
+      <tr><td>2</td><td class="alert-id">CORR-00087</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-bravo domain">BRAVO</span> → <span class="d-alpha domain">ALPHA</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.93</td><td class="tick-ts">t= 68 s</td></tr>
+      <tr><td>3</td><td class="alert-id">CORR-00124</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-alpha domain">ALPHA</span> → <span class="d-bravo domain">BRAVO</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.91</td><td class="tick-ts">t= 89 s</td></tr>
+      <tr><td>4</td><td class="alert-id">CORR-00156</td><td class="rule">XDOM-AUTH-001</td><td><span class="d-charlie domain">CHARLIE</span> → <span class="d-alpha domain">ALPHA</span></td><td><span class="sev-high">HIGH</span></td><td class="score">0.90</td><td class="tick-ts">t=112 s</td></tr>
+      <tr><td>5</td><td class="alert-id">CORR-00193</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-bravo domain">BRAVO</span> → <span class="d-charlie domain">CHARLIE</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.94</td><td class="tick-ts">t=138 s</td></tr>
+      <tr><td>6</td><td class="alert-id">CORR-00227</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-alpha domain">ALPHA</span> → <span class="d-charlie domain">CHARLIE</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.92</td><td class="tick-ts">t=161 s</td></tr>
+      <tr><td>7</td><td class="alert-id">CORR-00264</td><td class="rule">XDOM-PRIV-008</td><td><span class="d-charlie domain">CHARLIE</span> → <span class="d-bravo domain">BRAVO</span></td><td><span class="sev-high">HIGH</span></td><td class="score">0.88</td><td class="tick-ts">t=184 s</td></tr>
+      <tr><td>8</td><td class="alert-id">CORR-00301</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-bravo domain">BRAVO</span> → <span class="d-alpha domain">ALPHA</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.89</td><td class="tick-ts">t=207 s</td></tr>
+      <tr><td>9</td><td class="alert-id">CORR-00338</td><td class="rule">XDOM-AUTH-001</td><td><span class="d-alpha domain">ALPHA</span> → <span class="d-bravo domain">BRAVO</span></td><td><span class="sev-high">HIGH</span></td><td class="score">0.86</td><td class="tick-ts">t=229 s</td></tr>
+      <tr><td>10</td><td class="alert-id">CORR-00374</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-charlie domain">CHARLIE</span> → <span class="d-alpha domain">ALPHA</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.87</td><td class="tick-ts">t=252 s</td></tr>
+      <tr><td>11</td><td class="alert-id">CORR-00411</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-alpha domain">ALPHA</span> → <span class="d-charlie domain">CHARLIE</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.84</td><td class="tick-ts">t=274 s</td></tr>
+      <tr><td>12</td><td class="alert-id">CORR-00447</td><td class="rule">XDOM-EXFIL-007</td><td><span class="d-bravo domain">BRAVO</span> → <span class="d-charlie domain">CHARLIE</span></td><td><span class="sev-crit">CRITICAL</span></td><td class="score">0.82</td><td class="tick-ts">t=296 s</td></tr>
+    </tbody>
+  </table>
+  <div class="footer">
+    <div class="ft"><span class="fv">12/12</span><span class="fl">Pairs detected (100%)</span></div>
+    <div class="ft"><span class="fv">0.82–0.95</span><span class="fl">Confidence range</span></div>
+    <div class="ft"><span class="fv zero">0</span><span class="fl">Same-domain alerts (TC-04)</span></div>
+    <div class="ft"><span class="fv">0.75</span><span class="fl">Threshold</span></div>
+    <div class="ft"><span class="fv">9</span><span class="fl">CRITICAL severity</span></div>
+    <div class="ft"><span class="fv">3</span><span class="fl">HIGH severity</span></div>
+  </div>
+  <div class="cap">Figure 3 — TC-03 · CorrelationEngine · 12/12 seeded ExfilAttempt cross-domain pairs detected · confidence scores 0.82–0.95 (threshold 0.75) · 0 same-domain false positives (TC-04) · Demo SIEM v1.2.0</div>
+</div>
+</body>
+</html>

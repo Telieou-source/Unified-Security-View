@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 6 — pnpm Build / TypeScript Strict-Mode Gate</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1e1e1e; font-family:'Courier New',Courier,monospace; padding:0; }
+
+  .window {
+    background:#1e1e1e; border-radius:8px; overflow:hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    border: 1px solid #3c3c3c;
+    width: 900px; margin: 24px auto;
+  }
+  .titlebar {
+    background:#323233; padding:10px 16px; display:flex; align-items:center; gap:8px;
+    border-bottom: 1px solid #3c3c3c;
+  }
+  .dot { width:12px; height:12px; border-radius:50%; }
+  .title { color:#cccccc; font-size:12px; margin-left:8px; font-family:sans-serif; }
+  .branch { background:#1a3050; color:#58a6ff; font-size:10px; font-weight:bold; padding:2px 9px;
+             border-radius:12px; border:1px solid #1f6feb; margin-left:auto; font-family:sans-serif; }
+
+  .tabs { background:#252526; padding:0 0 0 0; border-bottom:1px solid #3c3c3c; display:flex; }
+  .tab  { padding:8px 20px; font-size:11px; font-family:sans-serif; color:#cccccc;
+           border-right:1px solid #3c3c3c; }
+  .tab.active { background:#1e1e1e; color:#ffffff; border-top:2px solid #007acc; }
+
+  .terminal { padding:18px 20px 20px; font-size:12.5px; line-height:1.75; }
+
+  .prompt  { color:#4ec9b0; }
+  .cmd     { color:#ce9178; }
+  .dim     { color:#6a9955; }
+  .white   { color:#d4d4d4; }
+  .green   { color:#4ec9b0; font-weight:bold; }
+  .blue    { color:#569cd6; }
+  .yellow  { color:#dcdcaa; }
+  .scope   { color:#9cdcfe; }
+  .ok-line { color:#4ec9b0; }
+  .sep     { color:#3c3c3c; }
+
+  .box {
+    margin:10px 0; border:1px solid #3fb950; border-radius:4px;
+    background:#14532d20; padding:10px 16px;
+  }
+  .box-title { color:#4ec9b0; font-weight:bold; font-size:12px; margin-bottom:6px; }
+  .box-row   { display:flex; gap:16px; flex-wrap:wrap; }
+  .box-item  { display:flex; flex-direction:column; gap:2px; }
+  .box-val   { font-size:16px; font-weight:bold; color:#4ec9b0; font-family:sans-serif; }
+  .box-lbl   { font-size:9px; color:#6a9955; font-family:sans-serif; text-transform:uppercase; }
+
+  .ok-badge {
+    display:inline-block; background:#14532d; color:#4ade80;
+    padding:3px 14px; border-radius:3px; font-weight:bold;
+    font-size:12px; border:1px solid #166534;
+  }
+
+  .cap {
+    background:#252526; border-top:1px solid #3c3c3c;
+    padding:9px 20px; font-family:sans-serif; font-size:11px;
+    color:#8e8e8e; font-style:italic; text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot" style="background:#ff5f57;"></div>
+    <div class="dot" style="background:#febc2e;"></div>
+    <div class="dot" style="background:#28c840;"></div>
+    <span class="title">TERMINAL — workspace root — PR #3 merge gate: pnpm run typecheck</span>
+    <span class="branch">⎇ main · v1.2.0</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active">TERMINAL</div>
+    <div class="tab">PROBLEMS <span style="color:#3c3c3c;">(0)</span></div>
+    <div class="tab">OUTPUT</div>
+  </div>
+  <div class="terminal">
+
+<div><span class="dim"># ── PR #3 merge gate: TypeScript strict-mode typecheck ──────────────────────────</span></div>
+<div><span class="prompt">~/workspace (main) $</span> <span class="cmd">git log --oneline -1</span></div>
+<div><span class="white">44835a6</span> <span class="dim">fix(correlation): add domain-exclusion guard in tryCorrelate() · resolves #2</span></div>
+<div>&nbsp;</div>
+<div><span class="prompt">~/workspace (main) $</span> <span class="cmd">pnpm run typecheck</span></div>
+<div>&nbsp;</div>
+<div><span class="dim">></span> <span class="scope">workspace@0.0.0</span> <span class="yellow">typecheck</span> <span class="dim">/home/runner/workspace</span></div>
+<div><span class="dim">></span> <span class="white">pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck</span></div>
+<div>&nbsp;</div>
+<div><span class="dim">></span> <span class="scope">workspace@0.0.0</span> <span class="yellow">typecheck:libs</span> <span class="dim">/home/runner/workspace</span></div>
+<div><span class="dim">></span> <span class="blue">tsc --build</span></div>
+<div>&nbsp;</div>
+<div><span class="dim">Scope:</span> <span class="white">4 of 9 workspace projects</span></div>
+<div>&nbsp;</div>
+<div><span class="scope">artifacts/api-server        </span><span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div><span class="scope">artifacts/cross-domain-demo </span><span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div><span class="scope">artifacts/mockup-sandbox    </span><span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div><span class="scope">scripts                     </span><span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div>&nbsp;</div>
+<div><span class="scope">scripts                     </span><span class="yellow">typecheck:</span> <span class="ok-line">Done</span></div>
+<div><span class="scope">artifacts/api-server        </span><span class="yellow">typecheck:</span> <span class="ok-line">Done</span></div>
+<div><span class="scope">artifacts/mockup-sandbox    </span><span class="yellow">typecheck:</span> <span class="ok-line">Done</span></div>
+<div><span class="scope">artifacts/cross-domain-demo </span><span class="yellow">typecheck:</span> <span class="ok-line">Done</span></div>
+<div>&nbsp;</div>
+<div><span class="sep">────────────────────────────────────────────────────────────────────────────────</span></div>
+<div>&nbsp;</div>
+
+<div class="box">
+  <div class="box-title">✓ Merge gate PASSED — PR #3 approved for merge to main</div>
+  <div class="box-row">
+    <div class="box-item"><span class="box-val">0</span><span class="box-lbl">Type errors</span></div>
+    <div class="box-item"><span class="box-val">0</span><span class="box-lbl">Warnings</span></div>
+    <div class="box-item"><span class="box-val">9/9</span><span class="box-lbl">Modules checked</span></div>
+    <div class="box-item"><span class="box-val">strict</span><span class="box-lbl">TS mode</span></div>
+    <div class="box-item"><span class="box-val">5.9</span><span class="box-lbl">TypeScript</span></div>
+    <div class="box-item"><span class="box-val">v1.2.0</span><span class="box-lbl">Release tag</span></div>
+  </div>
+</div>
+
+<div>&nbsp;</div>
+<div><span class="ok-badge">✓ MERGE GATE PASS — 0 errors · ready to merge</span></div>
+<div>&nbsp;</div>
+<div><span class="prompt">~/workspace (main) $</span> <span class="white">▊</span></div>
+
+  </div>
+  <div class="cap">Figure 6 — pnpm run typecheck · PR #3 merge gate · TypeScript 5.9 strict mode · 0 errors · 0 warnings · 9/9 modules · commit 44835a6 (fix: domain-exclusion guard) · Demo SIEM v1.2.0</div>
+</div>
+</body>
+</html>

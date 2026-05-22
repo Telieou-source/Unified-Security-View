@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 4 — SimulationController runSimulationTick()</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 13px; padding: 24px; }
+
+  .window {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    overflow: hidden; max-width: 1040px; margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .titlebar {
+    background: #21262d; padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red    { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green  { background: #27c93f; }
+  .filename { color: #8b949e; font-size: 12px; margin-left: 10px; }
+  .filepath { color: #484f58; font-size: 11px; margin-left: 4px; }
+
+  .body { padding: 20px 0 28px; line-height: 1.85; }
+
+  /* Lines */
+  .line { display: flex; align-items: baseline; }
+  .ln   { color: #484f58; min-width: 46px; text-align: right; padding-right: 18px; font-size: 11px; user-select: none; flex-shrink: 0; }
+  .code { white-space: pre; font-size: 12.5px; }
+
+  /* Syntax */
+  .kw      { color: #ff7b72; }
+  .fn      { color: #d2a8ff; }
+  .var     { color: #ffa657; }
+  .str     { color: #a5d6ff; }
+  .num     { color: #79c0ff; }
+  .type-an { color: #ff7b72; }
+  .cmt     { color: #484f58; font-style: italic; }
+  .punct   { color: #8b949e; }
+  .prop    { color: #79c0ff; }
+  .op      { color: #ff7b72; }
+  .react   { color: #d2a8ff; }          /* React hooks */
+  .comp    { color: #ffa657; }          /* Component names in dispatch comments */
+
+  /* Section label bars */
+  .section-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 46px 3px; margin-top: 4px;
+  }
+  .badge {
+    font-size: 10px; padding: 2px 9px; border-radius: 3px;
+    font-weight: bold; letter-spacing: 0.05em; white-space: nowrap;
+  }
+
+  /* Stage colours */
+  .b-jsdoc   { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+  .b-gen     { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }   /* ① generate */
+  .b-domain  { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; }   /* ② domain panels */
+  .b-guard   { background: #2d0e2d; color: #d2a8ff; border: 1px solid #6a2a6a; }   /* ③ guard */
+  .b-bound   { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }   /* ④ boundary */
+  .b-corr    { background: #2d1a08; color: #e5c97a; border: 1px solid #6a4a10; }   /* ⑤ correlate */
+  .b-alert   { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; }   /* ⑥ alert */
+  .b-health  { background: #1a2030; color: #79c0ff; border: 1px solid #2a3a60; }   /* ⑦ health */
+  .b-clock   { background: #21262d; color: #8b949e; border: 1px solid #30363d; }   /* clock */
+
+  .sep { flex: 1; border-top: 1px solid #21262d; }
+  .badge-desc { font-size: 10px; color: #484f58; white-space: nowrap; }
+
+  /* Dispatch pill */
+  .dpill {
+    display: inline-block; font-size: 10px; padding: 0 5px;
+    border-radius: 2px; font-style: normal; vertical-align: middle; margin-left: 3px;
+  }
+  .dp-alpha   { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; }
+  .dp-bravo   { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .dp-charlie { background: #2d2510; color: #c9a227; border: 1px solid #5a4a20; }
+  .dp-stats   { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+  .dp-bound   { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .dp-corr    { background: #2d1a08; color: #e5c97a; border: 1px solid #6a4a10; }
+  .dp-modal   { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; }
+  .dp-health  { background: #1a2030; color: #79c0ff; border: 1px solid #2a3a60; }
+
+  /* Pipeline flow diagram */
+  .pipeline {
+    margin: 0 46px 6px;
+    background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+    padding: 8px 14px; display: flex; align-items: center; gap: 0; font-size: 10px;
+    overflow: hidden;
+  }
+  .pipe-stage {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 1;
+  }
+  .pipe-name { font-weight: bold; font-size: 10px; }
+  .pipe-sub  { font-size: 9px; color: #484f58; }
+  .pipe-arr  { color: #30363d; font-size: 14px; padding: 0 4px; flex-shrink: 0; align-self: center; padding-bottom: 6px; }
+  .ps-gen     { color: #f58220; }
+  .ps-guard   { color: #d2a8ff; }
+  .ps-corr    { color: #e5c97a; }
+  .ps-dispatch { color: #48c78e; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    <span class="filename">App.tsx</span>
+    <span class="filepath">artifacts/cross-domain-demo/src/App.tsx</span>
+  </div>
+  <div class="body">
+
+    <!-- Pipeline diagram -->
+    <div class="section-label" style="margin-top:0;">
+      <span class="badge b-jsdoc">TICK PIPELINE</span>
+      <span class="badge-desc">sequential invocation chain per interval</span>
+      <span class="sep"></span>
+    </div>
+    <div class="pipeline">
+      <div class="pipe-stage">
+        <span class="pipe-name ps-gen">① generate()</span>
+        <span class="pipe-sub">RawEvent</span>
+      </div>
+      <span class="pipe-arr">→</span>
+      <div class="pipe-stage">
+        <span class="pipe-name ps-dispatch">② dispatch</span>
+        <span class="pipe-sub">DomainPanels</span>
+      </div>
+      <span class="pipe-arr">→</span>
+      <div class="pipe-stage">
+        <span class="pipe-name ps-guard">③ sanitize()</span>
+        <span class="pipe-sub">SanitizedEvent</span>
+      </div>
+      <span class="pipe-arr">→</span>
+      <div class="pipe-stage">
+        <span class="pipe-name ps-dispatch">④ dispatch</span>
+        <span class="pipe-sub">BoundaryLayer</span>
+      </div>
+      <span class="pipe-arr">→</span>
+      <div class="pipe-stage">
+        <span class="pipe-name ps-corr">⑤ process()</span>
+        <span class="pipe-sub">CorrelatedAlert?</span>
+      </div>
+      <span class="pipe-arr">→</span>
+      <div class="pipe-stage">
+        <span class="pipe-name ps-dispatch">⑥ dispatch</span>
+        <span class="pipe-sub">CorrelatedView</span>
+      </div>
+      <span class="pipe-arr">→</span>
+      <div class="pipe-stage">
+        <span class="pipe-name ps-dispatch">⑦ telemetry</span>
+        <span class="pipe-sub">HealthMonitor</span>
+      </div>
+    </div>
+
+    <!-- JSDoc -->
+    <div class="section-label">
+      <span class="badge b-jsdoc">JSDOC</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">42</span><span class="code">  <span class="cmt">/** SimulationController — orchestrates the full per-tick pipeline:</span></span></div>
+    <div class="line"><span class="ln">43</span><span class="code">  <span class="cmt"> *  DomainEventGenerator.generate() → CrossDomainGuard.sanitize()</span></span></div>
+    <div class="line"><span class="ln">44</span><span class="code">  <span class="cmt"> *  → CorrelationEngine.process() → dispatch to all six panels + HealthMonitor */</span></span></div>
+
+    <!-- Signature -->
+    <div class="line"><span class="ln">45</span><span class="code">  <span class="kw">const</span> <span class="var">runSimulationTick</span> <span class="op">=</span> <span class="react">useCallback</span><span class="punct">(():</span> <span class="type-an">void</span> <span class="op">=&gt;</span> <span class="punct">{</span></span></div>
+    <div class="line"><span class="ln">46</span><span class="code"></span></div>
+
+    <!-- ① generate -->
+    <div class="section-label">
+      <span class="badge b-gen">① DomainEventGenerator.generate()</span>
+      <span class="badge-desc">synthesize one RawEvent — domain selected round-robin from DOMAINS[3]</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">47</span><span class="code">    <span class="cmt">// ① DomainEventGenerator.generate() — synthesize one RawEvent per domain tick</span></span></div>
+    <div class="line"><span class="ln">48</span><span class="code">    <span class="kw">const</span> <span class="var">domainId</span><span class="punct">:</span> <span class="type-an">DomainId</span> <span class="op">=</span> <span class="var">DOMAINS</span><span class="punct">[</span><span class="fn">Math</span><span class="punct">.</span><span class="fn">floor</span><span class="punct">(</span><span class="fn">Math</span><span class="punct">.</span><span class="fn">random</span><span class="punct">() *</span> <span class="var">DOMAINS</span><span class="punct">.</span><span class="prop">length</span><span class="punct">)].</span><span class="prop">id</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">49</span><span class="code">    <span class="kw">const</span> <span class="var">raw</span><span class="punct">:</span> <span class="type-an">RawEvent</span> <span class="op">=</span> <span class="fn">generateEvent</span><span class="punct">(</span><span class="var">domainId</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">50</span><span class="code"></span></div>
+
+    <!-- ② domain panels -->
+    <div class="section-label">
+      <span class="badge b-domain">② dispatch → DomainPanels + StatsBar</span>
+      <span class="badge-desc">
+        raw event dispatched to
+        <span class="dpill dp-alpha">Alpha</span>
+        <span class="dpill dp-bravo">Bravo</span>
+        <span class="dpill dp-charlie">Charlie</span>
+        <span class="dpill dp-stats">StatsBar</span>
+        — capped at MAX_RAW=80
+      </span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">51</span><span class="code">    <span class="cmt">// ② Dispatch raw event → DomainPanel (Alpha / Bravo / Charlie) + StatsBar</span></span></div>
+    <div class="line"><span class="ln">52</span><span class="code">    <span class="fn">setRawEvents</span><span class="punct">((</span><span class="var">prev</span><span class="punct">) =&gt; [</span><span class="var">raw</span><span class="punct">,</span> <span class="op">...</span><span class="var">prev</span><span class="punct">].</span><span class="fn">slice</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="var">MAX_RAW</span><span class="punct">));</span></span></div>
+    <div class="line"><span class="ln">53</span><span class="code"></span></div>
+
+    <!-- ③ guard -->
+    <div class="section-label">
+      <span class="badge b-guard">③ CrossDomainGuard.sanitize()</span>
+      <span class="badge-desc">rawPacketBytes stripped via ES2018 destructuring · sanitizationTimestamp + guardId appended</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">54</span><span class="code">    <span class="cmt">// ③ CrossDomainGuard.sanitize() — strip rawPacketBytes, append audit fields</span></span></div>
+    <div class="line"><span class="ln">55</span><span class="code">    <span class="kw">const</span> <span class="var">sanitized</span><span class="punct">:</span> <span class="type-an">SanitizedEvent</span> <span class="op">=</span> <span class="fn">sanitizeEvent</span><span class="punct">(</span><span class="var">raw</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">56</span><span class="code">    <span class="kw">const</span> <span class="var">updatedSanitized</span> <span class="op">=</span> <span class="punct">[</span><span class="var">sanitized</span><span class="punct">,</span> <span class="op">...</span><span class="var">sanitizedRef</span><span class="punct">.</span><span class="prop">current</span><span class="punct">].</span><span class="fn">slice</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="var">MAX_SANITIZED</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">57</span><span class="code"></span></div>
+
+    <!-- ④ boundary -->
+    <div class="section-label">
+      <span class="badge b-bound">④ dispatch → BoundaryLayer + StatsBar</span>
+      <span class="badge-desc">
+        sanitized event + stripCount sent to
+        <span class="dpill dp-bound">BoundaryLayer</span>
+        <span class="dpill dp-stats">StatsBar</span>
+        — capped at MAX_SANITIZED=160
+      </span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">58</span><span class="code">    <span class="cmt">// ④ Dispatch sanitized event → BoundaryLayer + StatsBar panels</span></span></div>
+    <div class="line"><span class="ln">59</span><span class="code">    <span class="fn">setSanitizedEvents</span><span class="punct">(</span><span class="var">updatedSanitized</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">60</span><span class="code">    <span class="fn">setStrippedFieldCount</span><span class="punct">((</span><span class="var">c</span><span class="punct">) =&gt;</span> <span class="var">c</span> <span class="op">+</span> <span class="var">sanitized</span><span class="punct">.</span><span class="prop">strippedFields</span><span class="punct">.</span><span class="prop">length</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">61</span><span class="code"></span></div>
+
+    <!-- ⑤ correlate -->
+    <div class="section-label">
+      <span class="badge b-corr">⑤ CorrelationEngine.process()</span>
+      <span class="badge-desc">pattern match across 10 000 ms window · computeConfidence() four-factor scorer · returns null if below threshold</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">62</span><span class="code">    <span class="cmt">// ⑤ CorrelationEngine.process() — run pattern match across 10-second window</span></span></div>
+    <div class="line"><span class="ln">63</span><span class="code">    <span class="kw">const</span> <span class="var">alert</span><span class="punct">:</span> <span class="type-an">CorrelatedAlert</span> <span class="op">|</span> <span class="type-an">null</span> <span class="op">=</span> <span class="fn">tryCorrelate</span><span class="punct">(</span><span class="var">updatedSanitized</span><span class="punct">,</span> <span class="var">sanitized</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">64</span><span class="code"></span></div>
+
+    <!-- ⑥ alert dispatch -->
+    <div class="section-label">
+      <span class="badge b-alert">⑥ dispatch → CorrelatedView + AlertDetailModal</span>
+      <span class="badge-desc">
+        alert dispatched when confidence ≥ threshold ·
+        <span class="dpill dp-corr">CorrelatedView</span>
+        <span class="dpill dp-modal">AlertDetailModal</span>
+        — capped at MAX_ALERTS=60
+      </span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">65</span><span class="code">    <span class="cmt">// ⑥ Dispatch alert (when fired) → CorrelatedView + AlertDetailModal panels</span></span></div>
+    <div class="line"><span class="ln">66</span><span class="code">    <span class="kw">if</span> <span class="punct">(</span><span class="var">alert</span><span class="punct">) {</span></span></div>
+    <div class="line"><span class="ln">67</span><span class="code">      <span class="fn">setAlerts</span><span class="punct">((</span><span class="var">prev</span><span class="punct">) =&gt; [</span><span class="var">alert</span><span class="punct">,</span> <span class="op">...</span><span class="var">prev</span><span class="punct">].</span><span class="fn">slice</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="var">MAX_ALERTS</span><span class="punct">));</span></span></div>
+    <div class="line"><span class="ln">68</span><span class="code">    <span class="punct">}</span></span></div>
+    <div class="line"><span class="ln">69</span><span class="code"></span></div>
+
+    <!-- ⑦ health -->
+    <div class="section-label">
+      <span class="badge b-health">⑦ HealthMonitor telemetry</span>
+      <span class="badge-desc">
+        driven reactively from rawEvents + sanitizedEvents state ·
+        <span class="dpill dp-health">HealthMonitor</span>
+        re-renders on every state change
+      </span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">70</span><span class="code">    <span class="cmt">// ⑦ HealthMonitor telemetry driven reactively from rawEvents + sanitizedEvents state</span></span></div>
+    <div class="line"><span class="ln">71</span><span class="code"></span></div>
+    <div class="line"><span class="ln">72</span><span class="code">  <span class="punct">},</span> <span class="punct">[]);</span></span></div>
+    <div class="line"><span class="ln">73</span><span class="code"></span></div>
+
+    <!-- Clock -->
+    <div class="section-label">
+      <span class="badge b-clock">SIMULATION CLOCK</span>
+      <span class="badge-desc">setInterval drives runSimulationTick at configurable speed (200 ms – 3000 ms)</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">74</span><span class="code">  <span class="cmt">// SimulationController clock — fires runSimulationTick at configurable ms interval</span></span></div>
+    <div class="line"><span class="ln">75</span><span class="code">  <span class="react">useEffect</span><span class="punct">(() =&gt; {</span></span></div>
+    <div class="line"><span class="ln">76</span><span class="code">    <span class="kw">if</span> <span class="punct">(!</span><span class="var">isRunning</span><span class="punct">)</span> <span class="kw">return</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">77</span><span class="code">    <span class="kw">const</span> <span class="var">interval</span> <span class="op">=</span> <span class="fn">setInterval</span><span class="punct">(</span><span class="var">runSimulationTick</span><span class="punct">,</span> <span class="var">speed</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">78</span><span class="code">    <span class="kw">return</span> <span class="punct">() =&gt;</span> <span class="fn">clearInterval</span><span class="punct">(</span><span class="var">interval</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">79</span><span class="code">  <span class="punct">},</span> <span class="punct">[</span><span class="var">isRunning</span><span class="punct">,</span> <span class="var">speed</span><span class="punct">,</span> <span class="var">runSimulationTick</span><span class="punct">]);</span></span></div>
+
+  </div>
+</div>
+</body>
+</html>

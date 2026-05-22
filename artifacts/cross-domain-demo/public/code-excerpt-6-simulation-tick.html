@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 6 — runSimulationTick()</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 24px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 9px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.6; margin-bottom: 14px; }
+
+  /* ── card ── */
+  .card { background: #111315; border: 1px solid #21262d; border-radius: 6px; overflow: hidden; }
+  .card-header {
+    background: #16191e; border-bottom: 1px solid #21262d;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .file-path { font-size: 10px; color: #79c0ff; margin-left: 4px; }
+  .file-sub  { font-size: 9px; color: #555a62; }
+  .lang-badge {
+    margin-left: auto; font-size: 8px; font-weight: bold; padding: 1px 7px;
+    border-radius: 2px; background: #1f2937; color: #79c0ff; border: 1px solid #2a3a60;
+  }
+
+  /* ── layout ── */
+  .layout { display: grid; grid-template-columns: 1fr 310px; }
+
+  /* ── CODE PANE ── */
+  .code-pane { border-right: 1px solid #1e2228; overflow-x: auto; }
+
+  .block-sep {
+    background: #16191e; border-top: 1px solid #1e2228; border-bottom: 1px solid #1e2228;
+    padding: 4px 12px 4px 48px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .bs-label { font-size: 8px; font-weight: bold; color: #3a4048;
+              text-transform: uppercase; letter-spacing: 0.09em; }
+  .bs-badge { font-size: 8px; font-weight: bold; padding: 1px 7px; border-radius: 2px; }
+
+  table { border-collapse: collapse; width: 100%; }
+  tr { line-height: 1.65; }
+  tr:hover { background: #14161a; }
+
+  tr.hl-const  { background: #1a1c1020; }
+  tr.hl-ref    { background: #0e1a2a18; }
+  tr.hl-jsdoc  { background: #111820; }
+  tr.hl-gen    { background: #2a220a20; }   /* ① generate */
+  tr.hl-raw    { background: #0e1a2a20; }   /* ② raw dispatch */
+  tr.hl-san    { background: #2d0e0e18; }   /* ③ sanitize */
+  tr.hl-sanout { background: #0e2a1820; }   /* ④ sanitized dispatch */
+  tr.hl-corr   { background: #180e2a18; }   /* ⑤ correlation */
+  tr.hl-alert  { background: #2a180820; }   /* ⑥ alert dispatch */
+  tr.hl-cb     { background: #1a1020; }     /* useCallback */
+  tr.hl-clock  { background: #28180a20; }   /* useEffect clock */
+
+  td.ln {
+    width: 40px; min-width: 40px; text-align: right;
+    padding: 0 10px 0 0; color: #2a2d38; font-size: 11px;
+    user-select: none; vertical-align: top; padding-top: 1px;
+    border-right: 1px solid #1e2228;
+  }
+  td.code { padding: 0 16px 0 14px; font-size: 11.5px; white-space: pre; vertical-align: top; }
+  tr.spacer td.code { height: 5px; }
+
+  /* ── syntax ── */
+  .kw  { color: #f97583; }
+  .fn  { color: #d2a8ff; }
+  .par { color: #ffa657; }
+  .tn  { color: #79c0ff; }
+  .fld { color: #cdd9e5; }
+  .tv  { color: #a5d6ff; }
+  .sl  { color: #9ecbff; }
+  .cm  { color: #555a62; font-style: italic; }
+  .op  { color: #8a9aaa; }
+  .num { color: #f0a050; }
+  .mth { color: #79c0ff; }
+  .hk  { color: #79c0ff; }   /* hook name */
+  .rx  { color: #d2a8ff; }   /* React import */
+
+  /* semantic highlights — pipeline steps */
+  .h-gen   { color: #c9a227; font-weight: bold; }   /* ① generate */
+  .h-raw   { color: #4ea6dc; font-weight: bold; }   /* ② raw dispatch */
+  .h-san   { color: #e55555; font-weight: bold; }   /* ③ sanitize */
+  .h-sanout{ color: #48c78e; font-weight: bold; }   /* ④ sanitized dispatch */
+  .h-corr  { color: #a371f7; font-weight: bold; }   /* ⑤ correlate */
+  .h-alert { color: #f58220; font-weight: bold; }   /* ⑥ alert dispatch */
+  .h-hmon  { color: #79c0ff; font-weight: bold; }   /* ⑦ HealthMonitor */
+  .h-cb    { color: #d2a8ff; font-weight: bold; }   /* useCallback */
+  .h-clock { color: #e5c97a; font-weight: bold; }   /* useEffect clock */
+
+  /* ── ANNOTATION PANE ── */
+  .ann-pane { display: flex; flex-direction: column; }
+
+  .ann-section {
+    padding: 10px 13px; border-bottom: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .ann-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 2px;
+  }
+  .ann-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+  .ann-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* pipeline flow */
+  .pipe-node {
+    display: flex; align-items: flex-start; gap: 7px;
+  }
+  .pn-num {
+    width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: bold; margin-top: 1px;
+  }
+  .pn-body { flex: 1; }
+  .pn-call { font-size: 9.5px; font-weight: bold; line-height: 1.3; }
+  .pn-desc { font-size: 8px; color: #555a62; line-height: 1.4; margin-top: 1px; }
+  .pipe-arrow {
+    text-align: center; color: #2a2d38; font-size: 9px;
+    margin: 1px 0 1px 8px; line-height: 1;
+  }
+
+  /* buffer capacity table */
+  .buf-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  .buf-table th {
+    padding: 3px 6px; font-size: 7.5px; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #3a4048; border-bottom: 1px solid #1e2228;
+    text-align: left;
+  }
+  .buf-table td { padding: 4px 6px; border-bottom: 1px solid #111315; }
+  .buf-table tr:last-child td { border-bottom: none; }
+
+  /* useCallback card */
+  .cb-card {
+    padding: 7px 9px; border-radius: 3px;
+    background: #16101e; border: 1px solid #3a1a5040;
+    border-left: 3px solid #d2a8ff;
+  }
+  .cb-head { font-size: 10px; font-weight: bold; color: #d2a8ff; margin-bottom: 3px; }
+  .cb-body { font-size: 8.5px; color: #555a62; line-height: 1.5; }
+
+  /* ref card */
+  .ref-card {
+    padding: 7px 9px; border-radius: 3px;
+    background: #0e1a2a30; border: 1px solid #4ea6dc20;
+    border-left: 3px solid #4ea6dc;
+  }
+  .ref-head { font-size: 10px; font-weight: bold; color: #4ea6dc; margin-bottom: 3px; }
+  .ref-body { font-size: 8.5px; color: #555a62; line-height: 1.5; }
+
+  /* clock card */
+  .clock-card {
+    padding: 7px 9px; border-radius: 3px;
+    background: #28180a20; border: 1px solid #e5c97a20;
+    border-left: 3px solid #e5c97a;
+  }
+  .clock-head { font-size: 10px; font-weight: bold; color: #e5c97a; margin-bottom: 3px; }
+  .clock-body { font-size: 8.5px; color: #555a62; line-height: 1.5; }
+
+  /* ── stat strip ── */
+  .stat-strip { display: flex; border-top: 1px solid #1e2228; }
+  .ss-item {
+    flex: 1; padding: 7px 8px; border-right: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .ss-item:last-child { border-right: none; }
+  .ss-val { font-size: 14px; font-weight: bold; line-height: 1; }
+  .ss-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">CODE EXCERPT 6 — runSimulationTick() · SimulationController · src/App.tsx · lines 17–76</div>
+<div class="fig-title"><code style="color:#d2a8ff;">runSimulationTick()</code> — Seven-Step Per-Tick Pipeline: Generate → Sanitize → Correlate → Dispatch, Wrapped in <code style="color:#d2a8ff;">useCallback</code></div>
+<div class="fig-sub">
+  artifacts/cross-domain-demo/src/App.tsx · React 18 · TypeScript 5.9 ·
+  ① <code style="color:#c9a227;">generateEvent()</code> ·
+  ② <code style="color:#4ea6dc;">setRawEvents</code> ·
+  ③ <code style="color:#e55555;">sanitizeEvent()</code> ·
+  ④ <code style="color:#48c78e;">setSanitizedEvents</code> ·
+  ⑤ <code style="color:#a371f7;">tryCorrelate()</code> ·
+  ⑥ <code style="color:#f58220;">setAlerts (conditional)</code> ·
+  ⑦ <code style="color:#79c0ff;">HealthMonitor</code> reactive ·
+  clock: <code style="color:#e5c97a;">setInterval(tick, speed)</code>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <span class="file-path">src/App.tsx</span>
+    <span class="file-sub">— SimulationController · React 18 functional component · lines 17–76</span>
+    <span class="lang-badge">React 18 / TSX</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ════════════════════════════════
+         CODE PANE
+    ════════════════════════════════ -->
+    <div class="code-pane">
+
+      <!-- Imports (excerpt) -->
+      <div class="block-sep">
+        <span class="bs-label">Imports (excerpt) · lines 1–4</span>
+        <span class="bs-badge" style="background:#111820;color:#79c0ff;border:1px solid #2a3a60;">React 18 hooks + simulation module</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">1</td>
+          <td class="code"><span class="kw">import</span> <span class="op">{</span> <span class="rx">useState</span><span class="op">,</span> <span class="h-clock">useEffect</span><span class="op">,</span> <span class="h-cb">useCallback</span><span class="op">,</span> <span class="h-raw">useRef</span> <span class="op">}</span> <span class="kw">from</span> <span class="sl">"react"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">4</td>
+          <td class="code"><span class="kw">import</span> <span class="op">{</span> <span class="h-gen">generateEvent</span><span class="op">,</span> <span class="h-san">sanitizeEvent</span><span class="op">,</span> <span class="h-corr">tryCorrelate</span> <span class="op">}</span> <span class="kw">from</span> <span class="sl">"./lib/simulation"</span><span class="op">;</span></td>
+        </tr>
+      </table>
+
+      <!-- Buffer constants -->
+      <div class="block-sep">
+        <span class="bs-label">Buffer capacity constants · lines 17–19</span>
+        <span class="bs-badge" style="background:#1a1c10;color:#c9a227;border:1px solid #4a3810;">Ring-buffer limits — oldest events evicted via .slice(0, MAX)</span>
+      </div>
+      <table>
+        <tr class="hl-const">
+          <td class="ln">17</td>
+          <td class="code"><span class="kw">const</span> <span class="h-raw">MAX_RAW</span>        <span class="op">=</span> <span class="num">80</span><span class="op">;</span>   <span class="cm">// DomainPanel ring — 80 most recent low-side events</span></td>
+        </tr>
+        <tr class="hl-const">
+          <td class="ln">18</td>
+          <td class="code"><span class="kw">const</span> <span class="h-sanout">MAX_SANITIZED</span>  <span class="op">=</span> <span class="num">160</span><span class="op">;</span>  <span class="cm">// BoundaryLayer ring — correlation window must fit inside</span></td>
+        </tr>
+        <tr class="hl-const">
+          <td class="ln">19</td>
+          <td class="code"><span class="kw">const</span> <span class="h-alert">MAX_ALERTS</span>     <span class="op">=</span> <span class="num">60</span><span class="op">;</span>   <span class="cm">// CorrelatedView ring — newest 60 alerts retained</span></td>
+        </tr>
+      </table>
+
+      <!-- sanitizedRef -->
+      <div class="block-sep">
+        <span class="bs-label">Closure-safe ref · lines 36–37</span>
+        <span class="bs-badge" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a3a60;">sanitizedRef — stale-closure escape hatch</span>
+      </div>
+      <table>
+        <tr class="hl-ref">
+          <td class="ln">36</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-raw">sanitizedRef</span> <span class="op">=</span> <span class="hk">useRef</span><span class="op">&lt;</span><span class="tn">SanitizedEvent</span><span class="op">[]&gt;([]);</span></td>
+        </tr>
+        <tr class="hl-ref">
+          <td class="ln">37</td>
+          <td class="code">  <span class="h-raw">sanitizedRef</span><span class="op">.</span><span class="fld">current</span> <span class="op">=</span> <span class="par">sanitizedEvents</span><span class="op">;</span>       <span class="cm">// sync ref every render — always fresh inside callback</span></td>
+        </tr>
+        <!-- annotation -->
+        <tr style="background:#0a1218;">
+          <td class="ln" style="color:transparent;">·</td>
+          <td class="code" style="font-size:8.5px;padding-top:1px;padding-bottom:3px;color:#555a62;">
+            <span style="margin-left:2px;">╰── <code style="color:#4ea6dc;">useCallback([], [])</code> captures sanitizedRef at mount — ref.current read at call-time gives the <em>current</em> sanitized buffer without adding it to deps and causing clock restarts</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- JSDoc + useCallback open -->
+      <div class="block-sep">
+        <span class="bs-label">JSDoc · lines 39–41</span>
+        <span class="bs-badge" style="background:#16101e;color:#d2a8ff;border:1px solid #3a1a60;">useCallback(fn, []) — stable reference, memoised for lifetime of component</span>
+      </div>
+      <table>
+        <tr class="hl-jsdoc">
+          <td class="ln">39</td>
+          <td class="code">  <span class="cm">/** SimulationController — orchestrates the full per-tick pipeline:</span></td>
+        </tr>
+        <tr class="hl-jsdoc">
+          <td class="ln">40</td>
+          <td class="code">  <span class="cm"> *  DomainEventGenerator.generate() → CrossDomainGuard.sanitize()</span></td>
+        </tr>
+        <tr class="hl-jsdoc">
+          <td class="ln">41</td>
+          <td class="code">  <span class="cm"> *  → CorrelationEngine.process() → dispatch to all six panels + HealthMonitor */</span></td>
+        </tr>
+        <tr class="hl-cb">
+          <td class="ln">42</td>
+          <td class="code">  <span class="kw">const</span> <span class="fn">runSimulationTick</span> <span class="op">=</span> <span class="h-cb">useCallback</span><span class="op">(():</span> <span class="tv">void</span> <span class="op">=> {</span></td>
+        </tr>
+      </table>
+
+      <!-- ① generate -->
+      <div class="block-sep">
+        <span class="bs-label">① DomainEventGenerator.generate() · lines 44–46</span>
+        <span class="bs-badge" style="background:#1a1408;color:#c9a227;border:1px solid #4a3810;">Random domain selection → RawEvent synthesis</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">44</td>
+          <td class="code">    <span class="cm">// ① DomainEventGenerator.generate() — synthesize one RawEvent per domain tick</span></td>
+        </tr>
+        <tr class="hl-gen">
+          <td class="ln">45</td>
+          <td class="code">    <span class="kw">const</span> <span class="par">domainId</span><span class="op">:</span> <span class="tn">DomainId</span> <span class="op">=</span> <span class="tn">DOMAINS</span><span class="op">[</span><span class="tn">Math</span><span class="op">.</span><span class="mth">floor</span><span class="op">(</span><span class="tn">Math</span><span class="op">.</span><span class="mth">random</span><span class="op">() *</span> <span class="tn">DOMAINS</span><span class="op">.</span><span class="fld">length</span><span class="op">)].</span><span class="fld">id</span><span class="op">;</span>  <span class="cm">// uniform over 3</span></td>
+        </tr>
+        <tr class="hl-gen">
+          <td class="ln">46</td>
+          <td class="code">    <span class="kw">const</span> <span class="par">raw</span><span class="op">:</span> <span class="tn">RawEvent</span> <span class="op">=</span> <span class="h-gen">generateEvent</span><span class="op">(</span><span class="par">domainId</span><span class="op">);</span>                    <span class="cm">// → 14-field RawEvent (incl. rawPacketBytes)</span></td>
+        </tr>
+      </table>
+
+      <!-- ② raw dispatch -->
+      <div class="block-sep">
+        <span class="bs-label">② dispatch(ADD_EVENT) → DomainPanel + StatsBar · line 49</span>
+        <span class="bs-badge" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a3a60;">Ring-buffer prepend — slice evicts oldest when cap reached</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">48</td>
+          <td class="code">    <span class="cm">// ② Dispatch raw event → DomainPanel (Alpha / Bravo / Charlie) + StatsBar</span></td>
+        </tr>
+        <tr class="hl-raw">
+          <td class="ln">49</td>
+          <td class="code">    <span class="h-raw">setRawEvents</span><span class="op">((</span><span class="par">prev</span><span class="op">) => [</span><span class="par">raw</span><span class="op">, ...</span><span class="par">prev</span><span class="op">].</span><span class="mth">slice</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="h-raw">MAX_RAW</span><span class="op">));</span>  <span class="cm">// prepend; cap at 80</span></td>
+        </tr>
+      </table>
+
+      <!-- ③ sanitize -->
+      <div class="block-sep">
+        <span class="bs-label">③ CrossDomainGuard.sanitize() · lines 51–53</span>
+        <span class="bs-badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">rawPacketBytes + classification stripped · audit fields appended</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">51</td>
+          <td class="code">    <span class="cm">// ③ CrossDomainGuard.sanitize() — strip rawPacketBytes, append audit fields</span></td>
+        </tr>
+        <tr class="hl-san">
+          <td class="ln">52</td>
+          <td class="code">    <span class="kw">const</span> <span class="par">sanitized</span><span class="op">:</span> <span class="tn">SanitizedEvent</span> <span class="op">=</span> <span class="h-san">sanitizeEvent</span><span class="op">(</span><span class="par">raw</span><span class="op">);</span>           <span class="cm">// RawEvent → SanitizedEvent</span></td>
+        </tr>
+        <tr class="hl-san">
+          <td class="ln">53</td>
+          <td class="code">    <span class="kw">const</span> <span class="par">updatedSanitized</span> <span class="op">=</span> <span class="op">[</span><span class="par">sanitized</span><span class="op">, ...</span><span class="h-raw">sanitizedRef</span><span class="op">.</span><span class="fld">current</span><span class="op">].</span><span class="mth">slice</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="h-sanout">MAX_SANITIZED</span><span class="op">);</span></td>
+        </tr>
+        <!-- annotation row -->
+        <tr style="background:#1a0808;">
+          <td class="ln" style="color:transparent;">·</td>
+          <td class="code" style="font-size:8.5px;padding-top:1px;padding-bottom:3px;color:#555a62;">
+            <span style="margin-left:2px;">╰── reads <code style="color:#4ea6dc;">sanitizedRef.current</code> (not state) to avoid stale-closure — synchronous local array used by steps ④ and ⑤ in the same tick</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- ④ sanitized dispatch -->
+      <div class="block-sep">
+        <span class="bs-label">④ dispatch sanitized → BoundaryLayer + StatsBar · lines 55–57</span>
+        <span class="bs-badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">Dual dispatch — event buffer + stripped field counter</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">55</td>
+          <td class="code">    <span class="cm">// ④ Dispatch sanitized event → BoundaryLayer + StatsBar panels</span></td>
+        </tr>
+        <tr class="hl-sanout">
+          <td class="ln">56</td>
+          <td class="code">    <span class="h-sanout">setSanitizedEvents</span><span class="op">(</span><span class="par">updatedSanitized</span><span class="op">);</span>                        <span class="cm">// → BoundaryLayer + HealthMonitor reactive</span></td>
+        </tr>
+        <tr class="hl-sanout">
+          <td class="ln">57</td>
+          <td class="code">    <span class="h-sanout">setStrippedFieldCount</span><span class="op">((</span><span class="par">c</span><span class="op">) =></span> <span class="par">c</span> <span class="op">+</span> <span class="par">sanitized</span><span class="op">.</span><span class="fld">strippedFields</span><span class="op">.</span><span class="fld">length</span><span class="op">);</span>  <span class="cm">// cumulative strip counter</span></td>
+        </tr>
+      </table>
+
+      <!-- ⑤ correlate -->
+      <div class="block-sep">
+        <span class="bs-label">⑤ CorrelationEngine.process() · line 60</span>
+        <span class="bs-badge" style="background:#180e2a;color:#a371f7;border:1px solid #3a1a60;">tryCorrelate() over full 10 s buffer — CorrelatedAlert | null</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">59</td>
+          <td class="code">    <span class="cm">// ⑤ CorrelationEngine.process() — run pattern match across 10-second window</span></td>
+        </tr>
+        <tr class="hl-corr">
+          <td class="ln">60</td>
+          <td class="code">    <span class="kw">const</span> <span class="par">alert</span><span class="op">:</span> <span class="tn">CorrelatedAlert</span> <span class="op">|</span> <span class="tv">null</span> <span class="op">=</span> <span class="h-corr">tryCorrelate</span><span class="op">(</span><span class="par">updatedSanitized</span><span class="op">,</span> <span class="par">sanitized</span><span class="op">);</span>  <span class="cm">// ⑤</span></td>
+        </tr>
+      </table>
+
+      <!-- ⑥ conditional alert dispatch -->
+      <div class="block-sep">
+        <span class="bs-label">⑥ conditional dispatch(ADD_ALERT) · lines 62–65</span>
+        <span class="bs-badge" style="background:#2a1808;color:#f58220;border:1px solid #603010;">Null-guard — alert only when correlation threshold exceeded</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">62</td>
+          <td class="code">    <span class="cm">// ⑥ Dispatch alert (when fired) → CorrelatedView + AlertDetailModal panels</span></td>
+        </tr>
+        <tr class="hl-alert">
+          <td class="ln">63</td>
+          <td class="code">    <span class="kw">if</span> <span class="op">(</span><span class="h-alert">alert</span><span class="op">) {</span>                                                    <span class="cm">// null → no cross-domain pattern this tick</span></td>
+        </tr>
+        <tr class="hl-alert">
+          <td class="ln">64</td>
+          <td class="code">      <span class="h-alert">setAlerts</span><span class="op">((</span><span class="par">prev</span><span class="op">) => [</span><span class="h-alert">alert</span><span class="op">, ...</span><span class="par">prev</span><span class="op">].</span><span class="mth">slice</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="h-alert">MAX_ALERTS</span><span class="op">));</span>  <span class="cm">// prepend; cap at 60</span></td>
+        </tr>
+        <tr class="hl-alert">
+          <td class="ln">65</td>
+          <td class="code">    <span class="op">}</span></td>
+        </tr>
+      </table>
+
+      <!-- ⑦ HealthMonitor note + useCallback close -->
+      <div class="block-sep">
+        <span class="bs-label">⑦ HealthMonitor + useCallback closure · lines 67–69</span>
+        <span class="bs-badge" style="background:#0e1520;color:#79c0ff;border:1px solid #1a3a60;">Reactive — driven by state changes, not explicit dispatch</span>
+      </div>
+      <table>
+        <tr class="hl-cb">
+          <td class="ln">67</td>
+          <td class="code">    <span class="cm">// ⑦ HealthMonitor telemetry driven reactively from rawEvents + sanitizedEvents state</span></td>
+        </tr>
+        <tr class="hl-cb">
+          <td class="ln">68</td>
+          <td class="code">    <span class="cm">//    No explicit call — HealthMonitor re-renders when setSanitizedEvents fires (④)</span></td>
+        </tr>
+        <tr class="hl-cb">
+          <td class="ln">69</td>
+          <td class="code">  <span class="op">},</span> <span class="op">[]);</span>                                                          <span class="cm">// ← empty deps: stable for component lifetime</span></td>
+        </tr>
+      </table>
+
+      <!-- useEffect clock -->
+      <div class="block-sep">
+        <span class="bs-label">SimulationController clock · lines 71–76</span>
+        <span class="bs-badge" style="background:#28180a;color:#e5c97a;border:1px solid #605020;">setInterval — re-wired whenever isRunning, speed, or tick reference changes</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">71</td>
+          <td class="code">  <span class="cm">// SimulationController clock — fires runSimulationTick at configurable ms interval</span></td>
+        </tr>
+        <tr class="hl-clock">
+          <td class="ln">72</td>
+          <td class="code">  <span class="h-clock">useEffect</span><span class="op">(() => {</span></td>
+        </tr>
+        <tr class="hl-clock">
+          <td class="ln">73</td>
+          <td class="code">    <span class="kw">if</span> <span class="op">(!</span><span class="par">isRunning</span><span class="op">)</span> <span class="kw">return</span><span class="op">;</span>                                       <span class="cm">// paused — no interval</span></td>
+        </tr>
+        <tr class="hl-clock">
+          <td class="ln">74</td>
+          <td class="code">    <span class="kw">const</span> <span class="par">interval</span> <span class="op">=</span> <span class="mth">setInterval</span><span class="op">(</span><span class="h-clock">runSimulationTick</span><span class="op">,</span> <span class="h-clock">speed</span><span class="op">);</span>       <span class="cm">// default 1 500 ms · range 500–3 000</span></td>
+        </tr>
+        <tr class="hl-clock">
+          <td class="ln">75</td>
+          <td class="code">    <span class="kw">return</span> <span class="op">() =></span> <span class="mth">clearInterval</span><span class="op">(</span><span class="par">interval</span><span class="op">);</span>                         <span class="cm">// cleanup — cancel on pause or speed change</span></td>
+        </tr>
+        <tr class="hl-clock">
+          <td class="ln">76</td>
+          <td class="code">  <span class="op">},</span> <span class="op">[</span><span class="par">isRunning</span><span class="op">,</span> <span class="par">speed</span><span class="op">,</span> <span class="fn">runSimulationTick</span><span class="op">]);</span>                   <span class="cm">// deps: re-wire on pause/resume or speed change</span></td>
+        </tr>
+      </table>
+
+    </div><!-- /code-pane -->
+
+    <!-- ════════════════════════════════
+         ANNOTATION PANE
+    ════════════════════════════════ -->
+    <div class="ann-pane">
+
+      <!-- Pipeline flow -->
+      <div class="ann-section" style="background:#0d0f14;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#c8d0d8;"></div>
+          Per-tick pipeline — 7 steps
+        </div>
+
+        <div class="pipe-node">
+          <div class="pn-num" style="background:#1a1408;color:#c9a227;border:1px solid #4a3810;">①</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#c9a227;">DomainEventGenerator.generate()</div>
+            <div class="pn-desc">Random domain (ALPHA/BRAVO/CHARLIE) → <code style="font-size:8px;">generateEvent(domainId)</code> → 14-field RawEvent with rawPacketBytes.</div>
+          </div>
+        </div>
+        <div class="pipe-arrow">↓</div>
+        <div class="pipe-node">
+          <div class="pn-num" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a4060;">②</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#4ea6dc;">dispatch(ADD_EVENT) → setRawEvents</div>
+            <div class="pn-desc">Prepend to ring buffer. <code style="font-size:8px;">.slice(0, 80)</code> evicts oldest. Triggers DomainPanel + StatsBar re-render.</div>
+          </div>
+        </div>
+        <div class="pipe-arrow">↓</div>
+        <div class="pipe-node">
+          <div class="pn-num" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">③</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#e55555;">CrossDomainGuard.sanitize()</div>
+            <div class="pn-desc"><code style="font-size:8px;">sanitizeEvent(raw)</code> — strips rawPacketBytes + classification, appends sanitizationTimestamp + guardId.</div>
+          </div>
+        </div>
+        <div class="pipe-arrow">↓</div>
+        <div class="pipe-node">
+          <div class="pn-num" style="background:#0e2a1a;color:#48c78e;border:1px solid #1a5030;">④</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#48c78e;">dispatch sanitized → setSanitizedEvents</div>
+            <div class="pn-desc">Updates BoundaryLayer + HealthMonitor state. Also increments strippedFieldCount for StatsBar gauge.</div>
+          </div>
+        </div>
+        <div class="pipe-arrow">↓</div>
+        <div class="pipe-node">
+          <div class="pn-num" style="background:#180e2a;color:#a371f7;border:1px solid #3a1a60;">⑤</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#a371f7;">CorrelationEngine.process()</div>
+            <div class="pn-desc"><code style="font-size:8px;">tryCorrelate(updatedSanitized, sanitized)</code> — 4-factor scorer over 10 s window → CorrelatedAlert | null.</div>
+          </div>
+        </div>
+        <div class="pipe-arrow">↓</div>
+        <div class="pipe-node">
+          <div class="pn-num" style="background:#2a1808;color:#f58220;border:1px solid #603010;">⑥</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#f58220;">conditional dispatch(ADD_ALERT)</div>
+            <div class="pn-desc">Only when <code style="font-size:8px;">alert !== null</code>. Prepend to alerts ring, cap at 60. Triggers CorrelatedView + AlertDetailModal.</div>
+          </div>
+        </div>
+        <div class="pipe-arrow">↓</div>
+        <div class="pipe-node" style="margin-bottom:0;">
+          <div class="pn-num" style="background:#0e1520;color:#79c0ff;border:1px solid #1a3a60;">⑦</div>
+          <div class="pn-body">
+            <div class="pn-call" style="color:#79c0ff;">HealthMonitor — reactive</div>
+            <div class="pn-desc">No explicit call. Re-renders automatically when <code style="font-size:8px;">sanitizedEvents</code> state updates in step ④.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buffer capacity -->
+      <div class="ann-section">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#c9a227;"></div>
+          Ring-buffer capacity constants
+        </div>
+        <table class="buf-table">
+          <tr>
+            <th>Constant</th>
+            <th>Cap</th>
+            <th>Consumer</th>
+          </tr>
+          <tr>
+            <td style="color:#4ea6dc;font-weight:bold;">MAX_RAW</td>
+            <td style="color:#f0a050;">80</td>
+            <td style="color:#555a62;">DomainPanel × 3 · StatsBar</td>
+          </tr>
+          <tr>
+            <td style="color:#48c78e;font-weight:bold;">MAX_SANITIZED</td>
+            <td style="color:#f0a050;">160</td>
+            <td style="color:#555a62;">BoundaryLayer · CorrelationEngine · HealthMonitor</td>
+          </tr>
+          <tr>
+            <td style="color:#f58220;font-weight:bold;">MAX_ALERTS</td>
+            <td style="color:#f0a050;">60</td>
+            <td style="color:#555a62;">CorrelatedView · AlertDetailModal</td>
+          </tr>
+        </table>
+        <div style="font-size:8px;color:#555a62;font-style:italic;border-left:2px solid #c9a22740;padding-left:7px;line-height:1.5;">
+          MAX_SANITIZED = 160 ensures the 10 s correlation window (≈ 6–7 events/s at 1 500 ms tick rate) always has enough history for tryCorrelate() without unbounded memory growth.
+        </div>
+      </div>
+
+      <!-- useCallback + sanitizedRef -->
+      <div class="ann-section">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#d2a8ff;"></div>
+          useCallback + sanitizedRef pattern
+        </div>
+
+        <div class="cb-card">
+          <div class="cb-head">useCallback(fn, []) · line 42</div>
+          <div class="cb-body">
+            Empty dependency array memoises <code style="color:#d2a8ff;">runSimulationTick</code> for the component's lifetime. The stable reference allows <code style="color:#e5c97a;">useEffect</code> to include it in its dep array without triggering unnecessary interval re-wires on every render.
+          </div>
+        </div>
+
+        <div class="ref-card" style="margin-top:5px;">
+          <div class="ref-head">sanitizedRef — stale-closure escape hatch · lines 36–37</div>
+          <div class="ref-body">
+            The callback closes over <code style="color:#4ea6dc;">sanitizedRef</code> at mount, but <code style="color:#4ea6dc;">sanitizedRef.current</code> is updated on every render (line 37). Reading <code>.current</code> inside the callback gives the latest buffer without adding <code>sanitizedEvents</code> to <code>useCallback</code> deps — which would regenerate the function and restart the clock on every tick.
+          </div>
+        </div>
+      </div>
+
+      <!-- Clock wiring -->
+      <div class="ann-section" style="border-bottom:none;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#e5c97a;"></div>
+          useEffect clock · lines 72–76
+        </div>
+        <div class="clock-card">
+          <div class="clock-head">setInterval(runSimulationTick, speed)</div>
+          <div class="clock-body">
+            Fires every <code style="color:#e5c97a;">speed</code> ms (default 1 500, range 500–3 000). Returns a cleanup function — <code style="color:#79c0ff;">clearInterval</code> is called when <code>isRunning</code> goes false (pause/stop), when <code>speed</code> changes, or on unmount. Dep array <code>[isRunning, speed, runSimulationTick]</code> ensures the interval is always aligned with the current tick function and speed setting.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ann-pane -->
+
+  </div><!-- /layout -->
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="ss-item">
+      <span class="ss-val" style="color:#c8d0d8;">7</span>
+      <span class="ss-lbl">Pipeline steps</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#4ea6dc;">80</span>
+      <span class="ss-lbl">MAX_RAW buffer</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#48c78e;">160</span>
+      <span class="ss-lbl">MAX_SANITIZED buffer</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#f58220;">60</span>
+      <span class="ss-lbl">MAX_ALERTS buffer</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#d2a8ff;">[ ]</span>
+      <span class="ss-lbl">useCallback deps</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e5c97a;">1 500 ms</span>
+      <span class="ss-lbl">Default tick interval</span>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

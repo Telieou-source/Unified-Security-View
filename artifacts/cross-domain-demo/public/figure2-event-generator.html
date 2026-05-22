@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 2 — DomainEventGenerator Live Output</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    color: #c8d0d8;
+    padding: 26px 30px 20px;
+    display: flex; flex-direction: column; gap: 0;
+  }
+
+  /* ── figure header ── */
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 10px;
+  }
+  .fig-title { font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px; }
+  .fig-sub   { font-size: 10px; color: #555a62; line-height: 1.6; margin-bottom: 16px; }
+
+  /* ── panel chrome ── */
+  .panel-chrome {
+    background: #161b22; border: 1px solid #21262d; border-radius: 6px;
+    overflow: hidden;
+  }
+  .chrome-bar {
+    background: #1a1c1f; border-bottom: 1px solid #2a2d32;
+    padding: 0 14px; height: 34px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .bar-title { font-size: 11px; color: #c8d0d8; font-weight: bold; margin-left: 4px; flex: 1; }
+  .bar-right { display: flex; align-items: center; gap: 10px; }
+  .badge { font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 2px; }
+  .pulse { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+
+  /* ── toolbar ── */
+  .toolbar {
+    background: #13161a; border-bottom: 1px solid #1e2228;
+    padding: 6px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .tb-label { font-size: 8.5px; color: #444850; text-transform: uppercase; letter-spacing: 0.07em; margin-right: 4px; }
+  .dom-pill {
+    font-size: 9px; font-weight: bold; padding: 2px 9px; border-radius: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .tb-sep { width: 1px; height: 16px; background: #21262d; margin: 0 4px; }
+  .field-pill {
+    font-size: 8.5px; padding: 1px 7px; border-radius: 2px; color: #555a62;
+    background: #1a1c20; border: 1px solid #2a2d32;
+  }
+  .field-pill.active { color: #e55555; background: #2d0e0e; border-color: #6a2020; }
+
+  /* ── body layout ── */
+  .panel-body {
+    display: grid; grid-template-columns: 196px 1fr;
+  }
+
+  /* ── left stats sidebar ── */
+  .sidebar {
+    background: #0f1318; border-right: 1px solid #1e2228;
+    padding: 12px 10px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .sb-section-lbl {
+    font-size: 8px; color: #3a4048; text-transform: uppercase;
+    letter-spacing: 0.09em; margin-bottom: 4px;
+  }
+  .dom-stat-card {
+    border-radius: 3px; padding: 7px 8px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .dsc-top { display: flex; align-items: center; justify-content: space-between; }
+  .dsc-name { font-size: 9px; font-weight: bold; }
+  .dsc-status { font-size: 7.5px; padding: 1px 5px; border-radius: 2px; }
+  .dsc-count { font-size: 20px; font-weight: bold; line-height: 1; margin: 2px 0; }
+  .dsc-sub { font-size: 7.5px; color: #444850; }
+  .dsc-rate-row { display: flex; align-items: center; gap: 4px; }
+  .dsc-bar-track { flex: 1; height: 4px; background: #1a1c20; border-radius: 1px; overflow: hidden; }
+  .dsc-bar-fill  { height: 4px; border-radius: 1px; }
+  .dsc-rate-val  { font-size: 8px; font-weight: bold; width: 28px; text-align: right; flex-shrink: 0; }
+
+  .total-box {
+    background: #1a1c20; border: 1px solid #2a2d32; border-radius: 3px;
+    padding: 7px 8px; text-align: center;
+  }
+  .total-num { font-size: 22px; font-weight: bold; color: #f58220; }
+  .total-lbl { font-size: 8px; color: #555a62; margin-top: 1px; }
+
+  .field-legend { display: flex; flex-direction: column; gap: 3px; }
+  .fl-row { display: flex; align-items: center; gap: 5px; font-size: 8px; }
+  .fl-dot { width: 6px; height: 6px; border-radius: 1px; flex-shrink: 0; }
+  .fl-name { color: #8b949e; flex: 1; }
+  .fl-strip { font-size: 7px; font-weight: bold; padding: 0px 4px; border-radius: 1px; }
+
+  /* ── event stream ── */
+  .stream-area {
+    padding: 10px 12px; display: flex; flex-direction: column; gap: 7px;
+    background: #0d0f11;
+  }
+
+  /* individual event card */
+  .evt-card {
+    border-radius: 3px; border: 1px solid;
+    overflow: hidden;
+  }
+  /* event card header row */
+  .evt-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px; font-size: 9px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .evt-seq { color: #3a4048; width: 28px; flex-shrink: 0; font-size: 8px; }
+  .evt-ts  { color: #555a62; flex-shrink: 0; font-size: 8.5px; }
+  .evt-id  { color: #3a4048; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
+  .sev-badge { font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 2px; flex-shrink: 0; }
+  .sv-FATAL { background: #2d0e0e; color: #e55555; }
+  .sv-ERROR { background: #2d1a08; color: #f58220; }
+  .sv-WARN  { background: #2d2510; color: #e5c97a; }
+  .sv-INFO  { background: #0e1e30; color: #8eb8d4; }
+  .dom-badge { font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 2px; flex-shrink: 0; }
+  .da { background: #0d1e2d; color: #4ea6dc; }
+  .db { background: #0d2017; color: #48c78e; }
+  .dc { background: #2d2208; color: #c9a227; }
+
+  /* fields grid */
+  .evt-fields {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    padding: 6px 8px 4px;
+    background: rgba(0,0,0,0.2);
+  }
+  .fld {
+    padding: 3px 6px; display: flex; flex-direction: column; gap: 1px;
+    border-right: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .fld:nth-child(5n) { border-right: none; }
+  .fld-key { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+  .fld-val { font-size: 9px; color: #8b949e; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* rawPacketBytes special row */
+  .evt-raw {
+    padding: 4px 8px 6px;
+    display: flex; align-items: baseline; gap: 7px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .raw-key { font-size: 7.5px; color: #e55555; text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; }
+  .raw-strip-badge { font-size: 7px; font-weight: bold; padding: 1px 5px; border-radius: 2px; background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; flex-shrink: 0; }
+  .raw-val { font-size: 9px; color: #555a62; font-family: 'Courier New', monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 14px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">FIGURE 2 — DOMAIN EVENT GENERATOR LIVE OUTPUT</div>
+<div class="fig-title">DomainEventGenerator — Live Event Stream (5 evt/s · All Three Domains)</div>
+<div class="fig-sub">
+  All 14 RawEvent fields rendered per record — id · domainId · timestamp · type · classification ·
+  srcIp · dstIp · srcPort · dstPort · protocol · userId · host · severity · rawPacketBytes &nbsp;·&nbsp;
+  rawPacketBytes highlighted in red; stripped by CrossDomainGuard before Layer 2 output
+</div>
+
+<div class="panel-chrome">
+
+  <!-- Chrome title bar -->
+  <div class="chrome-bar">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <div class="bar-title">DomainEventGenerator &nbsp;—&nbsp; cross_domain_siem &nbsp;·&nbsp; rawEvent stream</div>
+    <div class="bar-right">
+      <span class="badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">
+        <span class="pulse" style="background:#e55555;box-shadow:0 0 4px #e5555588;"></span>RUNNING
+      </span>
+      <span class="badge" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">
+        <span class="pulse" style="background:#79c0ff;"></span>5 evt/s
+      </span>
+      <span style="font-size:9px;color:#444850;">index=cross_domain_siem</span>
+      <span style="font-size:9px;color:#e55555;font-weight:bold;">TOP SECRET // HIGH SIDE</span>
+    </div>
+  </div>
+
+  <!-- Toolbar: domain toggles + field visibility -->
+  <div class="toolbar">
+    <span class="tb-label">Domains:</span>
+    <div class="dom-pill" style="background:#0d1e2d;color:#4ea6dc;border:1px solid #4ea6dc40;">
+      <span class="pulse" style="background:#4ea6dc;"></span>ALPHA
+    </div>
+    <div class="dom-pill" style="background:#0d2017;color:#48c78e;border:1px solid #48c78e40;">
+      <span class="pulse" style="background:#48c78e;"></span>BRAVO
+    </div>
+    <div class="dom-pill" style="background:#2d2208;color:#c9a227;border:1px solid #c9a22740;">
+      <span class="pulse" style="background:#c9a227;"></span>CHARLIE
+    </div>
+    <div class="tb-sep"></div>
+    <span class="tb-label">Fields:</span>
+    <span class="field-pill">domainId</span>
+    <span class="field-pill">timestamp</span>
+    <span class="field-pill">type</span>
+    <span class="field-pill">severity</span>
+    <span class="field-pill">userId</span>
+    <span class="field-pill">host</span>
+    <span class="field-pill">srcIp / dstIp</span>
+    <span class="field-pill">srcPort / dstPort</span>
+    <span class="field-pill">protocol</span>
+    <span class="field-pill">classification</span>
+    <span class="field-pill active">rawPacketBytes ← STRIP</span>
+    <div class="tb-sep"></div>
+    <span style="font-size:8.5px;color:#264a38;margin-left:auto;">
+      <span style="color:#48c78e;font-weight:bold;">✓</span>&nbsp;All 14 fields · Pre-sanitization · Layer 1 output
+    </span>
+  </div>
+
+  <!-- Body: sidebar + stream -->
+  <div class="panel-body">
+
+    <!-- Left sidebar -->
+    <div class="sidebar">
+      <div>
+        <div class="sb-section-lbl">Domain Stats</div>
+
+        <div class="dom-stat-card" style="background:#0d1e2d;border:1px solid #4ea6dc20;margin-bottom:6px;">
+          <div class="dsc-top">
+            <span class="dsc-name" style="color:#4ea6dc;">ALPHA</span>
+            <span class="dsc-status" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">ONLINE</span>
+          </div>
+          <div class="dsc-count" style="color:#4ea6dc;">1,500</div>
+          <div class="dsc-sub">events generated</div>
+          <div class="dsc-rate-row" style="margin-top:3px;">
+            <div class="dsc-bar-track"><div class="dsc-bar-fill" style="width:100%;background:#4ea6dc;opacity:0.7;"></div></div>
+            <span class="dsc-rate-val" style="color:#4ea6dc;">1.7/s</span>
+          </div>
+          <div style="font-size:7.5px;color:#264a2a;margin-top:2px;">174 FATAL · subnet 10.1.0.0/16</div>
+        </div>
+
+        <div class="dom-stat-card" style="background:#0d2017;border:1px solid #48c78e20;margin-bottom:6px;">
+          <div class="dsc-top">
+            <span class="dsc-name" style="color:#48c78e;">BRAVO</span>
+            <span class="dsc-status" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">ONLINE</span>
+          </div>
+          <div class="dsc-count" style="color:#48c78e;">1,501</div>
+          <div class="dsc-sub">events generated</div>
+          <div class="dsc-rate-row" style="margin-top:3px;">
+            <div class="dsc-bar-track"><div class="dsc-bar-fill" style="width:100%;background:#48c78e;opacity:0.7;"></div></div>
+            <span class="dsc-rate-val" style="color:#48c78e;">1.7/s</span>
+          </div>
+          <div style="font-size:7.5px;color:#264a2a;margin-top:2px;">176 FATAL · subnet 10.2.0.0/16</div>
+        </div>
+
+        <div class="dom-stat-card" style="background:#2d2208;border:1px solid #c9a22720;margin-bottom:6px;">
+          <div class="dsc-top">
+            <span class="dsc-name" style="color:#c9a227;">CHARLIE</span>
+            <span class="dsc-status" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">ONLINE</span>
+          </div>
+          <div class="dsc-count" style="color:#c9a227;">1,499</div>
+          <div class="dsc-sub">events generated</div>
+          <div class="dsc-rate-row" style="margin-top:3px;">
+            <div class="dsc-bar-track"><div class="dsc-bar-fill" style="width:99%;background:#c9a227;opacity:0.7;"></div></div>
+            <span class="dsc-rate-val" style="color:#c9a227;">1.6/s</span>
+          </div>
+          <div style="font-size:7.5px;color:#4a3010;margin-top:2px;">172 FATAL · subnet 10.3.0.0/16</div>
+        </div>
+      </div>
+
+      <div class="total-box">
+        <div class="total-num">4,500</div>
+        <div class="total-lbl">total raw events</div>
+        <div style="font-size:8px;color:#444850;margin-top:3px;">≈ 5.0 evt/s combined</div>
+      </div>
+
+      <div>
+        <div class="sb-section-lbl" style="margin-top:4px;">Field Disposition</div>
+        <div class="field-legend">
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">domainId</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">timestamp</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">type</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">severity</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">srcIp / dstIp</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">srcPort / dstPort</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">protocol</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">userId</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">host</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#48c78e;"></div><span class="fl-name">classification</span><span class="fl-strip" style="background:#0e2208;color:#48c78e;">PASS</span></div>
+          <div class="fl-row"><div class="fl-dot" style="background:#e55555;"></div><span class="fl-name" style="color:#e55555;font-weight:bold;">rawPacketBytes</span><span class="fl-strip" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">STRIP</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event stream -->
+    <div class="stream-area">
+
+      <!-- ── EVENT 1: ALPHA FATAL ExfilAttempt ── -->
+      <div class="evt-card" style="background:#12080a;border-color:#e5555530;">
+        <div class="evt-head" style="background:#1a0808;">
+          <span class="evt-seq">#4500</span>
+          <span class="evt-ts">13:05:09.842</span>
+          <span class="dom-badge da">ALPHA</span>
+          <span class="sev-badge sv-FATAL">FATAL</span>
+          <span class="evt-id">id: evt_a4f82c1d-9b3e-4a21-8c7f-d5e2f1b09a34</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#ffa657;">ExfilAttempt</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">usr_j.harris</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#4ea6dc;">alpha-gw-04</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.1.4.22</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val" style="color:#e55555;">185.220.101.34</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">52341</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#48c78e;">443</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#e55555;">TOP SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#4ea6dc;">ALPHA</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 3c a4 f8 40 00 40 06 b2 d1 0a 01 04 16 b9 dc 65 22 cc 85 01 bb d4 3a 9f 11 00 00 00 00 a0 02 fa f0 3e 22 00 00 02 04 05 b4 04 02 08 0a 00 1c 3f 8a 00 00 00 00 01 03 03 07</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 2: BRAVO ERROR PolicyViolation ── -->
+      <div class="evt-card" style="background:#100c08;border-color:#f5822030;">
+        <div class="evt-head" style="background:#181208;">
+          <span class="evt-seq">#4499</span>
+          <span class="evt-ts">13:05:09.640</span>
+          <span class="dom-badge db">BRAVO</span>
+          <span class="sev-badge sv-ERROR">ERROR</span>
+          <span class="evt-id">id: evt_b3e71a9f-2c4d-4b12-9e8a-c6f3d2e1b07c</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#f58220;">PolicyViolation</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">usr_m.okonkwo</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#48c78e;">bravo-ctrl-01</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.2.7.15</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val">10.2.1.1</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">61204</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#f58220;">445</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#c9a227;">SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#48c78e;">BRAVO</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 28 b3 e7 40 00 40 06 c4 a2 0a 02 07 0f 0a 02 01 01 ef 14 01 bd 9a 3c 02 47 f2 1a b8 33 50 10 10 00 7c 22 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 3: CHARLIE WARN NetworkConn ── -->
+      <div class="evt-card" style="background:#0e0c08;border-color:#e5c97a30;">
+        <div class="evt-head" style="background:#161208;">
+          <span class="evt-seq">#4498</span>
+          <span class="evt-ts">13:05:09.418</span>
+          <span class="dom-badge dc">CHARLIE</span>
+          <span class="sev-badge sv-WARN">WARN</span>
+          <span class="evt-id">id: evt_c1d94b2e-7a8f-4e36-b2c1-a9d5e3f2c08b</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#e5c97a;">NetworkConn</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">svc_relay_01</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#c9a227;">charlie-fw-A</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.3.2.88</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val" style="color:#e55555;">91.108.4.12</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">49322</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#48c78e;">443</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#c9a227;">CONFIDENTIAL</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#c9a227;">CHARLIE</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 34 c1 d9 40 00 3e 06 d5 b3 0a 03 02 58 5b 6c 04 0c c0 ea 01 bb 3f 82 c1 d4 00 00 00 00 80 02 20 00 6d a4 00 00 02 04 05 b4 01 03 03 08 01 01 04 02 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 4: ALPHA INFO Authentication ── -->
+      <div class="evt-card" style="background:#0a0c10;border-color:#8eb8d420;">
+        <div class="evt-head" style="background:#0e1018;">
+          <span class="evt-seq">#4497</span>
+          <span class="evt-ts">13:05:09.204</span>
+          <span class="dom-badge da">ALPHA</span>
+          <span class="sev-badge sv-INFO">INFO</span>
+          <span class="evt-id">id: evt_a2c83f1b-5d6e-4a74-8f2a-b4c7d9e0a51f</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#8eb8d4;">Authentication</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">usr_a.petrov</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#4ea6dc;">alpha-auth-02</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.1.9.47</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val">10.1.0.1</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">38820</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#d2a8ff;">636</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#e55555;">TOP SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#4ea6dc;">ALPHA</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 2c a2 c8 40 00 40 06 b3 f4 0a 01 09 2f 0a 01 00 01 97 a4 02 7c 1f 4a 3b 22 00 00 00 00 60 02 20 00 4a b8 00 00 02 04 05 b4 00 00 00 00 00 00 00 00 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 5: BRAVO FATAL PrivilegeEsc ── -->
+      <div class="evt-card" style="background:#12080a;border-color:#e5555530;">
+        <div class="evt-head" style="background:#1a0808;">
+          <span class="evt-seq">#4496</span>
+          <span class="evt-ts">13:05:08.994</span>
+          <span class="dom-badge db">BRAVO</span>
+          <span class="sev-badge sv-FATAL">FATAL</span>
+          <span class="evt-id">id: evt_b4f12e3a-8c9d-4b28-a3f1-e7c2d4b5a62e</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#ffa657;">PrivilegeEsc</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#e55555;">root</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#48c78e;">bravo-srv-11</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.2.3.19</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val">10.2.0.1</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">44071</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#d2a8ff;">389</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#c9a227;">SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#48c78e;">BRAVO</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 40 b4 f1 40 00 40 06 a1 c3 0a 02 03 13 0a 02 00 01 ac 27 01 85 8c 3d 14 f2 a1 22 b3 44 50 18 10 00 88 3c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 6: CHARLIE ERROR AnomalyDetected ── -->
+      <div class="evt-card" style="background:#100c08;border-color:#f5822030;">
+        <div class="evt-head" style="background:#181208;">
+          <span class="evt-seq">#4495</span>
+          <span class="evt-ts">13:05:08.772</span>
+          <span class="dom-badge dc">CHARLIE</span>
+          <span class="sev-badge sv-ERROR">ERROR</span>
+          <span class="evt-id">id: evt_c3a51d8f-4b2e-4c19-b7d3-f8e1c2d3b94a</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#f58220;">AnomalyDetected</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">usr_l.santos</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#c9a227;">charlie-ids-B</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.3.8.44</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val" style="color:#e55555;">45.33.32.156</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">57831</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#f58220;">8443</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#c9a227;">CONFIDENTIAL</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#c9a227;">CHARLIE</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 38 c3 a5 40 00 3c 06 c2 b8 0a 03 08 2c 2d 21 20 9c e1 d7 20 fb 7a 4c 3a 81 00 00 00 00 80 02 20 00 5f 3e 00 00 02 04 05 b4 01 03 03 07 01 01 08 0a 00 2d 4e 91 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 7: ALPHA WARN FileAccess ── -->
+      <div class="evt-card" style="background:#0e0c08;border-color:#e5c97a20;">
+        <div class="evt-head" style="background:#161208;">
+          <span class="evt-seq">#4494</span>
+          <span class="evt-ts">13:05:08.558</span>
+          <span class="dom-badge da">ALPHA</span>
+          <span class="sev-badge sv-WARN">WARN</span>
+          <span class="evt-id">id: evt_a5b67c2d-1e3f-4d45-9a8b-c0d2e4f5b73c</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#e5c97a;">FileAccess</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">usr_f.wolf</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#4ea6dc;">alpha-db-03</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.1.6.33</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val">10.1.0.5</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">33912</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#8eb8d4;">80</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#e55555;">TOP SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#4ea6dc;">ALPHA</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 2c a5 b6 40 00 40 06 b1 f2 0a 01 06 21 0a 01 00 05 84 78 00 50 c2 3a 81 d4 00 00 00 00 60 02 20 00 51 2c 00 00 02 04 05 b4 00 00 00 00 00 00 00 00 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 8: BRAVO INFO ProcessSpawn ── -->
+      <div class="evt-card" style="background:#0a0c10;border-color:#8eb8d420;">
+        <div class="evt-head" style="background:#0e1018;">
+          <span class="evt-seq">#4493</span>
+          <span class="evt-ts">13:05:08.340</span>
+          <span class="dom-badge db">BRAVO</span>
+          <span class="sev-badge sv-INFO">INFO</span>
+          <span class="evt-id">id: evt_b6d38e4c-2a1b-4f56-c9e2-d1f3e5b6c84d</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#8eb8d4;">ProcessSpawn</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">svc_cron_02</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#48c78e;">bravo-app-02</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.2.5.77</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val">10.2.0.4</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">41055</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#8eb8d4;">53</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#c9a227;">UDP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#c9a227;">SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#48c78e;">BRAVO</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 1c b6 d3 00 00 40 11 a3 e5 0a 02 05 4d 0a 02 00 04 a0 5f 00 35 00 08 49 3c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 9: CHARLIE FATAL ExfilAttempt (cross-domain user) ── -->
+      <div class="evt-card" style="background:#12080a;border-color:#e5555550;">
+        <div class="evt-head" style="background:#1a0808;">
+          <span class="evt-seq">#4492</span>
+          <span class="evt-ts">13:05:08.116</span>
+          <span class="dom-badge dc">CHARLIE</span>
+          <span class="sev-badge sv-FATAL">FATAL</span>
+          <span class="evt-id">id: evt_c7e49f5d-3b2c-4e67-d0f3-e2d4f6b7c95e &nbsp;·&nbsp; <span style="color:#e55555;font-weight:bold;">⚠ cross-domain user detected</span></span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#ffa657;">ExfilAttempt</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#e55555;font-weight:bold;">usr_j.harris</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#c9a227;">charlie-ids-B</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.3.4.61</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val" style="color:#e55555;">185.220.101.34</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">55209</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#48c78e;">443</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#c9a227;">CONFIDENTIAL</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#c9a227;">CHARLIE</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 3c c7 e4 40 00 3b 06 c8 a2 0a 03 04 3d b9 dc 65 22 d7 89 01 bb 2a 4f b8 c3 00 00 00 00 a0 02 fa f0 41 3d 00 00 02 04 05 b4 04 02 08 0a 00 2f 5c 9b 00 00 00 00 01 03 03 07</span>
+        </div>
+      </div>
+
+      <!-- ── EVENT 10: ALPHA ERROR PrivilegeEsc ── -->
+      <div class="evt-card" style="background:#100c08;border-color:#f5822030;">
+        <div class="evt-head" style="background:#181208;">
+          <span class="evt-seq">#4491</span>
+          <span class="evt-ts">13:05:07.902</span>
+          <span class="dom-badge da">ALPHA</span>
+          <span class="sev-badge sv-ERROR">ERROR</span>
+          <span class="evt-id">id: evt_a8c51f6e-4d3b-4f78-e1a4-f3e5d7b8c06f</span>
+        </div>
+        <div class="evt-fields">
+          <div class="fld"><span class="fld-key">type</span><span class="fld-val" style="color:#f58220;">PrivilegeEsc</span></div>
+          <div class="fld"><span class="fld-key">userId</span><span class="fld-val" style="color:#79c0ff;">usr_m.okonkwo</span></div>
+          <div class="fld"><span class="fld-key">host</span><span class="fld-val" style="color:#4ea6dc;">alpha-ws-0044</span></div>
+          <div class="fld"><span class="fld-key">srcIp</span><span class="fld-val">10.1.11.8</span></div>
+          <div class="fld"><span class="fld-key">dstIp</span><span class="fld-val">10.1.0.1</span></div>
+          <div class="fld"><span class="fld-key">srcPort</span><span class="fld-val">29847</span></div>
+          <div class="fld"><span class="fld-key">dstPort</span><span class="fld-val" style="color:#d2a8ff;">389</span></div>
+          <div class="fld"><span class="fld-key">protocol</span><span class="fld-val" style="color:#4ea6dc;">TCP</span></div>
+          <div class="fld"><span class="fld-key">classification</span><span class="fld-val" style="color:#e55555;">TOP SECRET</span></div>
+          <div class="fld"><span class="fld-key">domainId</span><span class="fld-val" style="color:#4ea6dc;">ALPHA</span></div>
+        </div>
+        <div class="evt-raw">
+          <span class="raw-key">rawPacketBytes</span>
+          <span class="raw-strip-badge">▶ STRIP</span>
+          <span class="raw-val">45 00 00 38 a8 c5 40 00 40 06 b0 d4 0a 01 0b 08 0a 01 00 01 74 97 01 85 6e 2b 44 c1 00 00 00 00 80 02 20 00 62 4a 00 00 02 04 05 b4 01 03 03 08 01 01 04 02 00 00 00 00</span>
+        </div>
+      </div>
+
+    </div><!-- /stream-area -->
+  </div><!-- /panel-body -->
+</div><!-- /panel-chrome -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

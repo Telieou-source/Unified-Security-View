@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 5 — GitHub Issues Sample Bug Report</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d1117; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+         color:#c9d1d9; padding:0; }
+
+  .gh-header {
+    background:#161b22; border-bottom:1px solid #21262d;
+    padding:12px 24px; display:flex; align-items:center; gap:12px;
+  }
+  .gh-logo { color:#f0f6fc; font-size:18px; font-weight:bold; }
+  .gh-repo { color:#58a6ff; font-size:14px; font-weight:600; }
+  .gh-slash { color:#8b949e; }
+
+  .gh-tabs {
+    background:#161b22; border-bottom:1px solid #21262d;
+    padding:0 24px; display:flex; gap:0;
+  }
+  .gh-tab { padding:12px 16px; font-size:13px; color:#8b949e; border-bottom:2px solid transparent;
+             display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .gh-tab.active { color:#f0f6fc; border-bottom:2px solid #f78166; }
+  .gh-tab .cnt { background:#30363d; color:#c9d1d9; padding:1px 7px; border-radius:12px; font-size:11px; }
+
+  .gh-body { max-width:900px; margin:0 auto; padding:20px 24px; }
+
+  .issue-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:16px; }
+  .issue-title-row { display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; }
+  .issue-title { font-size:20px; font-weight:600; color:#f0f6fc; }
+  .issue-state {
+    display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px;
+    font-size:12px; font-weight:600; background:#1f4c2b; color:#3fb950; border:1px solid #238636; margin-top:3px;
+  }
+  .issue-state.closed { background:#30363d; color:#8b949e; border-color:#30363d; }
+  .issue-meta { font-size:12px; color:#8b949e; margin-top:6px; }
+  .issue-meta a { color:#58a6ff; }
+
+  .issue-body { background:#161b22; border:1px solid #21262d; border-radius:6px; margin-bottom:16px; }
+  .ib-header {
+    padding:10px 16px; background:#1c2128; border-bottom:1px solid #21262d;
+    display:flex; align-items:center; gap:8px; border-radius:6px 6px 0 0;
+  }
+  .ib-author { font-size:13px; font-weight:600; color:#c9d1d9; }
+  .ib-ts     { font-size:12px; color:#8b949e; }
+  .ib-owner  { background:#1a3050; color:#58a6ff; font-size:10px; font-weight:bold; padding:1px 7px; border-radius:12px; border:1px solid #1f6feb; }
+  .ib-content { padding:16px; font-size:13px; line-height:1.7; color:#c9d1d9; }
+  .ib-content h3 { color:#f0f6fc; font-size:14px; margin:12px 0 6px; }
+  .ib-content ul { margin-left:20px; }
+  .ib-content li { margin-bottom:4px; }
+  .ib-content code { background:#1c2128; padding:2px 6px; border-radius:4px; font-family:'Courier New',Courier,monospace; font-size:12px; color:#e6edf3; }
+  .ib-content .env { background:#1c2128; border:1px solid #21262d; border-radius:4px; padding:8px 12px; font-size:12px; font-family:monospace; color:#8b949e; margin:8px 0; }
+
+  .sidebar { float:right; width:200px; margin-left:20px; margin-top:4px; }
+  .sb-section { margin-bottom:16px; }
+  .sb-title { font-size:11px; font-weight:600; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+  .label-tag { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:600; margin:2px 2px 2px 0; }
+  .sb-val { font-size:13px; color:#c9d1d9; }
+
+  .timeline { margin-top:16px; clear:both; }
+  .tl-item { display:flex; gap:10px; margin-bottom:12px; align-items:flex-start; }
+  .tl-icon { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+  .tl-body { font-size:12px; color:#8b949e; padding-top:6px; }
+  .tl-body a { color:#58a6ff; }
+  .tl-body .hi { color:#c9d1d9; font-weight:600; }
+
+  .pr-ref { background:#161b22; border:1px solid #21262d; border-radius:6px; padding:10px 14px;
+             margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .pr-state { background:#1f4c2b; color:#3fb950; border:1px solid #238636; padding:2px 8px;
+               border-radius:12px; font-size:11px; font-weight:600; }
+  .pr-title { font-size:13px; color:#58a6ff; }
+
+  .cap { background:#0d1117; border-top:1px solid #21262d; padding:8px 24px;
+         font-size:10.5px; color:#6e7681; font-style:italic; text-align:center; margin-top:20px; }
+</style>
+</head>
+<body>
+<div class="gh-header">
+  <span class="gh-logo">⌥ GitHub</span>
+  <span class="gh-slash">/</span>
+  <span class="gh-repo">Telieou-source / Unified-Security-View</span>
+</div>
+<div class="gh-tabs">
+  <div class="gh-tab">Code</div>
+  <div class="gh-tab active">Issues <span class="cnt">1</span></div>
+  <div class="gh-tab">Pull requests <span class="cnt">1</span></div>
+  <div class="gh-tab">Actions</div>
+  <div class="gh-tab">Projects</div>
+</div>
+
+<div class="gh-body">
+
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Labels</div>
+      <span class="label-tag" style="background:#5a1e75;color:#e2b6fb;border:1px solid #7a3a9a;">bug</span>
+      <span class="label-tag" style="background:#0e3a5a;color:#58a6ff;border:1px solid #1f6feb;">correlation</span>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Milestone</div>
+      <div class="sb-val">v1.2.0 — Final Release</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Assignees</div>
+      <div class="sb-val">Telieou-source</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Linked pull requests</div>
+      <div class="pr-ref"><span class="pr-state">Merged</span> <span class="pr-title">#3 Fix domain-exclusion regression</span></div>
+    </div>
+  </div>
+
+  <div class="issue-header">
+    <div>
+      <div class="issue-title-row">
+        <span class="issue-state">⦿ Open → Closed</span>
+        <span class="issue-title">#2 · CorrelationEngine matches same-domain events — false positives on single-domain bursts</span>
+      </div>
+      <div class="issue-meta">Opened 3 weeks ago by <a>Telieou-source</a> · closed in PR #3 · milestone v1.2.0</div>
+    </div>
+  </div>
+
+  <div class="issue-body">
+    <div class="ib-header">
+      <img src="" style="width:20px;height:20px;border-radius:50%;background:#1f6feb;display:inline-block;"/>
+      <span class="ib-author">Telieou-source</span>
+      <span class="ib-ts">3 weeks ago</span>
+      <span class="ib-owner">Owner</span>
+    </div>
+    <div class="ib-content">
+      <h3>Bug Report — CorrelationEngine False Positives</h3>
+      <p><strong>Summary:</strong> During TC-03 seed validation the CorrelationEngine is generating <code>CorrelatedAlert</code> objects for event clusters where all events originate from a single <code>domainId</code>. This violates the cross-domain constraint that is central to the SIEM's detection model.</p>
+      <h3>Steps to Reproduce</h3>
+      <ul>
+        <li>Run the simulator at 10 evt/s/domain for 60 seconds</li>
+        <li>Observe <code>CorrelatedView</code> — alerts appear with <code>domains.length === 1</code></li>
+        <li>Filter alert log by <code>domainId === "ALPHA"</code> — same-domain clusters match</li>
+      </ul>
+      <h3>Root Cause</h3>
+      <p>Over-weighting of the temporal proximity factor in <code>computeConfidence()</code> causes single-domain bursts to breach the 0.75 threshold before the domain-count guard in <code>tryCorrelate()</code> can reject them.</p>
+      <div class="env">
+      Module: src/lib/simulation.ts · tryCorrelate() · line 183<br/>
+      Guard: uniqueDomains.length &lt; 2 → return null   ← missing in v1.1.0<br/>
+      Environment: React 18 / TypeScript 5.9 / Chrome 124
+      </div>
+      <h3>Expected Behaviour</h3>
+      <p><code>tryCorrelate()</code> must return <code>null</code> for any event cluster where <code>uniqueDomains.length &lt; 2</code>.</p>
+      <h3>Fix</h3>
+      <p>Introduce explicit domain-exclusion guard at line 183 and recalibrate temporal weighting coefficients. Resolved in PR #3 — merged to <code>main</code>, tagged <code>v1.2.0</code>.</p>
+    </div>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-icon" style="background:#1f4c2b;color:#3fb950;">⊙</div>
+      <div class="tl-body"><span class="hi">Telieou-source</span> added labels <span class="label-tag" style="background:#5a1e75;color:#e2b6fb;font-size:10px;border:1px solid #7a3a9a;">bug</span> <span class="label-tag" style="background:#0e3a5a;color:#58a6ff;font-size:10px;border:1px solid #1f6feb;">correlation</span> 3 weeks ago</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-icon" style="background:#6e40c9;color:#d2a8ff;">⊙</div>
+      <div class="tl-body"><span class="hi">Telieou-source</span> opened PR <a>#3 Fix domain-exclusion regression in tryCorrelate()</a> and linked it to this issue 3 weeks ago</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-icon" style="background:#1a3050;color:#58a6ff;">✓</div>
+      <div class="tl-body">PR <a>#3</a> was <span class="hi">merged</span> into <code>main</code> — issue closed · milestone v1.2.0 complete 2 weeks ago</div>
+    </div>
+  </div>
+
+</div>
+<div class="cap">Figure 5 — GitHub Issues · Issue #2 · CorrelationEngine same-domain false-positive regression · labels: bug · correlation · milestone: v1.2.0 · linked PR #3 (merged) · Demo SIEM defect tracking workflow</div>
+</body>
+</html>

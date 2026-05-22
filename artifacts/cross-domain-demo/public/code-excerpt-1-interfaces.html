@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 1 — TypeScript Interface Definitions</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 24px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 9px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.6; margin-bottom: 14px; }
+
+  /* outer card */
+  .card {
+    background: #111315; border: 1px solid #21262d; border-radius: 6px; overflow: hidden;
+  }
+  .card-header {
+    background: #16191e; border-bottom: 1px solid #21262d;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .file-path { font-size: 10px; color: #79c0ff; margin-left: 4px; }
+  .file-sub  { font-size: 9px; color: #555a62; }
+  .lang-badge {
+    margin-left: auto; font-size: 8px; font-weight: bold; padding: 1px 7px;
+    border-radius: 2px; background: #1f2937; color: #79c0ff; border: 1px solid #2a3a60;
+  }
+
+  /* layout: code + annotations side by side */
+  .layout { display: grid; grid-template-columns: 1fr 310px; }
+
+  /* ── CODE PANE ── */
+  .code-pane {
+    border-right: 1px solid #1e2228;
+    overflow-x: auto;
+  }
+
+  /* block separator */
+  .block-sep {
+    background: #16191e; border-top: 1px solid #1e2228; border-bottom: 1px solid #1e2228;
+    padding: 4px 12px 4px 48px; display: flex; align-items: center; gap: 8px;
+  }
+  .bs-label {
+    font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.09em; color: #3a4048;
+  }
+  .bs-badge { font-size: 8px; font-weight: bold; padding: 1px 6px; border-radius: 2px; }
+
+  /* line table */
+  table { border-collapse: collapse; width: 100%; }
+  tr { line-height: 1.62; }
+  tr:hover { background: #14161a; }
+  tr.highlight-strip { background: #2d0e0e30; }
+  tr.highlight-add   { background: #0e2a1a20; }
+  tr.highlight-note  { background: #1a1c2030; }
+
+  td.ln {
+    width: 40px; min-width: 40px; text-align: right;
+    padding: 0 10px 0 0; color: #2a2d38;
+    font-size: 11px; user-select: none; vertical-align: top;
+    padding-top: 1px;
+    border-right: 1px solid #1e2228;
+  }
+  td.code {
+    padding: 0 16px 0 14px;
+    font-size: 11.5px; white-space: pre;
+    vertical-align: top;
+  }
+
+  /* ── Syntax tokens ── */
+  .kw   { color: #f97583; }               /* export interface type */
+  .tn   { color: #79c0ff; }               /* type names: RawEvent, DomainId … */
+  .fn   { color: #cdd9e5; }               /* field names */
+  .tv   { color: #a5d6ff; }               /* type values: string, number … */
+  .sl   { color: #9ecbff; }               /* string literal: "TCP" "WARN" … */
+  .cm   { color: #555a62; font-style: italic; }  /* comments */
+  .op   { color: #8a9aaa; }               /* operators: = | ; : ? */
+  .strip{ color: #e55555; font-weight: bold; }   /* rawPacketBytes — red: stripped */
+  .add  { color: #48c78e; font-weight: bold; }   /* added fields — green */
+  .opt  { color: #e5c97a; }               /* optional marker ? */
+
+  /* ── ANNOTATION PANE ── */
+  .ann-pane { padding: 0; display: flex; flex-direction: column; }
+  .ann-block {
+    flex: 1; padding: 12px 14px; border-bottom: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .ann-block:last-child { border-bottom: none; }
+  .ann-title {
+    font-size: 9px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 2px;
+  }
+  .ann-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .ann-item {
+    font-size: 9px; color: #8a9aaa; line-height: 1.55; padding-left: 12px;
+    border-left: 2px solid; margin-bottom: 2px;
+  }
+  .ann-key { font-weight: bold; }
+  .ann-rule {
+    font-size: 8.5px; padding: 5px 8px; border-radius: 2px; margin-top: 3px;
+    font-style: italic; line-height: 1.4;
+  }
+  .ann-field-list {
+    display: flex; flex-direction: column; gap: 2px; margin-top: 2px;
+  }
+  .afl-row {
+    display: flex; align-items: flex-start; gap: 5px; font-size: 9px;
+  }
+  .afl-name { width: 130px; flex-shrink: 0; font-weight: bold; }
+  .afl-desc { color: #555a62; line-height: 1.4; }
+  .tag {
+    font-size: 7.5px; font-weight: bold; padding: 1px 5px; border-radius: 2px;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* stat strip */
+  .stat-strip {
+    display: flex; border-top: 1px solid #1e2228;
+  }
+  .ss-item {
+    flex: 1; padding: 7px 10px; border-right: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .ss-item:last-child { border-right: none; }
+  .ss-val { font-size: 16px; font-weight: bold; line-height: 1; }
+  .ss-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">CODE EXCERPT 1 — TYPESCRIPT INTERFACE DEFINITIONS · src/types.ts</div>
+<div class="fig-title">Core Domain Types: <code style="color:#79c0ff;">RawEvent</code>, <code style="color:#79c0ff;">SanitizedEvent</code>, and <code style="color:#79c0ff;">CorrelatedAlert</code></div>
+<div class="fig-sub">
+  artifacts/cross-domain-demo/src/types.ts · TypeScript 5.9 strict mode ·
+  <code style="color:#79c0ff;">rawPacketBytes</code> mandatory on <code>RawEvent</code> (line 28) → absent from <code>SanitizedEvent</code> (ES2018 rest-destructuring) ·
+  <code style="color:#e5c97a;">?</code> marks optional audit fields · <code style="color:#48c78e;">sanitizationTimestamp</code> / <code style="color:#48c78e;">guardId</code> appended by guard
+</div>
+
+<div class="card">
+
+  <!-- card header -->
+  <div class="card-header">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <span class="file-path">src/types.ts</span>
+    <span class="file-sub">— 83 lines · exported interfaces · no runtime dependencies</span>
+    <span class="lang-badge">TypeScript 5.9</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ════════════════════════════════════════
+         CODE PANE
+    ════════════════════════════════════════ -->
+    <div class="code-pane">
+
+      <!-- ── Block 1: Type aliases (context) ── -->
+      <div class="block-sep">
+        <span class="bs-label">Type Aliases · lines 1–13</span>
+        <span class="bs-badge" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">Context</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">1</td>
+          <td class="code"><span class="kw">export type</span> <span class="tn">DomainId</span>       <span class="op">=</span> <span class="sl">"ALPHA"</span> <span class="op">|</span> <span class="sl">"BRAVO"</span> <span class="op">|</span> <span class="sl">"CHARLIE"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">2</td>
+          <td class="code"><span class="kw">export type</span> <span class="tn">Classification</span>   <span class="op">=</span> <span class="sl">"UNCLASSIFIED"</span> <span class="op">|</span> <span class="sl">"CONFIDENTIAL"</span> <span class="op">|</span> <span class="sl">"SECRET"</span> <span class="op">|</span> <span class="sl">"TOP SECRET"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">3</td>
+          <td class="code"></td>
+        </tr>
+        <tr>
+          <td class="ln">4</td>
+          <td class="code"><span class="kw">export type</span> <span class="tn">EventType</span> <span class="op">=</span></td>
+        </tr>
+        <tr>
+          <td class="ln">5</td>
+          <td class="code">  <span class="op">|</span> <span class="sl">"Authentication"</span>   <span class="op">|</span> <span class="sl">"FileAccess"</span>    <span class="op">|</span> <span class="sl">"NetworkConn"</span>   <span class="op">|</span> <span class="sl">"AnomalyDetected"</span></td>
+        </tr>
+        <tr>
+          <td class="ln">6</td>
+          <td class="code">  <span class="op">|</span> <span class="sl">"PolicyViolation"</span>  <span class="op">|</span> <span class="sl">"ProcessSpawn"</span>  <span class="op">|</span> <span class="sl">"ExfilAttempt"</span>  <span class="op">|</span> <span class="sl">"PrivilegeEsc"</span><span class="op">;</span></td>
+        </tr>
+      </table>
+
+      <!-- ── Block 2: RawEvent ── -->
+      <div class="block-sep">
+        <span class="bs-label">Interface 1 · lines 15–30</span>
+        <span class="bs-badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">RawEvent — low-side only · rawPacketBytes present</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">15</td>
+          <td class="code"><span class="kw">export interface</span> <span class="tn">RawEvent</span> <span class="op">{</span></td>
+        </tr>
+        <tr>
+          <td class="ln">16</td>
+          <td class="code">  <span class="fn">id</span><span class="op">:</span>               <span class="tv">string</span><span class="op">;</span>                   <span class="cm">// UUID v4 — event identity</span></td>
+        </tr>
+        <tr>
+          <td class="ln">17</td>
+          <td class="code">  <span class="fn">domainId</span><span class="op">:</span>        <span class="tn">DomainId</span><span class="op">;</span>                <span class="cm">// ALPHA | BRAVO | CHARLIE</span></td>
+        </tr>
+        <tr>
+          <td class="ln">18</td>
+          <td class="code">  <span class="fn">timestamp</span><span class="op">:</span>       <span class="tv">number</span><span class="op">;</span>                   <span class="cm">// ms since epoch (Date.now())</span></td>
+        </tr>
+        <tr>
+          <td class="ln">19</td>
+          <td class="code">  <span class="fn">type</span><span class="op">:</span>            <span class="tn">EventType</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">20</td>
+          <td class="code">  <span class="fn">classification</span><span class="op">:</span>  <span class="tn">Classification</span><span class="op">;</span>          <span class="cm">// sensitivity label — STRIPPED at guard</span></td>
+        </tr>
+        <tr>
+          <td class="ln">21</td>
+          <td class="code">  <span class="fn">srcIp</span><span class="op">:</span>           <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">22</td>
+          <td class="code">  <span class="fn">dstIp</span><span class="op">:</span>           <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">23</td>
+          <td class="code">  <span class="fn">srcPort</span><span class="op">:</span>         <span class="tv">number</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">24</td>
+          <td class="code">  <span class="fn">dstPort</span><span class="op">:</span>         <span class="tv">number</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">25</td>
+          <td class="code">  <span class="fn">protocol</span><span class="op">:</span>        <span class="sl">"TCP"</span> <span class="op">|</span> <span class="sl">"UDP"</span> <span class="op">|</span> <span class="sl">"ICMP"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">26</td>
+          <td class="code">  <span class="fn">userId</span><span class="op">:</span>          <span class="tv">string</span><span class="op">;</span>                   <span class="cm">// correlation key across domains</span></td>
+        </tr>
+        <tr>
+          <td class="ln">27</td>
+          <td class="code">  <span class="fn">host</span><span class="op">:</span>            <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr class="highlight-strip">
+          <td class="ln">28</td>
+          <td class="code">  <span class="strip">rawPacketBytes</span><span class="op">:</span>  <span class="tv">string</span><span class="op">;</span>                   <span class="cm">// ← STRIP: hex payload — never forwarded high-side</span></td>
+        </tr>
+        <tr>
+          <td class="ln">29</td>
+          <td class="code">  <span class="fn">severity</span><span class="op">:</span>        <span class="sl">"INFO"</span> <span class="op">|</span> <span class="sl">"WARN"</span> <span class="op">|</span> <span class="sl">"ERROR"</span> <span class="op">|</span> <span class="sl">"FATAL"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">30</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+      <!-- ── Block 3: SanitizedEvent ── -->
+      <div class="block-sep">
+        <span class="bs-label">Interface 2 · lines 32–49</span>
+        <span class="bs-badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">SanitizedEvent — high-side · rawPacketBytes absent · audit fields added</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">32</td>
+          <td class="code"><span class="kw">export interface</span> <span class="tn">SanitizedEvent</span> <span class="op">{</span>                <span class="cm">// forwarded by CrossDomainGuard after sanitize()</span></td>
+        </tr>
+        <tr>
+          <td class="ln">33</td>
+          <td class="code">  <span class="fn">id</span><span class="op">:</span>                      <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">34</td>
+          <td class="code">  <span class="fn">domainId</span><span class="op">:</span>               <span class="tn">DomainId</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">35</td>
+          <td class="code">  <span class="fn">timestamp</span><span class="op">:</span>              <span class="tv">number</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">36</td>
+          <td class="code">  <span class="fn">type</span><span class="op">:</span>                   <span class="tn">EventType</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">37</td>
+          <td class="code">  <span class="fn">severity</span><span class="op">:</span>               <span class="sl">"INFO"</span> <span class="op">|</span> <span class="sl">"WARN"</span> <span class="op">|</span> <span class="sl">"ERROR"</span> <span class="op">|</span> <span class="sl">"FATAL"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">38</td>
+          <td class="code">  <span class="fn">srcIp</span><span class="op">:</span>                  <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">39</td>
+          <td class="code">  <span class="fn">dstIp</span><span class="op">:</span>                  <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">40</td>
+          <td class="code">  <span class="fn">srcPort</span><span class="op">:</span>                <span class="tv">number</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">41</td>
+          <td class="code">  <span class="fn">dstPort</span><span class="op">:</span>                <span class="tv">number</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">42</td>
+          <td class="code">  <span class="fn">protocol</span><span class="op">:</span>               <span class="sl">"TCP"</span> <span class="op">|</span> <span class="sl">"UDP"</span> <span class="op">|</span> <span class="sl">"ICMP"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">43</td>
+          <td class="code">  <span class="fn">userId</span><span class="op">:</span>                 <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">44</td>
+          <td class="code">  <span class="fn">host</span><span class="op">:</span>                   <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr class="highlight-note">
+          <td class="ln">45</td>
+          <td class="code">  <span class="fn">strippedFields</span><span class="op">:</span>         <span class="tv">string</span><span class="op">[];</span>            <span class="cm">// audit log: ["rawPacketBytes"] always present</span></td>
+        </tr>
+        <tr class="highlight-note">
+          <td class="ln">46</td>
+          <td class="code">  <span class="fn">passedFields</span><span class="op">:</span>           <span class="tv">string</span><span class="op">[];</span>            <span class="cm">// audit log: fields forwarded to high side</span></td>
+        </tr>
+        <tr class="highlight-add">
+          <td class="ln">47</td>
+          <td class="code">  <span class="add">sanitizationTimestamp</span><span class="opt">?</span><span class="op">:</span> <span class="tv">number</span><span class="op">;</span>            <span class="cm">// ④ guard processing time (ms epoch)</span></td>
+        </tr>
+        <tr class="highlight-add">
+          <td class="ln">48</td>
+          <td class="code">  <span class="add">guardId</span><span class="opt">?</span><span class="op">:</span>              <span class="tv">string</span><span class="op">;</span>            <span class="cm">// ⑤ guard instance — CDG-ALPHA-BRAVO-CHARLIE-01</span></td>
+        </tr>
+        <tr>
+          <td class="ln">49</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+      <!-- ── Block 4: CorrelatedAlert ── -->
+      <div class="block-sep">
+        <span class="bs-label">Interface 3 · lines 51–61</span>
+        <span class="bs-badge" style="background:#1a1408;color:#c9a227;border:1px solid #4a3810;">CorrelatedAlert — raised by CorrelationEngine · rule XDOM-EXFIL-007</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">51</td>
+          <td class="code"><span class="kw">export interface</span> <span class="tn">CorrelatedAlert</span> <span class="op">{</span></td>
+        </tr>
+        <tr>
+          <td class="ln">52</td>
+          <td class="code">  <span class="fn">id</span><span class="op">:</span>        <span class="tv">string</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">53</td>
+          <td class="code">  <span class="fn">timestamp</span><span class="op">:</span> <span class="tv">number</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">54</td>
+          <td class="code">  <span class="fn">type</span><span class="op">:</span>      <span class="sl">"CORRELATED_THREAT"</span> <span class="op">|</span> <span class="sl">"PATTERN_MATCH"</span> <span class="op">|</span> <span class="sl">"CROSS_DOMAIN_ANOMALY"</span> <span class="op">|</span> <span class="sl">"SYNCHRONIZED_ACTIVITY"</span><span class="op">;</span></td>
+        </tr>
+        <tr>
+          <td class="ln">55</td>
+          <td class="code">  <span class="fn">severity</span><span class="op">:</span>  <span class="sl">"MEDIUM"</span> <span class="op">|</span> <span class="sl">"HIGH"</span> <span class="op">|</span> <span class="sl">"CRITICAL"</span><span class="op">;</span></td>
+        </tr>
+        <tr class="highlight-add">
+          <td class="ln">56</td>
+          <td class="code">  <span class="add">domains</span><span class="op">:</span>   <span class="tn">DomainId</span><span class="op">[];</span>               <span class="cm">// ≥ 2 domains — cross-domain span required</span></td>
+        </tr>
+        <tr>
+          <td class="ln">57</td>
+          <td class="code">  <span class="fn">summary</span><span class="op">:</span>   <span class="tv">string</span><span class="op">;</span>                   <span class="cm">// human-readable alert description</span></td>
+        </tr>
+        <tr class="highlight-add">
+          <td class="ln">58</td>
+          <td class="code">  <span class="add">eventIds</span><span class="op">:</span>  <span class="tv">string</span><span class="op">[];</span>                 <span class="cm">// back-refs to matched SanitizedEvent.id values</span></td>
+        </tr>
+        <tr class="highlight-add">
+          <td class="ln">59</td>
+          <td class="code">  <span class="add">confidence</span><span class="op">:</span> <span class="tv">number</span><span class="op">;</span>                  <span class="cm">// computeConfidence() · range [0, 1]</span></td>
+        </tr>
+        <tr>
+          <td class="ln">60</td>
+          <td class="code">  <span class="fn">ruleId</span><span class="op">:</span>    <span class="tv">string</span><span class="op">;</span>                   <span class="cm">// e.g. "XDOM-EXFIL-007"</span></td>
+        </tr>
+        <tr>
+          <td class="ln">61</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+    </div><!-- /code-pane -->
+
+    <!-- ════════════════════════════════════════
+         ANNOTATION PANE
+    ════════════════════════════════════════ -->
+    <div class="ann-pane">
+
+      <!-- RawEvent annotations -->
+      <div class="ann-block" style="border-left:3px solid #e55555;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#e55555;"></div>
+          RawEvent — low-side boundary
+        </div>
+
+        <div class="ann-field-list">
+          <div class="afl-row">
+            <span class="afl-name" style="color:#e55555;">rawPacketBytes</span>
+            <span class="tag" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">STRIP</span>
+          </div>
+          <div class="afl-row">
+            <span class="afl-desc" style="color:#8a9aaa;">Hex-encoded packet payload. Generated via <code style="font-size:9px;">randomHex(32)</code>. Mandatory on low side; physically absent from <code style="font-size:9px;">SanitizedEvent</code> via ES2018 rest-destructuring — TypeScript enforces this at compile time.</span>
+          </div>
+        </div>
+
+        <div class="ann-item" style="border-color:#e5555540;margin-top:4px;">
+          <span style="color:#e55555;" class="ann-key">classification</span> also STRIPPED —
+          sensitivity label (<code style="font-size:9px;">"SECRET"</code> / <code style="font-size:9px;">"TOP SECRET"</code>) removed alongside <code style="font-size:9px;">rawPacketBytes</code> in the same destructure expression
+        </div>
+
+        <div class="ann-rule" style="background:#2d0e0e20;border:1px solid #e5555520;color:#8a9aaa;">
+          14 fields total · 2 stripped at guard ·<br/>
+          guard policy: <code style="font-size:8.5px;color:#e5c97a;">BoundaryRule { action: "STRIP" }</code>
+        </div>
+      </div>
+
+      <!-- SanitizedEvent annotations -->
+      <div class="ann-block" style="border-left:3px solid #48c78e;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#48c78e;"></div>
+          SanitizedEvent — high-side view
+        </div>
+
+        <div class="ann-field-list">
+          <div class="afl-row">
+            <span class="afl-name" style="color:#48c78e;">sanitizationTimestamp</span>
+            <span class="tag" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">ADDED</span>
+          </div>
+          <div class="afl-row">
+            <span class="afl-desc" style="color:#555a62;">Optional (<code style="font-size:9px;color:#e5c97a;">?</code>) audit field. Set to <code style="font-size:9px;">Date.now()</code> at guard transit. Enables latency measurement for compliance audits.</span>
+          </div>
+        </div>
+
+        <div class="ann-field-list">
+          <div class="afl-row">
+            <span class="afl-name" style="color:#48c78e;">guardId</span>
+            <span class="tag" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">ADDED</span>
+          </div>
+          <div class="afl-row">
+            <span class="afl-desc" style="color:#555a62;">Guard instance identifier. Constant <code style="font-size:9px;">GUARD_ID = "CDG-ALPHA-BRAVO-CHARLIE-01"</code> — traces every event to its processing guard.</span>
+          </div>
+        </div>
+
+        <div class="ann-item" style="border-color:#48c78e40;margin-top:2px;">
+          <span style="color:#48c78e;" class="ann-key">strippedFields</span> / <span style="color:#48c78e;" class="ann-key">passedFields</span> — audit arrays proving <code style="font-size:9px;">["rawPacketBytes"]</code> was stripped; all other fields passed. Verifiable at runtime.
+        </div>
+
+        <div class="ann-rule" style="background:#0e2a1a20;border:1px solid #48c78e20;color:#8a9aaa;">
+          12 forwarded fields · 2 stripped ·<br/>
+          <code style="font-size:8.5px;color:#48c78e;">CDG IN = OUT = STRIP ✓</code> (throughput invariant)
+        </div>
+      </div>
+
+      <!-- CorrelatedAlert annotations -->
+      <div class="ann-block" style="border-left:3px solid #c9a227;">
+        <div class="ann-title">
+          <div class="ann-dot" style="background:#c9a227;"></div>
+          CorrelatedAlert — correlation engine output
+        </div>
+
+        <div class="ann-field-list">
+          <div class="afl-row">
+            <span class="afl-name" style="color:#c9a227;">confidence</span>
+            <span class="tag" style="background:#1a1408;color:#c9a227;border:1px solid #4a3810;">SCORED</span>
+          </div>
+          <div class="afl-row">
+            <span class="afl-desc" style="color:#555a62;">Four-factor weighted score: ① 0.40 userId ② 0.30 type ③ 0.20 subnet ④ 0.10 temporal. Alert threshold 0.75. Observed range: 0.82–0.95 (all 12 pairs).</span>
+          </div>
+        </div>
+
+        <div class="ann-field-list">
+          <div class="afl-row">
+            <span class="afl-name" style="color:#c9a227;">domains</span>
+            <span class="tag" style="background:#1a1408;color:#c9a227;border:1px solid #4a3810;">SPAN</span>
+          </div>
+          <div class="afl-row">
+            <span class="afl-desc" style="color:#555a62;"><code style="font-size:9px;">DomainId[]</code> — must span ≥ 2 entries; enforced by correlation engine before alert emit. Pairs: α×β, β×γ, α×γ, α×β×γ.</span>
+          </div>
+        </div>
+
+        <div class="ann-item" style="border-color:#c9a22740;margin-top:2px;">
+          <span style="color:#c9a227;" class="ann-key">eventIds</span> — array of back-references to <code style="font-size:9px;">SanitizedEvent.id</code> values matched within the 10 000 ms correlation window. Supports alert drill-down in <code style="font-size:9px;">CorrelatedView</code>.
+        </div>
+
+        <div class="ann-rule" style="background:#1a140820;border:1px solid #c9a22720;color:#8a9aaa;">
+          Rule <code style="font-size:8.5px;color:#c9a227;">XDOM-EXFIL-007</code> · 10 000 ms window ·<br/>
+          cooldown 4 000 ms · 12 / 12 pairs detected
+        </div>
+      </div>
+
+    </div><!-- /ann-pane -->
+
+  </div><!-- /layout -->
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="ss-item">
+      <span class="ss-val" style="color:#79c0ff;">3</span>
+      <span class="ss-lbl">Exported interfaces</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e55555;">2</span>
+      <span class="ss-lbl">Fields stripped at guard</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#48c78e;">2</span>
+      <span class="ss-lbl">Audit fields added</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e5c97a;">12</span>
+      <span class="ss-lbl">RawEvent fields forwarded</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#c9a227;">0.75</span>
+      <span class="ss-lbl">Alert confidence threshold</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#f58220;">83</span>
+      <span class="ss-lbl">Total lines in types.ts</span>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

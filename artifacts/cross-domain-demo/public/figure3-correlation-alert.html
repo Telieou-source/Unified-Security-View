@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 3 — CorrelationEngine Alert Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111315; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #c8d0d8; padding: 16px; }
+
+  /* Top bar */
+  .topbar {
+    background: #1a1c1f; border: 1px solid #2d3035; border-radius: 6px 6px 0 0;
+    padding: 8px 14px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { color: #f58220; font-weight: bold; font-size: 13px; }
+  .module-name { color: #8a9aaa; font-size: 11px; margin-left: 10px; }
+  .topbar-left { display: flex; align-items: center; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; font-size: 11px; }
+  .stat { color: #555a62; }
+  .stat span { color: #f58220; }
+  .badge-active { background: #2d1008; color: #e55555; border: 1px solid #6a2010; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+
+  /* Alert card - hero */
+  .alert-card {
+    background: #1a0e0e; border: 2px solid #8a2020; border-radius: 0 0 6px 6px;
+    padding: 0; overflow: hidden;
+  }
+
+  /* Alert header band */
+  .alert-header {
+    background: linear-gradient(90deg, #2d0e0e 0%, #1e1010 100%);
+    border-bottom: 1px solid #6a2020;
+    padding: 12px 16px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .alert-header-left { display: flex; flex-direction: column; gap: 6px; }
+  .alert-type-row { display: flex; align-items: center; gap: 10px; }
+  .alert-type-badge {
+    font-size: 11px; font-weight: bold; padding: 3px 10px; border-radius: 3px;
+    background: #3a0e0e; color: #e55555; border: 1px solid #8a2020; letter-spacing: 0.05em;
+  }
+  .domain-badges { display: flex; gap: 6px; }
+  .dom-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: bold; }
+  .dom-alpha { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; }
+  .dom-bravo { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .alert-id { font-size: 20px; font-weight: bold; color: #e55555; letter-spacing: 0.04em; }
+  .alert-summary { font-size: 12px; color: #c8a090; max-width: 640px; line-height: 1.5; }
+  .alert-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+  /* Confidence gauge */
+  .conf-gauge { text-align: center; }
+  .conf-num { font-size: 32px; font-weight: bold; color: #e55555; line-height: 1; }
+  .conf-label { font-size: 10px; color: #7a4040; }
+  .conf-bar-wrap { width: 110px; height: 6px; background: #2a1010; border-radius: 3px; margin-top: 4px; }
+  .conf-bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #c84040, #e55555); }
+
+  .sev-crit { font-size: 11px; font-weight: bold; padding: 3px 12px; border-radius: 3px; background: #3a0e0e; color: #e55555; border: 1px solid #8a2020; }
+  .rule-id { font-size: 10px; color: #555a62; }
+
+  /* Body grid */
+  .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid #2a1010; }
+  .body-left { border-right: 1px solid #2a1010; padding: 0; }
+  .body-right { padding: 0; }
+
+  /* Section */
+  .section { border-bottom: 1px solid #1e1010; }
+  .section:last-child { border-bottom: none; }
+  .section-title {
+    padding: 6px 14px; font-size: 10px; color: #7a5040; text-transform: uppercase;
+    letter-spacing: 0.1em; background: #160c0c; border-bottom: 1px solid #1e1010;
+  }
+  .section-body { padding: 10px 14px; }
+
+  /* Key-value rows */
+  .kv-row { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; font-size: 11px; }
+  .kv-key { color: #79c0ff; min-width: 140px; flex-shrink: 0; }
+  .kv-val { color: #a5d6ff; }
+  .kv-val.highlight { color: #f58220; font-weight: bold; }
+  .kv-val.user-match { color: #f58220; font-weight: bold; background: #2d1a08; padding: 1px 6px; border-radius: 2px; border: 1px solid #6a3a10; }
+  .kv-val.domain-a { color: #4ea6dc; }
+  .kv-val.domain-b { color: #48c78e; }
+  .kv-val.critical { color: #e55555; font-weight: bold; }
+  .kv-val.delta { color: #d2a8ff; font-weight: bold; }
+
+  /* Matched indicators table */
+  .indicator-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .indicator-table th {
+    text-align: left; padding: 4px 6px; font-size: 10px; color: #555a62;
+    font-weight: normal; border-bottom: 1px solid #2a1010; background: #130a0a;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .indicator-table td { padding: 5px 6px; border-bottom: 1px solid #1a0e0e; vertical-align: middle; }
+  .indicator-table tr:last-child td { border-bottom: none; }
+  .ind-field { color: #79c0ff; }
+  .ind-alpha { color: #4ea6dc; font-size: 10px; }
+  .ind-bravo { color: #48c78e; font-size: 10px; }
+  .match-badge { font-size: 10px; padding: 1px 6px; border-radius: 2px; font-weight: bold; }
+  .match-exact { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+  .match-temporal { background: #1a1a2d; color: #a78bfa; border: 1px solid #3a2a6a; }
+  .match-subnet { background: #1a2d1a; color: #48c78e; border: 1px solid #2a4a2a; }
+
+  /* Timeline panel */
+  .timeline-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 11px; border-bottom: 1px solid #1a0e0e; }
+  .timeline-row:last-child { border-bottom: none; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .tl-dot.alpha { background: #4ea6dc; box-shadow: 0 0 4px #4ea6dc66; }
+  .tl-dot.bravo { background: #48c78e; box-shadow: 0 0 4px #48c78e66; }
+  .tl-dot.corr  { background: #e55555; box-shadow: 0 0 4px #e5555566; }
+  .tl-time { color: #555a62; min-width: 80px; font-size: 10px; }
+  .tl-desc { color: #a5d6ff; }
+  .tl-desc em { color: #f58220; font-style: normal; }
+  .tl-delta {
+    margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 2px;
+    background: #1a1a2d; color: #a78bfa; border: 1px solid #3a2a6a;
+  }
+
+  /* Correlated event IDs */
+  .evt-id-list { display: flex; flex-direction: column; gap: 4px; }
+  .evt-id-row { display: flex; align-items: center; gap: 8px; }
+  .evt-id-pill { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-family: 'Courier New'; }
+  .evt-id-pill.alpha { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; }
+  .evt-id-pill.bravo { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .evt-id-src { font-size: 10px; color: #444850; }
+
+  /* Footer strip */
+  .footer-strip {
+    background: #3a0e0e; border-top: 1px solid #6a2020;
+    padding: 6px 16px; display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px;
+  }
+  .footer-left { color: #7a4040; }
+  .footer-right { display: flex; gap: 16px; }
+  .footer-right span { color: #555a62; }
+  .footer-right span b { color: #e55555; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="brand">▶ Demo SIEM</span>
+    <span class="module-name">CorrelationEngine — cross-domain pattern matching · rule XDOM-EXFIL-007</span>
+  </div>
+  <div class="topbar-right">
+    <span class="stat">Alerts generated: <span>14</span></span>
+    <span class="stat">CRITICAL: <span>5</span></span>
+    <span class="stat">HIGH: <span>6</span></span>
+    <span class="badge-active">⚠ CRITICAL ALERT ACTIVE</span>
+  </div>
+</div>
+
+<!-- Main alert card -->
+<div class="alert-card">
+
+  <!-- Alert header -->
+  <div class="alert-header">
+    <div class="alert-header-left">
+      <div class="alert-type-row">
+        <span class="alert-type-badge">CORRELATED_THREAT</span>
+        <div class="domain-badges">
+          <span class="dom-badge dom-alpha">ALPHA</span>
+          <span class="dom-badge dom-bravo">BRAVO</span>
+        </div>
+      </div>
+      <div class="alert-id">CORR-00007</div>
+      <div class="alert-summary">
+        Coordinated ExfilAttempt detected across Domain Alpha (10.1.0.0/16) and Domain Bravo (10.2.0.0/16).
+        Shared actor <span style="color:#f58220;font-weight:bold">usr_j.harris</span> initiated identical exfiltration sequences
+        on destination port 443 within a 2.3-second temporal window — consistent with a
+        scripted multi-domain lateral exfiltration campaign.
+      </div>
+    </div>
+    <div class="alert-header-right">
+      <span class="sev-crit">CRITICAL</span>
+      <div class="conf-gauge">
+        <div class="conf-num">0.94</div>
+        <div class="conf-label">confidence score</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" style="width:94%;"></div></div>
+      </div>
+      <div class="rule-id">rule: XDOM-EXFIL-007 · generated: 13:03:09.881</div>
+    </div>
+  </div>
+
+  <!-- Body grid -->
+  <div class="body-grid">
+
+    <!-- LEFT column -->
+    <div class="body-left">
+
+      <!-- Alert metadata -->
+      <div class="section">
+        <div class="section-title">Alert metadata</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-key">alert id:</span><span class="kv-val">CORR-00007</span></div>
+          <div class="kv-row"><span class="kv-key">rule id:</span><span class="kv-val">XDOM-EXFIL-007</span></div>
+          <div class="kv-row"><span class="kv-key">type:</span><span class="kv-val">CORRELATED_THREAT</span></div>
+          <div class="kv-row"><span class="kv-key">severity:</span><span class="kv-val critical">CRITICAL</span></div>
+          <div class="kv-row"><span class="kv-key">confidence:</span><span class="kv-val highlight">0.94 (94%)</span></div>
+          <div class="kv-row"><span class="kv-key">domains:</span><span class="kv-val"><span class="kv-val domain-a">ALPHA</span> + <span class="kv-val domain-b">BRAVO</span></span></div>
+          <div class="kv-row"><span class="kv-key">timestamp:</span><span class="kv-val">1747051389881 (13:03:09 UTC)</span></div>
+          <div class="kv-row"><span class="kv-key">correlated events:</span><span class="kv-val">EVT-00051, EVT-00050</span></div>
+        </div>
+      </div>
+
+      <!-- Matched actor -->
+      <div class="section">
+        <div class="section-title">Matched user identifier</div>
+        <div class="section-body">
+          <div class="kv-row">
+            <span class="kv-key">userId (Alpha):</span>
+            <span class="kv-val user-match">usr_j.harris</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">userId (Bravo):</span>
+            <span class="kv-val user-match">usr_j.harris</span>
+          </div>
+          <div class="kv-row"><span class="kv-key">match type:</span><span class="kv-val highlight">EXACT — identical string</span></div>
+          <div class="kv-row"><span class="kv-key">event type (α):</span><span class="kv-val" style="color:#ffa657">ExfilAttempt</span></div>
+          <div class="kv-row"><span class="kv-key">event type (β):</span><span class="kv-val" style="color:#ffa657">ExfilAttempt</span></div>
+          <div class="kv-row"><span class="kv-key">severity (α):</span><span class="kv-val critical">FATAL</span></div>
+          <div class="kv-row"><span class="kv-key">severity (β):</span><span class="kv-val critical">FATAL</span></div>
+          <div class="kv-row"><span class="kv-key">dest port (α):</span><span class="kv-val">443 (HTTPS)</span></div>
+          <div class="kv-row"><span class="kv-key">dest port (β):</span><span class="kv-val">443 (HTTPS)</span></div>
+        </div>
+      </div>
+
+      <!-- Temporal delta -->
+      <div class="section">
+        <div class="section-title">Temporal analysis</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-key">Alpha timestamp:</span><span class="kv-val">13:03:09.881</span></div>
+          <div class="kv-row"><span class="kv-key">Bravo timestamp:</span><span class="kv-val">13:03:07.560</span></div>
+          <div class="kv-row"><span class="kv-key">temporal delta:</span><span class="kv-val delta">Δ 2.321 seconds</span></div>
+          <div class="kv-row"><span class="kv-key">rule window:</span><span class="kv-val">≤ 5.0 seconds</span></div>
+          <div class="kv-row"><span class="kv-key">window status:</span><span class="kv-val" style="color:#48c78e;font-weight:bold">✓ WITHIN WINDOW</span></div>
+          <div class="kv-row"><span class="kv-key">sequence:</span><span class="kv-val" style="color:#8a9aaa">Bravo → Alpha (2.3s)</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT column -->
+    <div class="body-right">
+
+      <!-- Shared indicators -->
+      <div class="section">
+        <div class="section-title">Shared indicators of compromise</div>
+        <div class="section-body" style="padding:8px 10px;">
+          <table class="indicator-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Alpha value</th>
+                <th>Bravo value</th>
+                <th>Match</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="ind-field">userId</td>
+                <td class="ind-alpha">usr_j.harris</td>
+                <td class="ind-bravo">usr_j.harris</td>
+                <td><span class="match-badge match-exact">EXACT</span></td>
+              </tr>
+              <tr>
+                <td class="ind-field">type</td>
+                <td class="ind-alpha">ExfilAttempt</td>
+                <td class="ind-bravo">ExfilAttempt</td>
+                <td><span class="match-badge match-exact">EXACT</span></td>
+              </tr>
+              <tr>
+                <td class="ind-field">severity</td>
+                <td class="ind-alpha">FATAL</td>
+                <td class="ind-bravo">FATAL</td>
+                <td><span class="match-badge match-exact">EXACT</span></td>
+              </tr>
+              <tr>
+                <td class="ind-field">dstPort</td>
+                <td class="ind-alpha">443</td>
+                <td class="ind-bravo">443</td>
+                <td><span class="match-badge match-exact">EXACT</span></td>
+              </tr>
+              <tr>
+                <td class="ind-field">protocol</td>
+                <td class="ind-alpha">TCP</td>
+                <td class="ind-bravo">TCP</td>
+                <td><span class="match-badge match-exact">EXACT</span></td>
+              </tr>
+              <tr>
+                <td class="ind-field">dstIp</td>
+                <td class="ind-alpha">10.1.0.1</td>
+                <td class="ind-bravo">10.2.0.1</td>
+                <td><span class="match-badge match-subnet">SUBNET GW</span></td>
+              </tr>
+              <tr>
+                <td class="ind-field">timestamp Δ</td>
+                <td class="ind-alpha">13:03:07.560</td>
+                <td class="ind-bravo">13:03:09.881</td>
+                <td><span class="match-badge match-temporal">Δ 2.32s</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Event timeline -->
+      <div class="section">
+        <div class="section-title">Correlated event timeline</div>
+        <div class="section-body">
+          <div class="timeline-row">
+            <div class="tl-dot bravo"></div>
+            <span class="tl-time">13:03:07.560</span>
+            <span class="tl-desc">Domain <em>Bravo</em> · EVT-00050 · ExfilAttempt · FATAL · usr_j.harris → 10.2.0.1:443</span>
+          </div>
+          <div class="timeline-row">
+            <div class="tl-dot alpha"></div>
+            <span class="tl-time">13:03:09.881</span>
+            <span class="tl-desc">Domain <em>Alpha</em> · EVT-00051 · ExfilAttempt · FATAL · usr_j.harris → 10.1.0.1:443</span>
+            <span class="tl-delta">Δ +2.321s</span>
+          </div>
+          <div class="timeline-row">
+            <div class="tl-dot corr"></div>
+            <span class="tl-time">13:03:09.881</span>
+            <span class="tl-desc">CorrelationEngine fired · rule XDOM-EXFIL-007 · confidence <em>0.94</em></span>
+            <span class="tl-delta" style="background:#2d0e0e;color:#e55555;border-color:#6a2020;">ALERT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Correlated event IDs -->
+      <div class="section">
+        <div class="section-title">Source event references (SanitizedEvent ids)</div>
+        <div class="section-body">
+          <div class="evt-id-list">
+            <div class="evt-id-row">
+              <span class="evt-id-pill alpha">EVT-00051</span>
+              <span class="evt-id-src">Domain Alpha · ExfilAttempt · 13:03:09.881 · host: alpha-ws-0044</span>
+            </div>
+            <div class="evt-id-row">
+              <span class="evt-id-pill bravo">EVT-00050</span>
+              <span class="evt-id-src">Domain Bravo · ExfilAttempt · 13:03:07.560 · host: bravo-ctrl-01</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-strip">
+    <span class="footer-left">CorrelationEngine · 14 total alerts · 300 sanitized events processed · rule XDOM-EXFIL-007</span>
+    <div class="footer-right">
+      <span>CRITICAL: <b>5</b></span>
+      <span>HIGH: <b>6</b></span>
+      <span>MEDIUM: <b>3</b></span>
+      <span>avg confidence: <b>0.81</b></span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
