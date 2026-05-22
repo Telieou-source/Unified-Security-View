@@ -222,3 +222,9 @@ id = "U7jZAjIfKFX7dZ8A9WfpD"
 uri = "file://Unit7_Assignment_With_Figures.docx"
 type = "word_document"
 title = "Unit 7 Assignment — With All 8 Figures (fresh build — verified clean)"
+
+[[outputs]]
+id = "jFk17fH51tCqzc6GZE8PH"
+uri = "file://Unit7_PartC_With_Figures.docx"
+type = "word_document"
+title = "Unit 7 Part C — Capstone Project Report (With All Figures & Code Excerpts)"
