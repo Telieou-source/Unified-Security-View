@@ -1,0 +1,104 @@
+name: Release Desktop App (Windows)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./artifacts/cross-domain-demo/src-tauri -> target"
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python and Pillow (icon generation)
+        run: pip install Pillow
+
+      - name: Generate Tauri icons
+        run: python scripts/generate_icons.py
+
+      - name: Build Tauri app (Windows)
+        run: pnpm --filter @workspace/cross-domain-demo run tauri:build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Locate built installers
+        id: find-installers
+        run: |
+          echo "MSI=$(ls artifacts/cross-domain-demo/src-tauri/target/release/bundle/msi/*.msi 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
+          echo "EXE=$(ls artifacts/cross-domain-demo/src-tauri/target/release/bundle/nsis/*.exe 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Upload installers as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-siem-windows-${{ github.ref_name }}
+          path: |
+            artifacts/cross-domain-demo/src-tauri/target/release/bundle/msi/*.msi
+            artifacts/cross-domain-demo/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: warn
+
+      - name: Publish GitHub Release with installers
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Demo SIEM ${{ github.ref_name }}"
+          body: |
+            ## Demo SIEM ${{ github.ref_name }} — Windows Desktop Release
+
+            ### Installation
+            Download **Demo_SIEM_${{ github.ref_name }}_x64-setup.exe** (recommended) or the `.msi` package below.
+
+            **Requirements:** Windows 10 / 11 (64-bit). WebView2 runtime is bundled with the NSIS installer.
+
+            ### What's included
+            - Standalone native Windows app — no browser required
+            - Powered by Tauri v2 + WebView2
+            - Full Demo SIEM simulation: five-layer architecture, CrossDomainGuard, CorrelationEngine, six-panel dashboard
+            - Same build as the web deployment at https://unified-security-view.replit.app
+          files: |
+            artifacts/cross-domain-demo/src-tauri/target/release/bundle/msi/*.msi
+            artifacts/cross-domain-demo/src-tauri/target/release/bundle/nsis/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
