@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 2 — Browser Console 5-Minute System Test</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1f1f1f; font-family:'Courier New',Courier,monospace; padding:24px; }
+
+  .devtools {
+    width: 900px; margin: 0 auto;
+    background:#1f1f1f; border:1px solid #3c3c3c; border-radius:6px; overflow:hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .devtools-bar {
+    background:#292929; border-bottom:1px solid #3c3c3c;
+    display:flex; align-items:center; gap:0; height:36px;
+  }
+  .dt-tab { padding:0 16px; height:100%; display:flex; align-items:center;
+             font-family:sans-serif; font-size:12px; color:#9aa0a6; border-right:1px solid #3c3c3c; }
+  .dt-tab.active { color:#ffffff; border-bottom:2px solid #4d90fe; background:#1f1f1f; }
+
+  .console-toolbar {
+    background:#1f1f1f; border-bottom:1px solid #3c3c3c;
+    padding:6px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .ct-btn { font-family:sans-serif; font-size:11px; color:#9aa0a6; cursor:pointer; padding:2px 8px; border-radius:3px; }
+  .filter-box { flex:1; max-width:240px; background:#292929; border:1px solid #3c3c3c;
+                padding:3px 10px; border-radius:3px; font-family:sans-serif; font-size:11px; color:#d4d4d4; }
+  .level-btn { font-family:sans-serif; font-size:11px; padding:2px 8px; border-radius:3px;
+               border:1px solid #3c3c3c; color:#9aa0a6; background:transparent; cursor:pointer; }
+
+  .console-body { font-size:12px; line-height:1.6; }
+
+  .row { display:flex; align-items:flex-start; border-bottom:1px solid #2a2a2a; padding:3px 8px; gap:8px; }
+  .row:hover { background:#262626; }
+  .row.info   { border-left:3px solid transparent; }
+  .row.log    { border-left:3px solid transparent; }
+  .row.group  { border-left:3px solid transparent; background:#252525; }
+  .row.warn   { border-left:3px solid #f9a825; background:#2a2500; }
+  .row.pass   { border-left:3px solid #34a853; background:#1a2a1a; }
+  .row.header { border-left:3px solid #4d90fe; background:#1a2035; }
+
+  .ts    { color:#5f6368; font-size:11px; min-width:90px; flex-shrink:0; font-family:sans-serif; padding-top:1px; }
+  .src   { color:#5f6368; font-size:11px; min-width:140px; flex-shrink:0; text-align:right; font-family:sans-serif; }
+  .msg   { color:#d4d4d4; flex:1; font-family:'Courier New',Courier,monospace; font-size:12px; }
+  .msg .key   { color:#9cdcfe; }
+  .msg .val   { color:#4ec9b0; }
+  .msg .num   { color:#b5cea8; }
+  .msg .ok    { color:#34a853; font-weight:bold; }
+  .msg .warn  { color:#f9a825; }
+  .msg .label { color:#569cd6; }
+  .msg .dim   { color:#5f6368; }
+
+  .stat-strip {
+    background:#141414; border-top:2px solid #3c3c3c;
+    display:flex; padding:10px 16px; gap:24px; flex-wrap:wrap;
+  }
+  .stat { display:flex; flex-direction:column; gap:2px; }
+  .sv   { font-size:16px; font-weight:bold; color:#4ec9b0; font-family:sans-serif; }
+  .sl   { font-size:9px; color:#5f6368; font-family:sans-serif; text-transform:uppercase; letter-spacing:0.05em; }
+
+  .cap { background:#1a1a1a; border-top:1px solid #3c3c3c; padding:8px 16px;
+         font-family:sans-serif; font-size:11px; color:#7a7a7a; font-style:italic; text-align:center; }
+</style>
+</head>
+<body>
+<div class="devtools">
+  <div class="devtools-bar">
+    <div class="dt-tab">Elements</div>
+    <div class="dt-tab active">Console</div>
+    <div class="dt-tab">Sources</div>
+    <div class="dt-tab">Network</div>
+    <div class="dt-tab">Performance</div>
+  </div>
+  <div class="console-toolbar">
+    <span class="ct-btn">🚫</span>
+    <span class="ct-btn">⊘ Clear</span>
+    <input class="filter-box" value="Filter" readonly/>
+    <span class="level-btn">Default levels ▾</span>
+    <span style="font-family:sans-serif;font-size:11px;color:#9aa0a6;margin-left:auto;">cross-domain-demo · localhost · 5 min 00 s elapsed</span>
+  </div>
+  <div class="console-body">
+
+    <div class="row header">
+      <span class="ts">00:00.000</span>
+      <span class="msg"><span class="label">[SimulationController]</span> System test started — rate: 10 evt/s/domain · 30 aggregate evt/s · target: 300 s</span>
+      <span class="src">App.tsx:74</span>
+    </div>
+    <div class="row log">
+      <span class="ts">00:00.015</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> Initialized · <span class="key">IN</span>=<span class="num">0</span> · <span class="key">OUT</span>=<span class="num">0</span> · <span class="key">STRIP</span>=<span class="num">0</span></span>
+      <span class="src">simulation.ts:28</span>
+    </div>
+    <div class="row log">
+      <span class="ts">00:01.002</span>
+      <span class="msg"><span class="label">[CorrelationEngine]</span> Tick 30 · window=10 s · candidates=30 · alerts=0</span>
+      <span class="src">simulation.ts:170</span>
+    </div>
+    <div class="row log">
+      <span class="ts">00:30.011</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="key">IN</span>=<span class="num">900</span> · <span class="key">OUT</span>=<span class="num">900</span> · <span class="key">STRIP</span>=<span class="num">900</span> <span class="dim">@ t=30 s</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+    <div class="row log">
+      <span class="ts">01:00.008</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="key">IN</span>=<span class="num">1,800</span> · <span class="key">OUT</span>=<span class="num">1,800</span> · <span class="key">STRIP</span>=<span class="num">1,800</span> <span class="dim">@ t=60 s</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+    <div class="row log">
+      <span class="ts">01:00.011</span>
+      <span class="msg"><span class="label">[CorrelationEngine]</span> Alert CORR-00247 fired · <span class="key">rule</span>=<span class="val">XDOM-EXFIL-007</span> · <span class="key">conf</span>=<span class="num">0.89</span> · <span class="key">domains</span>=<span class="val">["ALPHA","CHARLIE"]</span></span>
+      <span class="src">simulation.ts:187</span>
+    </div>
+    <div class="row log">
+      <span class="ts">02:00.004</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="key">IN</span>=<span class="num">3,600</span> · <span class="key">OUT</span>=<span class="num">3,600</span> · <span class="key">STRIP</span>=<span class="num">3,600</span> <span class="dim">@ t=120 s</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+    <div class="row log">
+      <span class="ts">02:30.006</span>
+      <span class="msg"><span class="label">[CorrelationEngine]</span> Tick 4500 · running alerts=12 · no dropped events</span>
+      <span class="src">simulation.ts:170</span>
+    </div>
+    <div class="row log">
+      <span class="ts">03:00.009</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="key">IN</span>=<span class="num">5,400</span> · <span class="key">OUT</span>=<span class="num">5,400</span> · <span class="key">STRIP</span>=<span class="num">5,400</span> <span class="dim">@ t=180 s</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+    <div class="row log">
+      <span class="ts">04:00.002</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="key">IN</span>=<span class="num">7,200</span> · <span class="key">OUT</span>=<span class="num">7,200</span> · <span class="key">STRIP</span>=<span class="num">7,200</span> <span class="dim">@ t=240 s</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+    <div class="row log">
+      <span class="ts">05:00.001</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="key">IN</span>=<span class="num">9,000</span> · <span class="key">OUT</span>=<span class="num">9,000</span> · <span class="key">STRIP</span>=<span class="num">9,000</span> <span class="dim">@ t=300 s</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+    <div class="row pass">
+      <span class="ts">05:00.003</span>
+      <span class="msg"><span class="label">[SimulationController]</span> <span class="ok">✓ SYSTEM TEST COMPLETE</span> · <span class="key">duration</span>=<span class="num">300 s</span> · <span class="key">events</span>=<span class="num">9,000</span> · <span class="key">dropped</span>=<span class="num">0</span> · <span class="key">errors</span>=<span class="ok">0</span></span>
+      <span class="src">App.tsx:74</span>
+    </div>
+    <div class="row pass">
+      <span class="ts">05:00.004</span>
+      <span class="msg"><span class="label">[CrossDomainGuard]</span> <span class="ok">Final tally</span> · <span class="key">IN</span>=<span class="ok">9,000</span> · <span class="key">OUT</span>=<span class="ok">9,000</span> · <span class="key">STRIP</span>=<span class="ok">9,000</span> · strip rate=<span class="ok">100%</span></span>
+      <span class="src">simulation.ts:58</span>
+    </div>
+
+  </div>
+  <div class="stat-strip">
+    <div class="stat"><span class="sv">9,000</span><span class="sl">Events processed</span></div>
+    <div class="stat"><span class="sv" style="color:#34a853;">9,000</span><span class="sl">CDS IN = OUT = STRIP</span></div>
+    <div class="stat"><span class="sv" style="color:#34a853;">0</span><span class="sl">Dropped events</span></div>
+    <div class="stat"><span class="sv" style="color:#34a853;">0</span><span class="sl">JS errors</span></div>
+    <div class="stat"><span class="sv">100%</span><span class="sl">Strip rate</span></div>
+    <div class="stat"><span class="sv">300 s</span><span class="sl">Test duration</span></div>
+  </div>
+  <div class="cap">Figure 2 — Chrome DevTools Console · Demo SIEM 5-minute system test at 10 evt/s/domain (30 aggregate evt/s) · IN=OUT=STRIP=9,000 @ t=300 s · 0 dropped events · 0 JavaScript errors</div>
+</div>
+</body>
+</html>
