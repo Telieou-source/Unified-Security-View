@@ -1,0 +1,44 @@
+{
+  "productName": "Demo SIEM",
+  "version": "1.2.0",
+  "identifier": "com.telieou.demo-siem",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm run dev:tauri",
+    "beforeBuildCommand": "pnpm run build:tauri"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Demo SIEM — High-Side Multi-Classification Security Monitor",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1200,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "resources": []
+  }
+}
