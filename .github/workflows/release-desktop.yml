@@ -48,6 +48,17 @@ jobs:
         with:
           workspaces: "./artifacts/cross-domain-demo/src-tauri -> target"
 
+      - name: Remove Linux-only rollup overrides for Windows build
+        run: |
+          python -c "
+import pathlib, re
+p = pathlib.Path('pnpm-workspace.yaml')
+content = p.read_text()
+content = re.sub(r'  \"rollup>@rollup/rollup-win32[^\"]*\": \"-\"\n', '', content)
+p.write_text(content)
+print('Removed win32 rollup exclusions from pnpm-workspace.yaml')
+"
+
       - name: Install Node dependencies
         run: |
           rm -f pnpm-lock.yaml
