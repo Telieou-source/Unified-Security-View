@@ -116,17 +116,17 @@ def main():
             img.save(path, "PNG")
         else:
             path.write_bytes(_minimal_png(size))
-        print(f"  ✓ {filename} ({size}x{size})")
+        print(f"  [ok] {filename} ({size}x{size})")
 
     # icon.ico — Windows multi-size bundle
     ico_path = ICONS_DIR / "icon.ico"
     if USE_PIL:
         img = make_icon_pil(256)
         img.save(ico_path, "ICO", sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-        print("  ✓ icon.ico (multi-size Windows icon)")
+        print("  [ok] icon.ico (multi-size Windows icon)")
     else:
         ico_path.write_bytes(_minimal_png(32))
-        print("  ✓ icon.ico (stub — install Pillow for a proper multi-size .ico)")
+        print("  [ok] icon.ico (stub -- install Pillow for a proper multi-size .ico)")
 
     # icon.icns — macOS (use 512px PNG renamed; tauri-cli will handle properly on macOS)
     icns_path = ICONS_DIR / "icon.icns"
@@ -138,7 +138,7 @@ def main():
         (ICONS_DIR / "icon.icns.png").unlink()
     else:
         icns_path.write_bytes(_minimal_png(512))
-    print("  ✓ icon.icns (512px source; tauri icon command will reprocess on macOS)")
+    print("  [ok] icon.icns (512px source; tauri icon command will reprocess on macOS)")
 
     print("\nDone. To regenerate from a custom source image:")
     print("  cargo tauri icon path/to/your-icon.png")

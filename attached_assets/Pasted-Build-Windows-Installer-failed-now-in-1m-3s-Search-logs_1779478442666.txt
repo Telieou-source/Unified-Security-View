@@ -1,0 +1,94 @@
+Build Windows Installer
+failed now in 1m 3s
+Search logs
+2s
+4s
+7s
+5s
+1s
+1s
+6s
+3s
+23s
+Run pnpm install --no-frozen-lockfile
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +486
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 486, reused 0, downloaded 0, added 0
+Progress: resolved 486, reused 0, downloaded 1, added 0
+Progress: resolved 486, reused 0, downloaded 113, added 40
+Progress: resolved 486, reused 0, downloaded 199, added 83
+Progress: resolved 486, reused 0, downloaded 278, added 113
+Progress: resolved 486, reused 0, downloaded 285, added 117
+Progress: resolved 486, reused 0, downloaded 287, added 117
+Progress: resolved 486, reused 0, downloaded 288, added 117
+Progress: resolved 486, reused 0, downloaded 293, added 117
+Progress: resolved 486, reused 0, downloaded 361, added 141
+Progress: resolved 486, reused 0, downloaded 403, added 157
+Progress: resolved 486, reused 0, downloaded 478, added 188
+Progress: resolved 486, reused 0, downloaded 486, added 288
+Progress: resolved 486, reused 0, downloaded 486, added 294
+Progress: resolved 486, reused 0, downloaded 486, added 390
+Progress: resolved 486, reused 0, downloaded 486, added 486, done
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.27.3/node_modules/esbuild postinstall: [esbuild] Failed to find package "@esbuild/win32-x64" on the file system
+.../esbuild@0.27.3/node_modules/esbuild postinstall: This can happen if you use the "--no-optional" flag. The "optionalDependencies"
+.../esbuild@0.27.3/node_modules/esbuild postinstall: package.json feature is used by esbuild to install the correct binary executable
+.../esbuild@0.27.3/node_modules/esbuild postinstall: for your current platform. This install script will now attempt to work around
+.../esbuild@0.27.3/node_modules/esbuild postinstall: this. If that fails, you need to remove the "--no-optional" flag to use esbuild.
+.../esbuild@0.27.3/node_modules/esbuild postinstall: [esbuild] Trying to install package "@esbuild/win32-x64" using npm
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+Done in 22.8s using pnpm v10.33.4
+6s
+Run pip install Pillow
+  
+Collecting Pillow
+  Downloading pillow-12.2.0-cp312-cp312-win_amd64.whl.metadata (9.0 kB)
+Downloading pillow-12.2.0-cp312-cp312-win_amd64.whl (7.1 MB)
+   ---------------------------------------- 7.1/7.1 MB 72.6 MB/s  0:00:00
+Installing collected packages: Pillow
+Successfully installed Pillow-12.2.0
+0s
+Run python scripts/generate_icons.py
+Traceback (most recent call last):
+Writing icons to D:\a\Unified-Security-View\Unified-Security-View\artifacts\cross-domain-demo\src-tauri\icons
+  File "D:\a\Unified-Security-View\Unified-Security-View\scripts\generate_icons.py", line 148, in <module>
+    main()
+  File "D:\a\Unified-Security-View\Unified-Security-View\scripts\generate_icons.py", line 119, in main
+    print(f"  \u2713 {filename} ({size}x{size})")
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 2: character maps to <undefined>
+Error: Process completed with exit code 1.
+0s
+0s
+0s
+0s
+0s
+0s
+Post job cleanup.
+Pruning is unnecessary.
+0s
+3s
+Post job cleanup.
+"C:\Program Files\Git\bin\git.exe" version
+git version 2.54.0.windows.1
+Temporarily overriding HOME='D:\a\_temp\d0ae24a7-4bdd-4f59-ba2a-4d5a1a314a3a' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\Unified-Security-View\Unified-Security-View
+"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+http.https://github.com/.extraheader
+"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
