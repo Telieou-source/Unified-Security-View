@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 3 — CorrelationEngine computeConfidence()</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 13px; padding: 24px; }
+
+  .window {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    overflow: hidden; max-width: 1020px; margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .titlebar {
+    background: #21262d; padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red    { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green  { background: #27c93f; }
+  .filename { color: #8b949e; font-size: 12px; margin-left: 10px; }
+  .filepath { color: #484f58; font-size: 11px; margin-left: 4px; }
+
+  .body { padding: 20px 0 28px; line-height: 1.85; }
+
+  /* Line rendering */
+  .line { display: flex; align-items: baseline; }
+  .ln   { color: #484f58; min-width: 46px; text-align: right; padding-right: 18px; font-size: 11px; user-select: none; flex-shrink: 0; }
+  .code { white-space: pre; }
+
+  /* Syntax */
+  .kw      { color: #ff7b72; }
+  .fn      { color: #d2a8ff; }
+  .var     { color: #ffa657; }
+  .str     { color: #a5d6ff; }
+  .num     { color: #79c0ff; }
+  .type-an { color: #ff7b72; }
+  .cmt     { color: #484f58; font-style: italic; }
+  .punct   { color: #8b949e; }
+  .prop    { color: #79c0ff; }
+  .op      { color: #ff7b72; }
+
+  /* Section label bar */
+  .section-label {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 46px 4px; margin-top: 6px;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .badge {
+    font-size: 10px; padding: 2px 9px; border-radius: 3px;
+    font-weight: bold; letter-spacing: 0.05em;
+  }
+
+  /* Factor colours */
+  .b1 { background: #1a3020; color: #48c78e; border: 1px solid #264a38; } /* identity  0.40 */
+  .b2 { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; } /* type      0.30 */
+  .b3 { background: #1a1a2d; color: #a78bfa; border: 1px solid #3a2a6a; } /* subnet    0.20 */
+  .b4 { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; } /* temporal  0.10 */
+  .b5 { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; } /* cap       1.00 */
+  .b0 { background: #21262d; color: #8b949e; border: 1px solid #30363d; } /* jsdoc / sig */
+
+  .sep { flex: 1; border-top: 1px solid #21262d; }
+  .badge-desc { font-size: 10px; color: #484f58; }
+
+  /* Weight pill — inline */
+  .wpill {
+    display: inline-block; font-size: 10px; font-weight: bold;
+    padding: 0px 5px; border-radius: 2px; vertical-align: middle;
+    margin-left: 4px; font-style: normal;
+  }
+  .wpill-green  { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .wpill-orange { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+  .wpill-purple { background: #1a1a2d; color: #a78bfa; border: 1px solid #3a2a6a; }
+  .wpill-blue   { background: #1a2d40; color: #4ea6dc; border: 1px solid #2a4a60; }
+
+  /* JSDoc table block */
+  .jsdoc-block {
+    margin: 4px 46px 0;
+    background: #0d1117; border-left: 2px solid #30363d;
+    padding: 8px 14px; font-size: 11px; line-height: 1.7;
+  }
+  .jsdoc-block table { border-collapse: collapse; width: 100%; }
+  .jsdoc-block th {
+    color: #484f58; font-weight: normal; font-size: 10px;
+    text-align: left; padding: 2px 10px 4px 0;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    border-bottom: 1px solid #21262d;
+  }
+  .jsdoc-block td { padding: 3px 10px 3px 0; font-size: 11px; }
+  .jdoc-cmt { color: #484f58; font-style: italic; }
+  .jdoc-factor { color: #c8d0d8; }
+  .jdoc-weight-green  { color: #48c78e; font-weight: bold; }
+  .jdoc-weight-orange { color: #f58220; font-weight: bold; }
+  .jdoc-weight-purple { color: #a78bfa; font-weight: bold; }
+  .jdoc-weight-blue   { color: #4ea6dc; font-weight: bold; }
+  .jdoc-cond { color: #79c0ff; font-size: 10px; }
+  .jdoc-note { color: #484f58; font-size: 10px; font-style: italic; margin-top: 6px; }
+
+  .block-sep { border: none; border-top: 1px dashed #21262d; margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    <span class="filename">simulation.ts</span>
+    <span class="filepath">artifacts/cross-domain-demo/src/lib/simulation.ts</span>
+  </div>
+  <div class="body">
+
+    <!-- JSDoc header -->
+    <div class="section-label">
+      <span class="badge b0">JSDOC</span>
+      <span class="badge-desc">four-factor weight table — inline documentation</span>
+      <span class="sep"></span>
+    </div>
+
+    <div class="jsdoc-block">
+      <span class="jdoc-cmt">/** CorrelationEngine — four-factor weighted confidence scorer.</span><br/>
+      <table>
+        <thead>
+          <tr>
+            <th>Factor</th>
+            <th>Weight</th>
+            <th>Condition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="jdoc-factor">Shared user identity</td>
+            <td class="jdoc-weight-green">0.40</td>
+            <td class="jdoc-cond">newEvent.userId present in ≥1 match</td>
+          </tr>
+          <tr>
+            <td class="jdoc-factor">Matching event type</td>
+            <td class="jdoc-weight-orange">0.30</td>
+            <td class="jdoc-cond">newEvent.type present in ≥1 match</td>
+          </tr>
+          <tr>
+            <td class="jdoc-factor">Destination subnet overlap</td>
+            <td class="jdoc-weight-purple">0.20</td>
+            <td class="jdoc-cond">dstIp /16 prefix differs (cross-domain target)</td>
+          </tr>
+          <tr>
+            <td class="jdoc-factor">Temporal proximity bonus</td>
+            <td class="jdoc-weight-blue">0.10</td>
+            <td class="jdoc-cond">linear decay over the 10 000 ms window</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="jdoc-note"> * Final score is capped at 1.0 to remain a valid probability. */</div>
+    </div>
+
+    <!-- Signature -->
+    <div class="section-label" style="margin-top:8px;">
+      <span class="badge b0">SIGNATURE</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">128</span><span class="code"><span class="kw">export function</span> <span class="fn">computeConfidence</span><span class="punct">(</span></span></div>
+    <div class="line"><span class="ln">129</span><span class="code">  <span class="var">newEvent</span><span class="punct">:</span> <span class="type-an">SanitizedEvent</span><span class="punct">,</span></span></div>
+    <div class="line"><span class="ln">130</span><span class="code">  <span class="var">matches</span><span class="punct">:</span>  <span class="type-an">SanitizedEvent</span><span class="punct">[],</span></span></div>
+    <div class="line"><span class="ln">131</span><span class="code">  <span class="var">windowMs</span><span class="punct">:</span> <span class="type-an">number</span> <span class="op">=</span> <span class="num">10_000</span></span></div>
+    <div class="line"><span class="ln">132</span><span class="code"><span class="punct">):</span> <span class="type-an">number</span> <span class="punct">{</span></span></div>
+    <div class="line"><span class="ln">133</span><span class="code">  <span class="kw">let</span> <span class="var">score</span> <span class="op">=</span> <span class="num">0</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">134</span><span class="code"></span></div>
+
+    <!-- Factor 1 -->
+    <div class="section-label">
+      <span class="badge b1">① IDENTITY</span>
+      <span class="badge-desc">shared user identity<span class="wpill wpill-green">+0.40</span></span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">135</span><span class="code">  <span class="cmt">// ① Shared user identity — weight 0.40</span></span></div>
+    <div class="line"><span class="ln">136</span><span class="code">  <span class="kw">const</span> <span class="var">sharedUser</span> <span class="op">=</span> <span class="var">matches</span><span class="punct">.</span><span class="fn">some</span><span class="punct">((</span><span class="var">e</span><span class="punct">) =&gt;</span> <span class="var">e</span><span class="punct">.</span><span class="prop">userId</span> <span class="op">===</span> <span class="var">newEvent</span><span class="punct">.</span><span class="prop">userId</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">137</span><span class="code">  <span class="kw">if</span> <span class="punct">(</span><span class="var">sharedUser</span><span class="punct">)</span> <span class="var">score</span> <span class="op">+=</span> <span class="num">0.40</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">138</span><span class="code"></span></div>
+
+    <!-- Factor 2 -->
+    <div class="section-label">
+      <span class="badge b2">② EVENT TYPE</span>
+      <span class="badge-desc">matching event type<span class="wpill wpill-orange">+0.30</span></span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">139</span><span class="code">  <span class="cmt">// ② Matching event type — weight 0.30</span></span></div>
+    <div class="line"><span class="ln">140</span><span class="code">  <span class="kw">const</span> <span class="var">typeMatch</span> <span class="op">=</span> <span class="var">matches</span><span class="punct">.</span><span class="fn">some</span><span class="punct">((</span><span class="var">e</span><span class="punct">) =&gt;</span> <span class="var">e</span><span class="punct">.</span><span class="prop">type</span> <span class="op">===</span> <span class="var">newEvent</span><span class="punct">.</span><span class="prop">type</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">141</span><span class="code">  <span class="kw">if</span> <span class="punct">(</span><span class="var">typeMatch</span><span class="punct">)</span> <span class="var">score</span> <span class="op">+=</span> <span class="num">0.30</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">142</span><span class="code"></span></div>
+
+    <!-- Factor 3 -->
+    <div class="section-label">
+      <span class="badge b3">③ SUBNET</span>
+      <span class="badge-desc">destination subnet overlap — /16 prefix differs across domains<span class="wpill wpill-purple">+0.20</span></span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">143</span><span class="code">  <span class="cmt">// ③ Destination subnet overlap — weight 0.20</span></span></div>
+    <div class="line"><span class="ln">144</span><span class="code">  <span class="cmt">// Subnets differ by design (cross-domain), but converge on the same /16 gateway class</span></span></div>
+    <div class="line"><span class="ln">145</span><span class="code">  <span class="kw">const</span> <span class="var">newSubnet</span> <span class="op">=</span> <span class="var">newEvent</span><span class="punct">.</span><span class="prop">dstIp</span><span class="punct">.</span><span class="fn">split</span><span class="punct">(</span><span class="str">"."</span><span class="punct">).</span><span class="fn">slice</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="num">2</span><span class="punct">).</span><span class="fn">join</span><span class="punct">(</span><span class="str">"."</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">146</span><span class="code">  <span class="kw">const</span> <span class="var">subnetMatch</span> <span class="op">=</span> <span class="var">matches</span><span class="punct">.</span><span class="fn">some</span><span class="punct">((</span><span class="var">e</span><span class="punct">) =&gt; {</span></span></div>
+    <div class="line"><span class="ln">147</span><span class="code">    <span class="kw">const</span> <span class="var">mSubnet</span> <span class="op">=</span> <span class="var">e</span><span class="punct">.</span><span class="prop">dstIp</span><span class="punct">.</span><span class="fn">split</span><span class="punct">(</span><span class="str">"."</span><span class="punct">).</span><span class="fn">slice</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="num">2</span><span class="punct">).</span><span class="fn">join</span><span class="punct">(</span><span class="str">"."</span><span class="punct">);</span></span></div>
+    <div class="line"><span class="ln">148</span><span class="code">    <span class="kw">return</span> <span class="var">mSubnet</span> <span class="op">!==</span> <span class="var">newSubnet</span><span class="punct">;</span>           <span class="cmt">// cross-domain, same target address class</span></span></div>
+    <div class="line"><span class="ln">149</span><span class="code">  <span class="punct">});</span></span></div>
+    <div class="line"><span class="ln">150</span><span class="code">  <span class="kw">if</span> <span class="punct">(</span><span class="var">subnetMatch</span><span class="punct">)</span> <span class="var">score</span> <span class="op">+=</span> <span class="num">0.20</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">151</span><span class="code"></span></div>
+
+    <!-- Factor 4 -->
+    <div class="section-label">
+      <span class="badge b4">④ TEMPORAL</span>
+      <span class="badge-desc">proximity bonus — linear decay toward window edge<span class="wpill wpill-blue">up to +0.10</span></span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">152</span><span class="code">  <span class="cmt">// ④ Temporal proximity bonus — up to 0.10 (linear decay toward window edge)</span></span></div>
+    <div class="line"><span class="ln">153</span><span class="code">  <span class="kw">const</span> <span class="var">now</span> <span class="op">=</span> <span class="fn">Date</span><span class="punct">.</span><span class="fn">now</span><span class="punct">();</span></span></div>
+    <div class="line"><span class="ln">154</span><span class="code">  <span class="kw">const</span> <span class="var">minDeltaMs</span> <span class="op">=</span> <span class="fn">Math</span><span class="punct">.</span><span class="fn">min</span><span class="punct">(...</span><span class="var">matches</span><span class="punct">.</span><span class="fn">map</span><span class="punct">((</span><span class="var">e</span><span class="punct">) =&gt;</span> <span class="fn">Math</span><span class="punct">.</span><span class="fn">abs</span><span class="punct">(</span><span class="var">now</span> <span class="op">-</span> <span class="var">e</span><span class="punct">.</span><span class="prop">timestamp</span><span class="punct">)));</span></span></div>
+    <div class="line"><span class="ln">155</span><span class="code">  <span class="kw">const</span> <span class="var">temporalBonus</span> <span class="op">=</span> <span class="fn">Math</span><span class="punct">.</span><span class="fn">max</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="num">0.10</span> <span class="op">*</span> <span class="punct">(</span><span class="num">1</span> <span class="op">-</span> <span class="var">minDeltaMs</span> <span class="op">/</span> <span class="var">windowMs</span><span class="punct">));</span></span></div>
+    <div class="line"><span class="ln">156</span><span class="code">  <span class="var">score</span> <span class="op">+=</span> <span class="var">temporalBonus</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">157</span><span class="code"></span></div>
+
+    <!-- Cap -->
+    <div class="section-label">
+      <span class="badge b5">⑤ CAP</span>
+      <span class="badge-desc">clamp final score to [0.0, 1.0] — valid probability range</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">158</span><span class="code">  <span class="kw">return</span> <span class="fn">Math</span><span class="punct">.</span><span class="fn">min</span><span class="punct">(</span><span class="num">1.0</span><span class="punct">,</span> <span class="var">score</span><span class="punct">);</span>              <span class="cmt">// cap at 1.0</span></span></div>
+    <div class="line"><span class="ln">159</span><span class="code"><span class="punct">}</span></span></div>
+
+  </div>
+</div>
+</body>
+</html>

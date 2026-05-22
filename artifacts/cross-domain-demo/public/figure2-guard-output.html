@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 2 — CrossDomainGuard Output</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111315; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #c8d0d8; padding: 16px; }
+
+  /* Top bar */
+  .topbar {
+    background: #1a1c1f; border: 1px solid #2d3035; border-radius: 6px 6px 0 0;
+    padding: 8px 14px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .brand { color: #f58220; font-weight: bold; font-size: 13px; }
+  .module-name { color: #8a9aaa; font-size: 11px; }
+  .badge-complete { background: #1a2030; color: #79c0ff; border: 1px solid #2a3a60; padding: 2px 8px; border-radius: 3px; font-size: 11px; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; font-size: 11px; }
+  .stat { color: #555a62; }
+  .stat span { color: #f58220; }
+  .elapsed { background: #1a1c1f; color: #48c78e; border: 1px solid #264a38; padding: 2px 10px; border-radius: 3px; font-weight: bold; }
+
+  /* Main grid */
+  .grid { display: grid; grid-template-columns: 1fr 340px; gap: 10px; margin-top: 0; }
+
+  /* ── Left: sanitized event detail ── */
+  .panel { background: #161b22; border: 1px solid #2a2d32; border-radius: 0 0 6px 6px; overflow: hidden; }
+  .panel-header {
+    padding: 8px 12px; border-bottom: 1px solid #2a2d32;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1a1c1f;
+  }
+  .panel-title { font-size: 11px; color: #8a9aaa; }
+  .panel-tag { font-size: 10px; padding: 1px 7px; border-radius: 2px; font-weight: bold; }
+  .tag-san { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .tag-raw { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+
+  .event-detail { padding: 14px 16px; }
+  .event-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #1e2128; }
+  .event-id-big { font-size: 14px; font-weight: bold; color: #79c0ff; }
+  .sev { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 2px; }
+  .sev-FATAL { background: #2d0e0e; color: #e55555; border: 1px solid #6a2020; }
+  .event-ts { font-size: 11px; color: #555a62; margin-left: auto; }
+
+  /* Field grid */
+  .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .field-row {
+    display: flex; align-items: baseline; gap: 6px;
+    padding: 4px 8px; border-radius: 2px;
+  }
+  .field-row:nth-child(odd) { background: #12151a; }
+  .field-row:nth-child(even) { background: #111315; }
+  .field-key { color: #79c0ff; min-width: 120px; flex-shrink: 0; font-size: 11px; }
+  .field-val { color: #a5d6ff; font-size: 11px; }
+  .field-val.domain { color: #f58220; font-weight: bold; }
+  .field-val.type-val { color: #ffa657; }
+  .field-val.class { color: #d2a8ff; }
+  .field-val.sev-text { color: #e55555; font-weight: bold; }
+  .field-val.guard-data { color: #e55555; font-style: italic; font-size: 10px; }
+
+  /* Stripped field row */
+  .stripped-section { margin-top: 12px; border-top: 1px dashed #2a2d32; padding-top: 10px; }
+  .stripped-label { font-size: 10px; color: #555a62; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .stripped-row {
+    display: flex; align-items: center; gap: 10px;
+    background: #1e0e0e; border: 1px solid #5a1a1a; border-radius: 4px;
+    padding: 7px 10px; margin-bottom: 4px;
+  }
+  .strip-icon { color: #e55555; font-size: 14px; font-weight: bold; }
+  .strip-field { color: #e55555; font-size: 12px; text-decoration: line-through; text-decoration-color: #e5555599; }
+  .strip-reason { color: #7a3030; font-size: 10px; margin-left: auto; font-style: italic; }
+
+  .passed-section { margin-top: 8px; }
+  .passed-label { font-size: 10px; color: #555a62; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .passed-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+  .pill {
+    font-size: 10px; padding: 2px 7px; border-radius: 2px;
+    background: #1a2d1a; color: #48c78e; border: 1px solid #2a4a2a;
+  }
+
+  /* ── Right: metrics panel ── */
+  .metrics { display: flex; flex-direction: column; gap: 8px; margin-top: 0; }
+  .metric-panel { background: #161b22; border: 1px solid #2a2d32; border-radius: 6px; padding: 12px 14px; }
+  .metric-panel-title { font-size: 10px; color: #555a62; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+
+  /* Big counters */
+  .counter-row { display: flex; gap: 8px; }
+  .counter-box {
+    flex: 1; border-radius: 4px; padding: 10px 8px; text-align: center;
+    border: 1px solid;
+  }
+  .counter-box.in    { background: #1a2030; border-color: #2a3a60; }
+  .counter-box.out   { background: #1a3020; border-color: #264a38; }
+  .counter-box.strip { background: #2d1a08; border-color: #6a3a10; }
+
+  .counter-num { font-size: 26px; font-weight: bold; line-height: 1; }
+  .counter-box.in    .counter-num { color: #79c0ff; }
+  .counter-box.out   .counter-num { color: #48c78e; }
+  .counter-box.strip .counter-num { color: #f58220; }
+  .counter-label { font-size: 10px; color: #555a62; margin-top: 4px; }
+
+  /* Agreement row */
+  .agreement { margin-top: 10px; background: #1a3020; border: 1px solid #264a38; border-radius: 4px; padding: 8px 10px; }
+  .agree-row { display: flex; align-items: center; justify-content: space-between; }
+  .agree-label { font-size: 11px; color: #8a9aaa; }
+  .agree-val { font-size: 11px; color: #48c78e; font-weight: bold; }
+  .agree-eq { font-size: 10px; color: #48c78e; margin-top: 4px; font-style: italic; }
+
+  /* Strip breakdown */
+  .breakdown { }
+  .breakdown-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #1e2128; }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-field { color: #79c0ff; font-size: 11px; }
+  .breakdown-count { font-size: 11px; color: #f58220; }
+  .breakdown-action { font-size: 10px; color: #555a62; }
+
+  /* Timeline */
+  .timeline { }
+  .tl-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 10px; color: #555a62; }
+  .tl-time { min-width: 60px; color: #444850; }
+  .tl-bar-wrap { flex: 1; background: #1a1c1f; border-radius: 2px; height: 6px; }
+  .tl-bar { height: 6px; border-radius: 2px; }
+  .tl-num { min-width: 28px; text-align: right; }
+
+  /* Rules table */
+  .rule-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; border-radius: 2px; }
+  .rule-row:nth-child(odd) { background: #12151a; }
+  .rule-field { color: #79c0ff; font-size: 11px; }
+  .rule-action-strip { font-size: 10px; padding: 1px 6px; border-radius: 2px; background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+  .rule-action-pass  { font-size: 10px; padding: 1px 6px; border-radius: 2px; background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .rule-reason { font-size: 10px; color: #444850; font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="brand">▶ Demo SIEM</span>
+    <span class="module-name">CrossDomainGuard — boundary sanitization engine</span>
+    <span class="badge-complete">● SIMULATION COMPLETE</span>
+  </div>
+  <div class="topbar-right">
+    <span class="stat">Run duration: <span>60.0s</span></span>
+    <span class="stat">Events in: <span>300</span></span>
+    <span class="stat">Events out: <span>300</span></span>
+    <span class="elapsed">▶ 60.0s elapsed</span>
+  </div>
+</div>
+
+<div class="grid">
+
+  <!-- ── LEFT: Sanitized event detail ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">SanitizedEvent record — post-guard output · most recent ingress</span>
+      <div style="display:flex;gap:6px">
+        <span class="panel-tag tag-san">SANITIZED</span>
+        <span class="panel-tag" style="background:#1a2d40;color:#4ea6dc;border:1px solid #2a4a60;font-size:10px;padding:1px 7px;border-radius:2px;">ALPHA</span>
+      </div>
+    </div>
+    <div class="event-detail">
+      <div class="event-meta">
+        <span class="event-id-big">EVT-00051</span>
+        <span class="sev sev-FATAL">FATAL</span>
+        <span class="event-ts">processed: 2026-05-14 · 13:03:09.881 UTC</span>
+      </div>
+
+      <!-- Passed fields grid -->
+      <div class="fields-grid">
+        <div class="field-row">
+          <span class="field-key">id:</span>
+          <span class="field-val">EVT-00051</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">domainId:</span>
+          <span class="field-val domain">ALPHA</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">timestamp:</span>
+          <span class="field-val">1747051389881</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">type:</span>
+          <span class="field-val type-val">ExfilAttempt</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">severity:</span>
+          <span class="field-val sev-text">FATAL</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">srcIp:</span>
+          <span class="field-val">10.1.4.22</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">dstIp:</span>
+          <span class="field-val">10.1.0.1</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">srcPort:</span>
+          <span class="field-val">49221</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">dstPort:</span>
+          <span class="field-val">443</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">protocol:</span>
+          <span class="field-val">TCP</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">userId:</span>
+          <span class="field-val">usr_j.harris</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">host:</span>
+          <span class="field-val">alpha-ws-0044</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">strippedFields:</span>
+          <span class="field-val guard-data">["rawPacketBytes"]</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key">passedFields:</span>
+          <span class="field-val guard-data" style="color:#48c78e">[13 fields]</span>
+        </div>
+      </div>
+
+      <!-- Stripped section -->
+      <div class="stripped-section">
+        <div class="stripped-label">Fields removed at CDS boundary</div>
+        <div class="stripped-row">
+          <span class="strip-icon">✗</span>
+          <span class="strip-field">rawPacketBytes</span>
+          <span class="strip-reason">STRIP · contains raw packet payload — cross-domain transfer prohibited</span>
+        </div>
+      </div>
+
+      <!-- Passed pills -->
+      <div class="passed-section">
+        <div class="passed-label">Fields forwarded to unified view (13 of 14)</div>
+        <div class="passed-pills">
+          <span class="pill">id</span>
+          <span class="pill">domainId</span>
+          <span class="pill">timestamp</span>
+          <span class="pill">type</span>
+          <span class="pill">severity</span>
+          <span class="pill">srcIp</span>
+          <span class="pill">dstIp</span>
+          <span class="pill">srcPort</span>
+          <span class="pill">dstPort</span>
+          <span class="pill">protocol</span>
+          <span class="pill">userId</span>
+          <span class="pill">host</span>
+          <span class="pill" style="background:#1a3020;color:#48c78e;border-color:#2a4a2a">strippedFields</span>
+          <span class="pill" style="background:#1a3020;color:#48c78e;border-color:#2a4a2a">passedFields</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Metrics panels ── -->
+  <div class="metrics">
+
+    <!-- Counter panel -->
+    <div class="metric-panel">
+      <div class="metric-panel-title">Guard counters — 60-second run</div>
+      <div class="counter-row">
+        <div class="counter-box in">
+          <div class="counter-num">300</div>
+          <div class="counter-label">IN</div>
+        </div>
+        <div class="counter-box out">
+          <div class="counter-num">300</div>
+          <div class="counter-label">OUT</div>
+        </div>
+        <div class="counter-box strip">
+          <div class="counter-num">300</div>
+          <div class="counter-label">STRIPPED</div>
+        </div>
+      </div>
+      <div class="agreement" style="margin-top:10px;">
+        <div class="agree-row">
+          <span class="agree-label">Packet balance</span>
+          <span class="agree-val">✓ IN = OUT = 300</span>
+        </div>
+        <div class="agree-eq">Strip count = 1 field × 300 events = 300 total strips</div>
+      </div>
+    </div>
+
+    <!-- Strip breakdown -->
+    <div class="metric-panel">
+      <div class="metric-panel-title">Strip field breakdown</div>
+      <div class="breakdown">
+        <div class="breakdown-row">
+          <span class="breakdown-field">rawPacketBytes</span>
+          <span class="breakdown-action" style="color:#f58220;">STRIP</span>
+          <span class="breakdown-count">300</span>
+        </div>
+        <div class="breakdown-row" style="opacity:0.4;">
+          <span class="breakdown-field">id</span>
+          <span class="breakdown-action" style="color:#48c78e;">PASS</span>
+          <span class="breakdown-count">—</span>
+        </div>
+        <div class="breakdown-row" style="opacity:0.4;">
+          <span class="breakdown-field">all other fields (×12)</span>
+          <span class="breakdown-action" style="color:#48c78e;">PASS</span>
+          <span class="breakdown-count">—</span>
+        </div>
+      </div>
+      <div style="margin-top:8px;background:#2d1a08;border:1px solid #6a3a10;border-radius:3px;padding:6px 8px;font-size:10px;color:#c87840;">
+        1 boundary rule applied · 100% strip compliance · 0 pass-through violations
+      </div>
+    </div>
+
+    <!-- 10-second interval timeline -->
+    <div class="metric-panel">
+      <div class="metric-panel-title">Event throughput — 10-second intervals</div>
+      <div class="timeline">
+        <div class="tl-row">
+          <span class="tl-time">0–10s</span>
+          <div class="tl-bar-wrap"><div class="tl-bar" style="width:100%;background:#4ea6dc55;"></div></div>
+          <span class="tl-num" style="color:#79c0ff;">50</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-time">10–20s</span>
+          <div class="tl-bar-wrap"><div class="tl-bar" style="width:100%;background:#4ea6dc55;"></div></div>
+          <span class="tl-num" style="color:#79c0ff;">50</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-time">20–30s</span>
+          <div class="tl-bar-wrap"><div class="tl-bar" style="width:100%;background:#4ea6dc55;"></div></div>
+          <span class="tl-num" style="color:#79c0ff;">50</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-time">30–40s</span>
+          <div class="tl-bar-wrap"><div class="tl-bar" style="width:100%;background:#4ea6dc55;"></div></div>
+          <span class="tl-num" style="color:#79c0ff;">50</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-time">40–50s</span>
+          <div class="tl-bar-wrap"><div class="tl-bar" style="width:100%;background:#4ea6dc55;"></div></div>
+          <span class="tl-num" style="color:#79c0ff;">50</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-time">50–60s</span>
+          <div class="tl-bar-wrap"><div class="tl-bar" style="width:100%;background:#4ea6dc55;"></div></div>
+          <span class="tl-num" style="color:#79c0ff;">50</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#444850;margin-top:6px;">
+        <span>5 events/sec × 10s = 50 per interval</span>
+        <span>Total: 300</span>
+      </div>
+    </div>
+
+    <!-- BoundaryRule applied -->
+    <div class="metric-panel">
+      <div class="metric-panel-title">Active boundary rules</div>
+      <div class="rule-row">
+        <span class="rule-field">rawPacketBytes</span>
+        <span class="rule-action-strip">STRIP</span>
+        <span class="rule-reason">raw payload prohibited</span>
+      </div>
+      <div class="rule-row">
+        <span class="rule-field">id · domainId · timestamp</span>
+        <span class="rule-action-pass">PASS</span>
+        <span class="rule-reason">identity fields</span>
+      </div>
+      <div class="rule-row">
+        <span class="rule-field">type · severity · protocol</span>
+        <span class="rule-action-pass">PASS</span>
+        <span class="rule-reason">metadata fields</span>
+      </div>
+      <div class="rule-row">
+        <span class="rule-field">srcIp · dstIp · srcPort · dstPort</span>
+        <span class="rule-action-pass">PASS</span>
+        <span class="rule-reason">network addressing</span>
+      </div>
+      <div class="rule-row">
+        <span class="rule-field">userId · host</span>
+        <span class="rule-action-pass">PASS</span>
+        <span class="rule-reason">actor identity</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

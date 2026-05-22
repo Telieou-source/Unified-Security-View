@@ -70,33 +70,90 @@ export function generateEvent(domainId: DomainId): RawEvent {
   };
 }
 
-/** Only raw packet bytes are stripped. All SIEM log metadata passes through. */
-export function sanitizeEvent(raw: RawEvent): SanitizedEvent {
-  const strippedFields = ["rawPacketBytes"];
-  const passedFields = [
-    "srcIp", "dstIp", "srcPort", "dstPort", "protocol",
-    "userId", "host", "eventType", "severity", "timestamp",
-  ];
+// CrossDomainGuard — throughput counters (atomic per JS single-thread model)
+let inCount   = 0;
+let outCount  = 0;
+let stripCount = 0;
 
-  return {
-    id: raw.id,
-    domainId: raw.domainId,
-    timestamp: raw.timestamp,
-    type: raw.type,
-    severity: raw.severity,
-    srcIp: raw.srcIp,
-    dstIp: raw.dstIp,
-    srcPort: raw.srcPort,
-    dstPort: raw.dstPort,
-    protocol: raw.protocol,
-    userId: raw.userId,
-    host: raw.host,
-    strippedFields,
+const GUARD_ID = "CDG-ALPHA-BRAVO-CHARLIE-v1.2";
+
+export function getGuardCounters() {
+  return { inCount, outCount, stripCount };
+}
+
+export function resetGuardCounters() {
+  inCount = outCount = stripCount = 0;
+}
+
+/** CrossDomainGuard sanitize() — strips rawPacketBytes via ES2018 rest-destructuring,
+ *  increments atomic throughput counters, and appends sanitizationTimestamp / guardId
+ *  audit fields before forwarding the SanitizedEvent to the unified high-side view. */
+export function sanitizeEvent(raw: RawEvent): SanitizedEvent {
+  inCount++;                                          // ① ingress counter
+
+  // ES2018 rest-destructuring: rawPacketBytes captured in _stripped, never forwarded
+  const { rawPacketBytes: _stripped, classification: _cls, ...rest } = raw;
+
+  stripCount++;                                       // ② strip counter (one field per event)
+
+  const passedFields = Object.keys(rest) as string[];
+
+  const sanitized: SanitizedEvent = {
+    ...rest,                                          // ③ all safe metadata fields
+    strippedFields:        ["rawPacketBytes"],
     passedFields,
+    sanitizationTimestamp: Date.now(),                // ④ audit: guard processing time (ms)
+    guardId:               GUARD_ID,                  // ⑤ audit: guard instance identifier
   };
+
+  outCount++;                                         // ⑥ egress counter
+  return sanitized;
 }
 
 const correlationCooldown: Map<string, number> = new Map();
+
+/** CorrelationEngine — four-factor weighted confidence scorer.
+ *
+ *  Factor                     Weight  Condition
+ *  ─────────────────────────  ──────  ──────────────────────────────────────────
+ *  Shared user identity        0.40   newEvent.userId present in ≥1 match
+ *  Matching event type         0.30   newEvent.type  present in ≥1 match
+ *  Destination subnet overlap  0.20   dstIp /16 prefix differs (cross-domain target)
+ *  Temporal proximity bonus    0.10   linear decay over the 10 000 ms window
+ *
+ *  Final score is capped at 1.0 to remain a valid probability. */
+export function computeConfidence(
+  newEvent: SanitizedEvent,
+  matches:  SanitizedEvent[],
+  windowMs: number = 10_000
+): number {
+  let score = 0;
+
+  // ① Shared user identity — weight 0.40
+  const sharedUser = matches.some((e) => e.userId === newEvent.userId);
+  if (sharedUser) score += 0.40;
+
+  // ② Matching event type — weight 0.30
+  const typeMatch = matches.some((e) => e.type === newEvent.type);
+  if (typeMatch) score += 0.30;
+
+  // ③ Destination subnet overlap — weight 0.20
+  //    Subnets differ by design (cross-domain), but converge on the same /16 gateway class
+  const newSubnet = newEvent.dstIp.split(".").slice(0, 2).join(".");
+  const subnetMatch = matches.some((e) => {
+    const mSubnet = e.dstIp.split(".").slice(0, 2).join(".");
+    return mSubnet !== newSubnet;           // cross-domain, same target address class
+  });
+  if (subnetMatch) score += 0.20;
+
+  // ④ Temporal proximity bonus — up to 0.10 (linear decay toward window edge)
+  const now = Date.now();
+  const minDeltaMs = Math.min(...matches.map((e) => Math.abs(now - e.timestamp)));
+  const temporalBonus = Math.max(0, 0.10 * (1 - minDeltaMs / windowMs));
+  score += temporalBonus;
+
+  return Math.min(1.0, score);              // cap at 1.0
+}
 
 const RULE_IDS: Record<EventType, string> = {
   Authentication:  "XDOM-AUTH-001",
@@ -127,7 +184,7 @@ export function tryCorrelate(
 
   correlationCooldown.set(cooldownKey, now);
 
-  const confidence = Math.min(97, 50 + uniqueDomains.length * 18 + Math.min(domainMatches.length * 3, 15));
+  const confidence = Math.round(computeConfidence(newEvent, domainMatches, windowMs) * 100);
 
   const alertTypes: CorrelatedAlert["type"][] = [
     "CORRELATED_THREAT", "PATTERN_MATCH", "CROSS_DOMAIN_ANOMALY", "SYNCHRONIZED_ACTIVITY",

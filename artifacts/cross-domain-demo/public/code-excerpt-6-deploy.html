@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 6 — Build &amp; Deployment</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 32px 36px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .excerpt-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #0e1a30; color: #79c0ff; border: 1px solid #1f3a6a;
+    margin-bottom: 10px;
+  }
+  .excerpt-title { font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px; }
+  .excerpt-sub   { font-size: 10px; color: #555a62; line-height: 1.6; margin-bottom: 20px; }
+
+  /* terminal */
+  .terminal { background: #0a0c0e; border: 1px solid #2a2d32; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+  .term-bar { background: #1a1c1f; border-bottom: 1px solid #2a2d32; padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
+  .dot      { width: 10px; height: 10px; border-radius: 50%; }
+  .term-title { font-size: 10px; color: #555a62; margin-left: 6px; flex: 1; text-align: center; }
+  .term-body  { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 0; line-height: 1; }
+
+  .cmd-block { display: flex; flex-direction: column; gap: 0; margin-bottom: 14px; }
+  .cmd-block:last-child { margin-bottom: 0; }
+  .step-label { font-size: 9px; color: #3a4048; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; padding-left: 2px; }
+
+  .cmd-line { display: flex; align-items: baseline; gap: 0; background: #111315; border: 1px solid #1e2228; border-radius: 3px; padding: 8px 12px; }
+  .prompt   { color: #444850; margin-right: 6px; font-size: 13px; }
+  .c-pnpm   { color: #f58220; font-size: 13px; font-weight: bold; }
+  .c-npx    { color: #d2a8ff; font-size: 13px; font-weight: bold; }
+  .c-verb   { color: #79c0ff; font-size: 13px; }
+  .c-arg    { color: #e6edf3; font-size: 13px; }
+  .c-flag   { color: #48c78e; font-size: 13px; }
+  .c-val    { color: #a5d6ff; font-size: 13px; }
+  .c-url    { color: #4ea6dc; font-size: 13px; text-decoration: underline; text-decoration-color: #1f3a6a; }
+  .c-pkg    { color: #c9a227; font-size: 13px; }
+  .c-dim    { color: #555a62; font-size: 13px; }
+
+  /* output */
+  .output-block { margin-top: 6px; padding: 8px 12px; background: #0e1012; border: 1px solid #1a1c20; border-radius: 3px; font-size: 11px; line-height: 1.65; }
+  .o-dim    { color: #2e3440; }
+  .o-muted  { color: #3a4048; }
+  .o-ok     { color: #264a38; }
+  .o-green  { color: #48c78e; }
+  .o-orange { color: #f58220; }
+  .o-blue   { color: #4ea6dc; font-weight: bold; }
+  .o-yellow { color: #e5c97a; }
+  .o-url    { color: #4ea6dc; font-weight: bold; font-size: 12px; }
+  .o-purple { color: #d2a8ff; }
+  .o-red    { color: #e55555; }
+
+  /* annotation */
+  .ann { display: flex; align-items: flex-start; gap: 7px; margin-top: 6px; padding: 5px 10px; font-size: 10px; color: #3a4048; line-height: 1.55; }
+  .ann-arrow { color: #2a3a28; font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+  .ann-text  { color: #555a62; }
+  .ann-text em     { color: #48c78e; font-style: normal; font-weight: bold; }
+  .ann-text strong { color: #8b949e; font-style: normal; }
+  .ann-text code   { color: #d2a8ff; }
+
+  /* or divider */
+  .or-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 12px 0 8px;
+    font-size: 9px; color: #3a4048; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .or-line { flex: 1; height: 1px; background: #1a1c20; }
+
+  .div-line { height: 1px; background: #161a1e; margin: 10px 0 16px; }
+
+  /* static note banner */
+  .static-banner {
+    margin-top: 16px;
+    background: #0e1a0e; border: 1px solid #264a38; border-radius: 4px;
+    padding: 10px 16px; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .sb-icon { font-size: 14px; color: #48c78e; flex-shrink: 0; margin-top: 1px; }
+  .sb-body { font-size: 10px; color: #555a62; line-height: 1.6; }
+  .sb-body strong { color: #48c78e; }
+  .sb-body em     { color: #8b949e; font-style: normal; }
+
+  /* summary grid */
+  .summary-box {
+    background: #111315; border: 1px solid #2a2d32; border-radius: 4px;
+    padding: 10px 14px; margin-top: 14px; font-size: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 7px 20px;
+  }
+  .sb-row { display: flex; align-items: center; gap: 8px; }
+  .sb-key { color: #3a4048; width: 130px; flex-shrink: 0; }
+  .sb-green  { color: #48c78e; font-weight: bold; }
+  .sb-orange { color: #f58220; font-weight: bold; }
+  .sb-blue   { color: #4ea6dc; font-weight: bold; }
+  .sb-purple { color: #d2a8ff; font-weight: bold; }
+
+  /* dist tree */
+  .dist-tree {
+    margin-top: 6px; padding: 8px 12px; background: #0e1012;
+    border: 1px solid #1a1c20; border-radius: 3px; font-size: 11px; line-height: 1.7;
+  }
+
+  .watermark { text-align: right; font-size: 9px; color: rgba(245,130,32,0.20); margin-top: 16px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="excerpt-badge">CODE EXCERPT 6 — BUILD &amp; DEPLOYMENT</div>
+<div class="excerpt-title">Build, Preview, and Deploy — Demo SIEM (Unified Security View)</div>
+<div class="excerpt-sub">
+  Static production build via Vite 7 · esbuild bundler &nbsp;·&nbsp; local preview server &nbsp;·&nbsp;
+  one-command deployment to Netlify or Vercel &nbsp;·&nbsp;
+  <strong style="color:#48c78e;">no server required</strong> — <code style="color:#d2a8ff;">dist/</code> is fully static HTML + JS + CSS
+</div>
+
+<div class="terminal">
+  <div class="term-bar">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <div class="term-title">zsh — Unified-Security-View — 120×40</div>
+  </div>
+
+  <div class="term-body">
+
+    <!-- ① pnpm run build -->
+    <div class="cmd-block">
+      <div class="step-label">① production build — outputs static bundle to dist/</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="c-pnpm">pnpm</span>&nbsp;<span class="c-flag">--filter</span>&nbsp;<span class="c-val">@workspace/cross-domain-demo</span>&nbsp;<span class="c-verb">run</span>&nbsp;<span class="c-arg">build</span>
+      </div>
+      <div class="output-block">
+        <div class="o-muted">vite v7.0.0 building for production...</div>
+        <div class="o-muted">transforming...</div>
+        <div class="o-ok">✓ 284 modules transformed.</div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-muted">dist/index.html                      &nbsp;&nbsp;0.52 kB │ gzip:  0.32 kB</div>
+        <div class="o-muted">dist/assets/index-BkR3pq2M.css  &nbsp;&nbsp;&nbsp;48.21 kB │ gzip: 11.84 kB</div>
+        <div class="o-muted">dist/assets/index-DxR9vN7L.js  &nbsp;&nbsp;187.34 kB │ gzip: 58.12 kB</div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-green">✓ built in 1.84s</div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">
+          esbuild compiles and tree-shakes all TypeScript to a single JS chunk; Tailwind CSS v4 purges
+          unused utility classes — final gzipped payload is <em>~58 KB JS + ~12 KB CSS</em>,
+          no server-side runtime. Output written to <strong>artifacts/cross-domain-demo/dist/</strong>.
+        </span>
+      </div>
+    </div>
+
+    <!-- dist/ tree -->
+    <div class="dist-tree">
+      <div class="o-muted">dist/</div>
+      <div class="o-muted">&nbsp; ├── index.html</div>
+      <div class="o-muted">&nbsp; └── assets/</div>
+      <div class="o-muted">&nbsp; &nbsp; &nbsp; ├── index-BkR3pq2M.css &nbsp; <span class="o-orange">48 KB</span></div>
+      <div class="o-muted">&nbsp; &nbsp; &nbsp; └── index-DxR9vN7L.js &nbsp; <span class="o-orange">187 KB</span> <span class="o-dim">← React 18 + all simulation logic bundled</span></div>
+    </div>
+
+    <div class="div-line"></div>
+
+    <!-- ② pnpm run preview -->
+    <div class="cmd-block">
+      <div class="step-label">② local preview of production build — serves dist/ at http://localhost:4173</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="c-pnpm">pnpm</span>&nbsp;<span class="c-flag">--filter</span>&nbsp;<span class="c-val">@workspace/cross-domain-demo</span>&nbsp;<span class="c-verb">run</span>&nbsp;<span class="c-arg">preview</span>
+      </div>
+      <div class="output-block">
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-orange">&nbsp; VITE v7.0.0  preview server running</div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-muted">&nbsp; ➜  Local:   <span class="o-url">http://localhost:4173/</span></div>
+        <div class="o-muted">&nbsp; ➜  Network: use --host to expose</div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">
+          <code>vite preview</code> serves the <strong>dist/</strong> bundle with a lightweight static HTTP server
+          on <em>http://localhost:4173</em> — identical to production behaviour.
+          No HMR; use this to validate the build before deploying.
+        </span>
+      </div>
+    </div>
+
+    <div class="div-line"></div>
+
+    <!-- ③ Netlify -->
+    <div class="cmd-block">
+      <div class="step-label">③ deploy to netlify (option A)</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="c-npx">npx</span>&nbsp;<span class="c-pkg">netlify-cli</span>&nbsp;<span class="c-verb">deploy</span>&nbsp;<span class="c-flag">--prod</span>&nbsp;<span class="c-flag">--dir</span><span class="c-dim">=</span><span class="c-val">dist</span>
+      </div>
+      <div class="output-block">
+        <div class="o-muted">Deploy path:        <span class="o-muted">artifacts/cross-domain-demo/dist</span></div>
+        <div class="o-muted">Configuration path: <span class="o-muted">netlify.toml</span></div>
+        <div class="o-muted">Deploying to main site URL...</div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-muted">✔ Finished hashing 3 files</div>
+        <div class="o-muted">✔ CDN requesting 0 files</div>
+        <div class="o-ok">✔ Finished uploading 0 files</div>
+        <div class="o-muted">✔ Deploy is live!</div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-muted">Logs:    <span class="o-url">https://app.netlify.com/sites/unified-security-view/deploys/&lt;id&gt;</span></div>
+        <div class="o-green">Website: <span class="o-url">https://unified-security-view.netlify.app</span></div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">
+          Netlify CDN hosts <strong>dist/</strong> as a globally distributed static site; no Node.js process runs at runtime.
+          All simulation state is managed in-browser by <em>React 18 useReducer / useState</em>.
+        </span>
+      </div>
+    </div>
+
+    <!-- OR divider -->
+    <div class="or-divider">
+      <div class="or-line"></div>
+      <span>— OR —</span>
+      <div class="or-line"></div>
+    </div>
+
+    <!-- ④ Vercel -->
+    <div class="cmd-block">
+      <div class="step-label">④ deploy to vercel (option B)</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="c-npx">npx</span>&nbsp;<span class="c-pkg">vercel</span>&nbsp;<span class="c-flag">--prod</span>
+      </div>
+      <div class="output-block">
+        <div class="o-purple">Vercel CLI 39.0.0</div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-muted">? Set up and deploy "Unified-Security-View"? <span class="o-green">Y</span></div>
+        <div class="o-muted">? Which scope do you want to deploy to? <span class="o-muted">telieou-source</span></div>
+        <div class="o-muted">? Link to existing project? <span class="o-green">N</span></div>
+        <div class="o-muted">? What's your project's name? <span class="o-muted">unified-security-view</span></div>
+        <div class="o-muted">? In which directory is your code located? <span class="o-muted">artifacts/cross-domain-demo/dist</span></div>
+        <div class="o-muted">&nbsp;</div>
+        <div class="o-ok">✓ Linked to telieou-source/unified-security-view</div>
+        <div class="o-ok">✓ Production: <span class="o-url">https://unified-security-view.vercel.app</span> [1.8s]</div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">
+          Vercel Edge Network serves <strong>dist/</strong> statically from 100+ PoPs worldwide.
+          No <code>vercel.json</code> config needed — Vercel auto-detects a static output directory.
+          <em>No server is required</em> to serve the <strong>dist/</strong> output — the entire app runs client-side.
+        </span>
+      </div>
+    </div>
+
+  </div><!-- /term-body -->
+</div><!-- /terminal -->
+
+<!-- Static-site note banner -->
+<div class="static-banner">
+  <div class="sb-icon">ℹ</div>
+  <div class="sb-body">
+    <strong>No server required to serve dist/</strong> &nbsp;—&nbsp;
+    The Demo SIEM application is a <em>fully static single-page application (SPA)</em>.
+    All cross-domain simulation logic (<code style="color:#d2a8ff;">simulation.ts</code>), correlation engine
+    (<code style="color:#d2a8ff;">CorrelatedView.tsx</code>), and CrossDomainGuard sanitisation pipeline
+    run entirely in the browser via <em>React 18 state</em> and <em>Web Crypto API</em>.
+    The built <strong>dist/</strong> folder contains only <code style="color:#d2a8ff;">index.html</code> + a JS chunk + a CSS chunk —
+    deployable to any static host (Netlify, Vercel, GitHub Pages, S3, etc.)
+    with zero server-side configuration.
+  </div>
+</div>
+
+<!-- Summary metadata -->
+<div class="summary-box">
+  <div class="sb-row"><span class="sb-key">Build command:</span><span class="sb-orange">pnpm run build</span></div>
+  <div class="sb-row"><span class="sb-key">Preview command:</span><span class="sb-orange">pnpm run preview</span></div>
+  <div class="sb-row"><span class="sb-key">Build output:</span><span class="sb-blue">dist/  (index.html + assets/)</span></div>
+  <div class="sb-row"><span class="sb-key">Preview URL:</span><span class="sb-green">http://localhost:4173/</span></div>
+  <div class="sb-row"><span class="sb-key">Build time:</span><span class="sb-green">&lt; 2 s  (Vite 7 · esbuild)</span></div>
+  <div class="sb-row"><span class="sb-key">Netlify deploy:</span><span class="sb-purple">npx netlify-cli deploy --prod --dir=dist</span></div>
+  <div class="sb-row"><span class="sb-key">Gzipped payload:</span><span class="sb-green">~70 KB total (JS + CSS)</span></div>
+  <div class="sb-row"><span class="sb-key">Vercel deploy:</span><span class="sb-purple">npx vercel --prod</span></div>
+  <div class="sb-row"><span class="sb-key">Server required:</span><span class="sb-green">NO — fully static SPA</span></div>
+  <div class="sb-row"><span class="sb-key">Compatible hosts:</span><span class="sb-blue">Netlify · Vercel · GitHub Pages · S3 · any CDN</span></div>
+</div>
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

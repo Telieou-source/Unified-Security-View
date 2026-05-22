@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 3 — sanitizeEvent()</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 24px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 9px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.6; margin-bottom: 14px; }
+
+  /* ── card ── */
+  .card { background: #111315; border: 1px solid #21262d; border-radius: 6px; overflow: hidden; }
+  .card-header {
+    background: #16191e; border-bottom: 1px solid #21262d;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .file-path  { font-size: 10px; color: #79c0ff; margin-left: 4px; }
+  .file-sub   { font-size: 9px; color: #555a62; }
+  .lang-badge {
+    margin-left: auto; font-size: 8px; font-weight: bold; padding: 1px 7px;
+    border-radius: 2px; background: #1f2937; color: #79c0ff; border: 1px solid #2a3a60;
+  }
+
+  /* ── layout ── */
+  .layout { display: grid; grid-template-columns: 1fr 318px; }
+
+  /* ── CODE PANE ── */
+  .code-pane { border-right: 1px solid #1e2228; overflow-x: auto; }
+
+  .block-sep {
+    background: #16191e; border-top: 1px solid #1e2228; border-bottom: 1px solid #1e2228;
+    padding: 4px 12px 4px 48px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .bs-label { font-size: 8px; font-weight: bold; color: #3a4048;
+              text-transform: uppercase; letter-spacing: 0.09em; }
+  .bs-badge { font-size: 8px; font-weight: bold; padding: 1px 7px; border-radius: 2px; }
+
+  table { border-collapse: collapse; width: 100%; }
+  tr { line-height: 1.65; }
+  tr:hover { background: #14161a; }
+
+  /* row highlights */
+  tr.hl-counter  { background: #0e1a2a18; }
+  tr.hl-strip    { background: #2d0e0e22; }
+  tr.hl-pass     { background: #0e2a1820; }
+  tr.hl-audit    { background: #1a1c2830; }
+  tr.hl-jsdoc    { background: #1a1c2010; }
+
+  td.ln {
+    width: 40px; min-width: 40px; text-align: right;
+    padding: 0 10px 0 0; color: #2a2d38; font-size: 11px;
+    user-select: none; vertical-align: top; padding-top: 1px;
+    border-right: 1px solid #1e2228;
+  }
+  td.code { padding: 0 16px 0 14px; font-size: 11.5px; white-space: pre; vertical-align: top; }
+  tr.spacer td.code { height: 6px; }
+
+  /* ── syntax tokens ── */
+  .kw    { color: #f97583; }
+  .fn    { color: #d2a8ff; }
+  .param { color: #ffa657; }
+  .tn    { color: #79c0ff; }
+  .fld   { color: #cdd9e5; }
+  .tv    { color: #a5d6ff; }
+  .sl    { color: #9ecbff; }
+  .cm    { color: #555a62; font-style: italic; }
+  .op    { color: #8a9aaa; }
+  .num   { color: #f0a050; }
+  .mth   { color: #79c0ff; }
+
+  /* semantic highlights */
+  .h-counter { color: #4ea6dc; font-weight: bold; }   /* ① ② ⑥ counter ops */
+  .h-strip   { color: #e55555; font-weight: bold; }   /* rawPacketBytes stripped */
+  .h-cls     { color: #f58220; font-weight: bold; }   /* classification stripped */
+  .h-rest    { color: #48c78e; font-weight: bold; }   /* ...rest (passed fields) */
+  .h-audit   { color: #a371f7; font-weight: bold; }   /* sanitizationTimestamp / guardId */
+  .h-type    { color: #79c0ff; font-weight: bold; }   /* SanitizedEvent type annotation */
+  .h-guard   { color: #c9a227; font-weight: bold; }   /* GUARD_ID constant */
+
+  /* step gutter marker */
+  td.gutter {
+    width: 20px; min-width: 20px; padding: 0 3px;
+    text-align: center; font-size: 9px; font-weight: bold;
+    vertical-align: top; padding-top: 2px;
+  }
+
+  /* ── ANNOTATION PANE ── */
+  .ann-pane { display: flex; flex-direction: column; }
+
+  /* destructuring diagram */
+  .destruct-box {
+    padding: 11px 13px; border-bottom: 1px solid #1e2228; background: #0d0f14;
+  }
+  .db-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .db-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+
+  .destruct-row {
+    display: flex; align-items: center; gap: 0; margin-bottom: 4px; font-size: 9.5px;
+  }
+  .dr-name   { width: 140px; flex-shrink: 0; font-weight: bold; }
+  .dr-arrow  { width: 18px; text-align: center; color: #3a4048; flex-shrink: 0; }
+  .dr-dest   { flex: 1; }
+  .dr-fate   { font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 2px;
+               flex-shrink: 0; margin-left: 5px; }
+
+  /* counter invariant flow */
+  .counter-flow {
+    padding: 11px 13px; border-bottom: 1px solid #1e2228; background: #0d1018;
+  }
+  .cf-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cf-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+  .cf-flow {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    margin-bottom: 8px;
+  }
+  .cf-node {
+    flex: 1; padding: 6px 4px; border-radius: 3px; text-align: center;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .cf-node-val { font-size: 13px; font-weight: bold; line-height: 1; }
+  .cf-node-lbl { font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .cf-arrow { color: #3a4048; font-size: 12px; flex-shrink: 0; }
+  .cf-eq {
+    font-size: 9px; color: #48c78e; font-weight: bold; text-align: center;
+    padding: 4px 6px; background: #0e2a1a30; border: 1px solid #48c78e20;
+    border-radius: 2px;
+  }
+  .cf-step {
+    display: flex; align-items: flex-start; gap: 6px; margin-bottom: 5px; font-size: 9px;
+  }
+  .cf-num {
+    width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: bold; margin-top: 0px;
+  }
+  .cf-body { flex: 1; }
+  .cf-call { font-weight: bold; font-size: 9.5px; }
+  .cf-desc { font-size: 8.5px; color: #555a62; line-height: 1.4; margin-top: 1px; }
+
+  /* audit fields */
+  .audit-box {
+    padding: 10px 13px; border-bottom: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .ab-title {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 2px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ab-title::after { content:''; flex:1; height:1px; background:#1e2228; }
+  .ab-field { display: flex; flex-direction: column; gap: 2px; }
+  .ab-key { font-size: 10px; font-weight: bold; }
+  .ab-val { font-size: 8.5px; color: #555a62; padding-left: 10px; line-height: 1.4; }
+  .ab-rule {
+    font-size: 8.5px; padding: 5px 8px; border-radius: 2px; line-height: 1.5;
+    color: #8a9aaa; font-style: italic;
+  }
+
+  /* ── stat strip ── */
+  .stat-strip { display: flex; border-top: 1px solid #1e2228; }
+  .ss-item {
+    flex: 1; padding: 7px 10px; border-right: 1px solid #1e2228;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .ss-item:last-child { border-right: none; }
+  .ss-val { font-size: 16px; font-weight: bold; line-height: 1; }
+  .ss-lbl { font-size: 7.5px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">CODE EXCERPT 3 — sanitizeEvent() · CrossDomainGuard · src/lib/simulation.ts · lines 73–111</div>
+<div class="fig-title"><code style="color:#d2a8ff;">sanitizeEvent(raw)</code> — ES2018 Rest-Destructuring, Atomic Counter Increments, and Typed <code style="color:#79c0ff;">SanitizedEvent</code> Return</div>
+<div class="fig-sub">
+  artifacts/cross-domain-demo/src/lib/simulation.ts ·
+  ES2018 <code style="color:#48c78e;">const { rawPacketBytes: _stripped, classification: _cls, ...rest } = raw</code> ·
+  counters: <code style="color:#4ea6dc;">inCount++</code> → destructure → <code style="color:#4ea6dc;">stripCount++</code> → build → <code style="color:#4ea6dc;">outCount++</code> ·
+  invariant: <code style="color:#48c78e;">IN = OUT = STRIP</code> · guardId = <code style="color:#c9a227;">CDG-ALPHA-BRAVO-CHARLIE-v1.2</code>
+</div>
+
+<div class="card">
+
+  <div class="card-header">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <span class="file-path">src/lib/simulation.ts</span>
+    <span class="file-sub">— CrossDomainGuard module · 221 lines · pure sanitize pipeline</span>
+    <span class="lang-badge">TypeScript 5.9</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ══════════════════════════════════
+         CODE PANE
+    ══════════════════════════════════ -->
+    <div class="code-pane">
+
+      <!-- Module-level counters + GUARD_ID -->
+      <div class="block-sep">
+        <span class="bs-label">Module-level state · lines 73–78</span>
+        <span class="bs-badge" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a3a60;">Atomic counters — single-threaded JS model</span>
+      </div>
+      <table>
+        <tr>
+          <td class="ln">73</td>
+          <td class="code"><span class="cm">// CrossDomainGuard — throughput counters (atomic per JS single-thread model)</span></td>
+        </tr>
+        <tr class="hl-counter">
+          <td class="ln">74</td>
+          <td class="code"><span class="kw">let</span> <span class="h-counter">inCount</span>    <span class="op">=</span> <span class="num">0</span><span class="op">;</span>                                        <span class="cm">// events received by guard</span></td>
+        </tr>
+        <tr class="hl-counter">
+          <td class="ln">75</td>
+          <td class="code"><span class="kw">let</span> <span class="h-counter">outCount</span>   <span class="op">=</span> <span class="num">0</span><span class="op">;</span>                                        <span class="cm">// events forwarded high-side</span></td>
+        </tr>
+        <tr class="hl-counter">
+          <td class="ln">76</td>
+          <td class="code"><span class="kw">let</span> <span class="h-counter">stripCount</span> <span class="op">=</span> <span class="num">0</span><span class="op">;</span>                                        <span class="cm">// strip operations performed</span></td>
+        </tr>
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+        <tr>
+          <td class="ln">78</td>
+          <td class="code"><span class="kw">const</span> <span class="h-guard">GUARD_ID</span> <span class="op">=</span> <span class="sl">"CDG-ALPHA-BRAVO-CHARLIE-v1.2"</span><span class="op">;</span></td>
+        </tr>
+      </table>
+
+      <!-- JSDoc + function signature -->
+      <div class="block-sep">
+        <span class="bs-label">JSDoc · lines 88–91</span>
+        <span class="bs-badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">sanitizeEvent(raw: RawEvent): SanitizedEvent</span>
+        <span class="bs-badge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">rawPacketBytes never forwarded</span>
+      </div>
+      <table>
+        <tr class="hl-jsdoc">
+          <td class="ln">88</td>
+          <td class="code"><span class="cm">/** CrossDomainGuard sanitize() — strips rawPacketBytes via ES2018 rest-destructuring,</span></td>
+        </tr>
+        <tr class="hl-jsdoc">
+          <td class="ln">89</td>
+          <td class="code"><span class="cm"> *  increments atomic throughput counters, and appends sanitizationTimestamp / guardId</span></td>
+        </tr>
+        <tr class="hl-jsdoc">
+          <td class="ln">90</td>
+          <td class="code"><span class="cm"> *  audit fields before forwarding the SanitizedEvent to the unified high-side view. */</span></td>
+        </tr>
+        <tr>
+          <td class="ln">91</td>
+          <td class="code"><span class="kw">export function</span> <span class="fn">sanitizeEvent</span><span class="op">(</span><span class="param">raw</span><span class="op">:</span> <span class="h-type">RawEvent</span><span class="op">):</span> <span class="h-type">SanitizedEvent</span> <span class="op">{</span></td>
+        </tr>
+      </table>
+
+      <!-- sanitizeEvent body -->
+      <div class="block-sep">
+        <span class="bs-label">Function body · lines 92–111 · six-step pipeline</span>
+      </div>
+      <table>
+
+        <!-- ① inCount++ -->
+        <tr class="hl-counter">
+          <td class="ln">92</td>
+          <td class="code">  <span class="h-counter">inCount</span><span class="op">++;</span>                                          <span class="cm">// ① ingress counter — every event entering guard</span></td>
+        </tr>
+
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- ES2018 destructuring comment -->
+        <tr>
+          <td class="ln">94</td>
+          <td class="code">  <span class="cm">// ES2018 rest-destructuring: rawPacketBytes captured in _stripped, never forwarded</span></td>
+        </tr>
+
+        <!-- THE KEY LINE -->
+        <tr class="hl-strip">
+          <td class="ln">95</td>
+          <td class="code">  <span class="kw">const</span> <span class="op">{</span> <span class="h-strip">rawPacketBytes</span><span class="op">:</span> <span class="h-strip">_stripped</span><span class="op">,</span> <span class="h-cls">classification</span><span class="op">:</span> <span class="h-cls">_cls</span><span class="op">,</span> <span class="op">...</span><span class="h-rest">rest</span> <span class="op">}</span> <span class="op">=</span> <span class="param">raw</span><span class="op">;</span></td>
+        </tr>
+
+        <!-- annotation overlay for line 95 -->
+        <tr style="background:#1a0808;">
+          <td class="ln" style="color:transparent;">·</td>
+          <td class="code" style="font-size:9px;padding-top:2px;padding-bottom:3px;">
+            <span style="margin-left:2px;color:#e55555;">╰── <code>rawPacketBytes: _stripped</code></span>
+            <span style="color:#555a62;"> → local binding only, underscore-prefixed (_stripped) → TS suppresses "unused" lint</span>
+            <span style="margin-left:182px;color:#f58220;">╰── <code>classification: _cls</code></span>
+            <span style="color:#555a62;"> → sensitivity label also stripped</span>
+            <span style="margin-left:350px;color:#48c78e;">╰── <code>...rest</code> → all remaining 12 fields pass forward</span>
+          </td>
+        </tr>
+
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- ② stripCount++ -->
+        <tr class="hl-counter">
+          <td class="ln">97</td>
+          <td class="code">  <span class="h-counter">stripCount</span><span class="op">++;</span>                                       <span class="cm">// ② strip counter — incremented once per event</span></td>
+        </tr>
+
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- passedFields -->
+        <tr class="hl-pass">
+          <td class="ln">99</td>
+          <td class="code">  <span class="kw">const</span> <span class="h-rest">passedFields</span> <span class="op">=</span> <span class="tn">Object</span><span class="op">.</span><span class="mth">keys</span><span class="op">(</span><span class="h-rest">rest</span><span class="op">)</span> <span class="kw">as</span> <span class="tv">string</span><span class="op">[];</span>   <span class="cm">// audit: 12 forwarded field names</span></td>
+        </tr>
+
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- sanitized object construction -->
+        <tr class="hl-pass">
+          <td class="ln">101</td>
+          <td class="code">  <span class="kw">const</span> <span class="param">sanitized</span><span class="op">:</span> <span class="h-type">SanitizedEvent</span> <span class="op">= {</span></td>
+        </tr>
+        <tr class="hl-pass">
+          <td class="ln">102</td>
+          <td class="code">    <span class="op">...</span><span class="h-rest">rest</span><span class="op">,</span>                                          <span class="cm">// ③ spread — all safe metadata fields</span></td>
+        </tr>
+        <tr>
+          <td class="ln">103</td>
+          <td class="code">    <span class="fld">strippedFields</span><span class="op">:</span>        <span class="op">[</span><span class="sl">"rawPacketBytes"</span><span class="op">],</span>          <span class="cm">// audit: names of stripped fields</span></td>
+        </tr>
+        <tr class="hl-pass">
+          <td class="ln">104</td>
+          <td class="code">    <span class="h-rest">passedFields</span><span class="op">,</span>                                         <span class="cm">// audit: shorthand — 12 forwarded names</span></td>
+        </tr>
+        <tr class="hl-audit">
+          <td class="ln">105</td>
+          <td class="code">    <span class="h-audit">sanitizationTimestamp</span><span class="op">:</span> <span class="tn">Date</span><span class="op">.</span><span class="mth">now</span><span class="op">(),</span>                <span class="cm">// ④ guard processing time (ms epoch)</span></td>
+        </tr>
+        <tr class="hl-audit">
+          <td class="ln">106</td>
+          <td class="code">    <span class="h-audit">guardId</span><span class="op">:</span>               <span class="h-guard">GUARD_ID</span><span class="op">,</span>                  <span class="cm">// ⑤ guard instance — CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></td>
+        </tr>
+        <tr class="hl-pass">
+          <td class="ln">107</td>
+          <td class="code">  <span class="op">};</span></td>
+        </tr>
+
+        <tr class="spacer"><td class="ln"></td><td class="code"></td></tr>
+
+        <!-- ⑥ outCount++ and return -->
+        <tr class="hl-counter">
+          <td class="ln">109</td>
+          <td class="code">  <span class="h-counter">outCount</span><span class="op">++;</span>                                         <span class="cm">// ⑥ egress counter — after object is built</span></td>
+        </tr>
+        <tr>
+          <td class="ln">110</td>
+          <td class="code">  <span class="kw">return</span> <span class="param">sanitized</span><span class="op">;</span>                                     <span class="cm">// typed SanitizedEvent — TS checks at compile time</span></td>
+        </tr>
+        <tr>
+          <td class="ln">111</td>
+          <td class="code"><span class="op">}</span></td>
+        </tr>
+      </table>
+
+    </div><!-- /code-pane -->
+
+    <!-- ══════════════════════════════════
+         ANNOTATION PANE
+    ══════════════════════════════════ -->
+    <div class="ann-pane">
+
+      <!-- Destructuring diagram -->
+      <div class="destruct-box">
+        <div class="db-title">ES2018 destructuring · line 95</div>
+
+        <!-- RawEvent input -->
+        <div style="font-size:8.5px;color:#3a4048;margin-bottom:5px;">
+          <code style="color:#79c0ff;">RawEvent</code> input fields → fate after guard
+        </div>
+
+        <div class="destruct-row">
+          <span class="dr-name" style="color:#e55555;">rawPacketBytes</span>
+          <span class="dr-arrow">→</span>
+          <span class="dr-dest" style="color:#e55555;font-size:9px;"><code>_stripped</code> (unused)</span>
+          <span class="dr-fate" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">STRIP</span>
+        </div>
+        <div class="destruct-row">
+          <span class="dr-name" style="color:#f58220;">classification</span>
+          <span class="dr-arrow">→</span>
+          <span class="dr-dest" style="color:#f58220;font-size:9px;"><code>_cls</code> (unused)</span>
+          <span class="dr-fate" style="background:#2d1408;color:#f58220;border:1px solid #6a3010;">STRIP</span>
+        </div>
+        <div style="height:5px;border-left:1px dashed #2a2d32;margin:3px 0 3px 68px;"></div>
+        <div class="destruct-row">
+          <span class="dr-name" style="color:#48c78e;">...rest</span>
+          <span class="dr-arrow">→</span>
+          <span class="dr-dest" style="color:#48c78e;font-size:9px;">12 remaining fields</span>
+          <span class="dr-fate" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">PASS</span>
+        </div>
+        <div style="font-size:8px;color:#3a4048;margin-top:5px;padding:4px 6px;background:#111315;border:1px solid #1e2228;border-radius:2px;line-height:1.5;">
+          <code style="color:#48c78e;">rest</code> = id · domainId · timestamp · type · severity ·
+          srcIp · dstIp · srcPort · dstPort · protocol · userId · host
+        </div>
+        <div style="font-size:8px;color:#555a62;margin-top:5px;font-style:italic;">
+          Underscore prefix on <code>_stripped</code>, <code>_cls</code> signals intentional capture &amp; discard — TypeScript no-unused-vars rule suppressed by convention.
+        </div>
+      </div>
+
+      <!-- Counter flow -->
+      <div class="counter-flow">
+        <div class="cf-title">Atomic counter pipeline</div>
+
+        <!-- flow diagram: inCount → strip → outCount -->
+        <div class="cf-flow">
+          <div class="cf-node" style="background:#0e1a2a;border:1px solid #4ea6dc30;">
+            <span class="cf-node-val" style="color:#4ea6dc;">inCount</span>
+            <span class="cf-node-lbl" style="color:#4ea6dc;">line 92</span>
+          </div>
+          <span class="cf-arrow">→</span>
+          <div class="cf-node" style="background:#2d0e0e;border:1px solid #e5555530;">
+            <span class="cf-node-val" style="color:#e55555;">stripCount</span>
+            <span class="cf-node-lbl" style="color:#e55555;">line 97</span>
+          </div>
+          <span class="cf-arrow">→</span>
+          <div class="cf-node" style="background:#0e2a1a;border:1px solid #48c78e30;">
+            <span class="cf-node-val" style="color:#48c78e;">outCount</span>
+            <span class="cf-node-lbl" style="color:#48c78e;">line 109</span>
+          </div>
+        </div>
+
+        <div class="cf-eq">inCount = outCount = stripCount &nbsp;(throughput invariant)</div>
+
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <div class="cf-step">
+            <div class="cf-num" style="background:#0e1a2a;color:#4ea6dc;border:1px solid #2a4060;">①</div>
+            <div class="cf-body">
+              <div class="cf-call" style="color:#4ea6dc;">inCount++</div>
+              <div class="cf-desc">First statement. Counts every <code style="font-size:8px;">RawEvent</code> entering the guard. Verified by <code style="font-size:8px;">getGuardCounters()</code> in HealthMonitor.</div>
+            </div>
+          </div>
+          <div class="cf-step">
+            <div class="cf-num" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">②</div>
+            <div class="cf-body">
+              <div class="cf-call" style="color:#e55555;">stripCount++</div>
+              <div class="cf-desc">After destructure — confirms the strip operation completed. Always one strip per event (rawPacketBytes is always present on RawEvent).</div>
+            </div>
+          </div>
+          <div class="cf-step" style="margin-bottom:0;">
+            <div class="cf-num" style="background:#0e2a1a;color:#48c78e;border:1px solid #1a5030;">⑥</div>
+            <div class="cf-body">
+              <div class="cf-call" style="color:#48c78e;">outCount++</div>
+              <div class="cf-desc">After object is fully constructed. Guards against partial-construction count. Ensures out ≤ in at all times.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit fields -->
+      <div class="audit-box" style="border-left:3px solid #a371f7;">
+        <div class="ab-title">Appended audit fields · lines 105–106</div>
+
+        <div class="ab-field">
+          <span class="ab-key" style="color:#a371f7;">sanitizationTimestamp</span>
+          <div class="ab-val">
+            <code style="color:#e5c97a;">Date.now()</code> at guard transit. Enables latency measurement between event generation (<code style="font-size:8px;">RawEvent.timestamp</code>) and sanitization. Key for compliance audit trails.
+          </div>
+        </div>
+
+        <div class="ab-field">
+          <span class="ab-key" style="color:#c9a227;">guardId</span>
+          <div class="ab-val">
+            Constant <code style="color:#c9a227;">"CDG-ALPHA-BRAVO-CHARLIE-v1.2"</code> — identifies the guard instance on every forwarded event. Supports multi-guard deployments where events from different guards must be attributed.
+          </div>
+        </div>
+
+        <div class="ab-rule" style="background:#180e2a30;border:1px solid #a371f730;">
+          Both fields declared <code style="color:#e5c97a;">?</code> (optional) on <code style="color:#79c0ff;">SanitizedEvent</code> — they are always set by <code style="color:#d2a8ff;">sanitizeEvent()</code> but TypeScript allows downstream consumers to handle absent values gracefully.
+        </div>
+      </div>
+
+      <!-- Type safety note -->
+      <div style="padding:10px 13px;display:flex;flex-direction:column;gap:5px;">
+        <div style="font-size:8px;font-weight:bold;color:#3a4048;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:2px;display:flex;align-items:center;gap:6px;">
+          TypeScript safety guarantee
+          <span style="flex:1;height:1px;background:#1e2228;"></span>
+        </div>
+        <div style="font-size:9px;color:#8a9aaa;line-height:1.55;border-left:2px solid #79c0ff40;padding-left:9px;">
+          The return type annotation <code style="color:#79c0ff;">: SanitizedEvent</code> on line 91 enforces at compile time that <code style="color:#e55555;">rawPacketBytes</code> is absent from the returned object — it is not a member of <code style="color:#79c0ff;">SanitizedEvent</code>. Any accidental forwarding of a raw-typed object would produce a <strong style="color:#e55555;">TS2322</strong> type error.
+        </div>
+        <div style="font-size:9px;color:#8a9aaa;line-height:1.55;border-left:2px solid #48c78e40;padding-left:9px;margin-top:3px;">
+          The spread <code style="color:#48c78e;">...rest</code> on line 102 is structurally compatible with <code style="color:#79c0ff;">SanitizedEvent</code> because <code style="color:#e55555;">rawPacketBytes</code> and <code style="color:#f58220;">classification</code> have already been extracted — the remaining fields exactly match the interface's required members.
+        </div>
+      </div>
+
+    </div><!-- /ann-pane -->
+
+  </div><!-- /layout -->
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="ss-item">
+      <span class="ss-val" style="color:#4ea6dc;">3</span>
+      <span class="ss-lbl">Atomic counters</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#e55555;">2</span>
+      <span class="ss-lbl">Fields stripped</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#48c78e;">12</span>
+      <span class="ss-lbl">Fields forwarded (...rest)</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#a371f7;">2</span>
+      <span class="ss-lbl">Audit fields appended</span>
+    </div>
+    <div class="ss-item">
+      <span class="ss-val" style="color:#c9a227;">IN=OUT=STRIP</span>
+      <span class="ss-lbl">Throughput invariant</span>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 2 — CrossDomainGuard sanitize()</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; font-family: 'Courier New', Courier, monospace; font-size: 13px; padding: 24px; }
+
+  .window {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    overflow: hidden; max-width: 1020px; margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .titlebar {
+    background: #21262d; padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .filename  { color: #8b949e; font-size: 12px; margin-left: 10px; }
+  .filepath  { color: #484f58; font-size: 11px; margin-left: 4px; }
+
+  .body { padding: 20px 0 24px; line-height: 1.85; }
+
+  /* Line rendering */
+  .line { display: flex; align-items: baseline; }
+  .ln { color: #484f58; min-width: 46px; text-align: right; padding-right: 18px; font-size: 11px; user-select: none; flex-shrink: 0; }
+  .code { white-space: pre; }
+
+  /* Syntax colours */
+  .kw      { color: #ff7b72; }           /* let const export function */
+  .fn      { color: #d2a8ff; }           /* function names */
+  .var     { color: #ffa657; }           /* variable names / identifiers */
+  .str     { color: #a5d6ff; }           /* string literals */
+  .num     { color: #79c0ff; }           /* number literals */
+  .param   { color: #e6edf3; }
+  .type-an { color: #ff7b72; }           /* :type annotations */
+  .cmt     { color: #484f58; font-style: italic; }   /* comments */
+  .punct   { color: #8b949e; }           /* braces, parens, semicolons */
+  .prop    { color: #79c0ff; }           /* object property keys */
+  .op      { color: #ff7b72; }           /* ++ = operators */
+  .decor   { color: #f58220; font-weight: bold; }    /* ① ② etc callout nums */
+
+  /* Section dividers */
+  .section-label {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 46px 4px; margin-top: 4px;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .badge {
+    font-size: 10px; padding: 2px 9px; border-radius: 3px;
+    font-weight: bold; letter-spacing: 0.05em; font-style: normal;
+  }
+  .badge-counter { background: #1a2030; color: #79c0ff; border: 1px solid #2a3a60; }
+  .badge-dest    { background: #2d1a08; color: #f58220; border: 1px solid #6a3a10; }
+  .badge-san     { background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+  .badge-audit   { background: #1a1a2d; color: #a78bfa; border: 1px solid #3a2a6a; }
+  .sep { flex: 1; border-top: 1px solid #21262d; }
+  .badge-desc { font-size: 10px; color: #484f58; }
+
+  .block-sep { border: none; border-top: 1px dashed #21262d; margin: 6px 0; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    <span class="filename">simulation.ts</span>
+    <span class="filepath">artifacts/cross-domain-demo/src/lib/simulation.ts</span>
+  </div>
+  <div class="body">
+
+    <!-- ── Counters ── -->
+    <div class="section-label">
+      <span class="badge badge-counter">THROUGHPUT COUNTERS</span>
+      <span class="badge-desc">module-scope atomics — incremented once per sanitize() call</span>
+      <span class="sep"></span>
+    </div>
+
+    <div class="line"><span class="ln">76</span><span class="code"><span class="cmt">// CrossDomainGuard — throughput counters (atomic per JS single-thread model)</span></span></div>
+    <div class="line"><span class="ln">77</span><span class="code"><span class="kw">let</span> <span class="var">inCount</span>    <span class="op">=</span> <span class="num">0</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">78</span><span class="code"><span class="kw">let</span> <span class="var">outCount</span>   <span class="op">=</span> <span class="num">0</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">79</span><span class="code"><span class="kw">let</span> <span class="var">stripCount</span> <span class="op">=</span> <span class="num">0</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">80</span><span class="code"></span></div>
+    <div class="line"><span class="ln">81</span><span class="code"><span class="kw">const</span> <span class="var">GUARD_ID</span> <span class="op">=</span> <span class="str">"CDG-ALPHA-BRAVO-CHARLIE-v1.2"</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">82</span><span class="code"></span></div>
+    <div class="line"><span class="ln">83</span><span class="code"><span class="kw">export function</span> <span class="fn">getGuardCounters</span><span class="punct">() {</span></span></div>
+    <div class="line"><span class="ln">84</span><span class="code">  <span class="kw">return</span> <span class="punct">{</span> <span class="prop">inCount</span><span class="punct">,</span> <span class="prop">outCount</span><span class="punct">,</span> <span class="prop">stripCount</span> <span class="punct">};</span></span></div>
+    <div class="line"><span class="ln">85</span><span class="code"><span class="punct">}</span></span></div>
+
+    <hr class="block-sep"/>
+
+    <!-- ── JSDoc ── -->
+    <div class="line"><span class="ln">91</span><span class="code"><span class="cmt">/** CrossDomainGuard sanitize() — strips rawPacketBytes via ES2018 rest-destructuring,</span></span></div>
+    <div class="line"><span class="ln">92</span><span class="code"><span class="cmt"> *  increments atomic throughput counters, and appends sanitizationTimestamp / guardId</span></span></div>
+    <div class="line"><span class="ln">93</span><span class="code"><span class="cmt"> *  audit fields before forwarding the SanitizedEvent to the unified high-side view. */</span></span></div>
+
+    <!-- ── sanitizeEvent function ── -->
+    <div class="section-label" style="margin-top:4px;">
+      <span class="badge badge-san">sanitizeEvent()</span>
+      <span class="badge-desc">exported boundary guard — called once per RawEvent before high-side ingestion</span>
+      <span class="sep"></span>
+    </div>
+
+    <div class="line"><span class="ln">94</span><span class="code"><span class="kw">export function</span> <span class="fn">sanitizeEvent</span><span class="punct">(</span><span class="param">raw</span><span class="punct">:</span> <span class="type-an">RawEvent</span><span class="punct">):</span> <span class="type-an">SanitizedEvent</span> <span class="punct">{</span></span></div>
+
+    <!-- ① inCount -->
+    <div class="section-label" style="margin-top:2px;padding-top:4px;">
+      <span class="badge badge-counter">① INGRESS</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">95</span><span class="code">  <span class="var">inCount</span><span class="op">++</span><span class="punct">;</span>                                          <span class="cmt">// ① atomic ingress counter</span></span></div>
+    <div class="line"><span class="ln">96</span><span class="code"></span></div>
+
+    <!-- ② destructuring -->
+    <div class="section-label" style="padding-top:4px;">
+      <span class="badge badge-dest">② ES2018 DESTRUCTURING</span>
+      <span class="badge-desc">rawPacketBytes aliased to _stripped — never referenced again; classification also dropped</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">97</span><span class="code">  <span class="cmt">// ES2018 rest-destructuring: rawPacketBytes captured in _stripped, never forwarded</span></span></div>
+    <div class="line"><span class="ln">98</span><span class="code">  <span class="kw">const</span> <span class="punct">{</span> <span class="prop">rawPacketBytes</span><span class="punct">:</span> <span class="var">_stripped</span><span class="punct">,</span> <span class="prop">classification</span><span class="punct">:</span> <span class="var">_cls</span><span class="punct">,</span> <span class="op">...</span><span class="var">rest</span> <span class="punct">} =</span> <span class="var">raw</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">99</span><span class="code"></span></div>
+    <div class="line"><span class="ln">100</span><span class="code">  <span class="var">stripCount</span><span class="op">++</span><span class="punct">;</span>                                       <span class="cmt">// ② strip counter (one field per event)</span></span></div>
+    <div class="line"><span class="ln">101</span><span class="code"></span></div>
+    <div class="line"><span class="ln">102</span><span class="code">  <span class="kw">const</span> <span class="var">passedFields</span> <span class="op">=</span> <span class="fn">Object</span><span class="punct">.</span><span class="fn">keys</span><span class="punct">(</span><span class="var">rest</span><span class="punct">)</span> <span class="kw">as</span> <span class="type-an">string</span><span class="punct">[];</span></span></div>
+    <div class="line"><span class="ln">103</span><span class="code"></span></div>
+
+    <!-- ③ + ④ + ⑤ SanitizedEvent -->
+    <div class="section-label" style="padding-top:4px;">
+      <span class="badge badge-san">③ FORWARD</span>
+      <span class="badge-desc">spread rest — all safe fields; rawPacketBytes absent by construction</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">104</span><span class="code">  <span class="kw">const</span> <span class="var">sanitized</span><span class="punct">:</span> <span class="type-an">SanitizedEvent</span> <span class="op">=</span> <span class="punct">{</span></span></div>
+    <div class="line"><span class="ln">105</span><span class="code">    <span class="op">...</span><span class="var">rest</span><span class="punct">,</span>                                          <span class="cmt">// ③ all safe metadata fields forwarded</span></span></div>
+    <div class="line"><span class="ln">106</span><span class="code">    <span class="prop">strippedFields</span><span class="punct">:</span>        <span class="punct">[</span><span class="str">"rawPacketBytes"</span><span class="punct">],</span></span></div>
+    <div class="line"><span class="ln">107</span><span class="code">    <span class="prop">passedFields</span><span class="punct">,</span></span></div>
+
+    <div class="section-label" style="padding-top:2px;padding-bottom:2px;">
+      <span class="badge badge-audit">④⑤ AUDIT FIELDS</span>
+      <span class="badge-desc">appended by guard — not present in the original RawEvent</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">108</span><span class="code">    <span class="prop">sanitizationTimestamp</span><span class="punct">:</span> <span class="fn">Date</span><span class="punct">.</span><span class="fn">now</span><span class="punct">(),</span>                <span class="cmt">// ④ audit: guard processing time (ms)</span></span></div>
+    <div class="line"><span class="ln">109</span><span class="code">    <span class="prop">guardId</span><span class="punct">:</span>               <span class="var">GUARD_ID</span><span class="punct">,</span>                  <span class="cmt">// ⑤ audit: guard instance identifier</span></span></div>
+    <div class="line"><span class="ln">110</span><span class="code">  <span class="punct">};</span></span></div>
+    <div class="line"><span class="ln">111</span><span class="code"></span></div>
+
+    <!-- ⑥ outCount -->
+    <div class="section-label" style="padding-top:2px;">
+      <span class="badge badge-counter">⑥ EGRESS</span>
+      <span class="sep"></span>
+    </div>
+    <div class="line"><span class="ln">112</span><span class="code">  <span class="var">outCount</span><span class="op">++</span><span class="punct">;</span>                                         <span class="cmt">// ⑥ atomic egress counter</span></span></div>
+    <div class="line"><span class="ln">113</span><span class="code">  <span class="kw">return</span> <span class="var">sanitized</span><span class="punct">;</span></span></div>
+    <div class="line"><span class="ln">114</span><span class="code"><span class="punct">}</span></span></div>
+
+  </div>
+</div>
+</body>
+</html>

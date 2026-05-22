@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Code Excerpt 5 — Clone & Install</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 32px 36px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── Header ── */
+  .excerpt-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #0e1a30; color: #79c0ff; border: 1px solid #1f3a6a;
+    margin-bottom: 10px;
+  }
+  .excerpt-title {
+    font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px;
+  }
+  .excerpt-sub {
+    font-size: 10px; color: #555a62; line-height: 1.6; margin-bottom: 20px;
+  }
+
+  /* ── Terminal window ── */
+  .terminal {
+    background: #0a0c0e;
+    border: 1px solid #2a2d32;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .term-bar {
+    background: #1a1c1f;
+    border-bottom: 1px solid #2a2d32;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .term-title {
+    font-size: 10px; color: #555a62; margin-left: 6px; flex: 1; text-align: center;
+  }
+  .term-body {
+    padding: 20px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    line-height: 1;
+  }
+
+  /* ── Command block ── */
+  .cmd-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 14px;
+  }
+  .cmd-block:last-child { margin-bottom: 0; }
+
+  /* step label */
+  .step-label {
+    font-size: 9px;
+    color: #3a4048;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    padding-left: 2px;
+  }
+
+  /* command line row */
+  .cmd-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    background: #111315;
+    border: 1px solid #1e2228;
+    border-radius: 3px;
+    padding: 8px 12px;
+  }
+  .prompt { color: #444850; margin-right: 6px; user-select: none; font-size: 13px; }
+  .cmd-git    { color: #d2a8ff; font-size: 13px; font-weight: bold; }
+  .cmd-cd     { color: #d2a8ff; font-size: 13px; font-weight: bold; }
+  .cmd-pnpm   { color: #f58220; font-size: 13px; font-weight: bold; }
+  .cmd-verb   { color: #79c0ff; font-size: 13px; }
+  .cmd-arg    { color: #e6edf3; font-size: 13px; }
+  .cmd-url    { color: #a5d6ff; font-size: 13px; text-decoration: underline; text-decoration-color: #2a4a7a; }
+  .cmd-flag   { color: #48c78e; font-size: 13px; }
+
+  /* annotation */
+  .ann {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-top: 6px;
+    padding: 5px 10px;
+    background: transparent;
+    font-size: 10px;
+    color: #3a4048;
+    line-height: 1.5;
+  }
+  .ann-arrow { color: #2a3a28; font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+  .ann-text  { color: #555a62; }
+  .ann-text em { color: #48c78e; font-style: normal; font-weight: bold; }
+  .ann-text strong { color: #8b949e; font-style: normal; }
+
+  /* output simulation */
+  .output-block {
+    margin-top: 6px;
+    padding: 7px 12px;
+    background: #0e1012;
+    border: 1px solid #1a1c20;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 1.65;
+  }
+  .out-dim    { color: #2e3440; }
+  .out-muted  { color: #3a4048; }
+  .out-ok     { color: #264a38; }
+  .out-bright { color: #48c78e; }
+  .out-warn   { color: #6a4a10; }
+  .out-pkg    { color: #2a3a4a; }
+  .out-url    { color: #4ea6dc; font-weight: bold; font-size: 12px; }
+  .out-accent { color: #f58220; }
+
+  /* divider between blocks */
+  .div-line {
+    height: 1px; background: #161a1e; margin: 10px 0 16px;
+  }
+
+  /* ── Summary box ── */
+  .summary-box {
+    background: #0e1a0e; border: 1px solid #264a38; border-radius: 4px;
+    padding: 10px 14px; margin-top: 16px; font-size: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px;
+  }
+  .sb-row { display: flex; align-items: center; gap: 8px; }
+  .sb-key { color: #3a4a3a; width: 110px; flex-shrink: 0; }
+  .sb-val { color: #48c78e; font-weight: bold; }
+  .sb-val-blue { color: #4ea6dc; font-weight: bold; }
+  .sb-val-orange { color: #f58220; font-weight: bold; }
+
+  /* watermark */
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 18px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="excerpt-badge">CODE EXCERPT 5 — SETUP &amp; INSTALLATION</div>
+<div class="excerpt-title">Clone, Install, and Launch — Demo SIEM (Unified Security View)</div>
+<div class="excerpt-sub">
+  Four commands to reproduce the development environment on any machine with Node.js 20+ and pnpm installed &nbsp;·&nbsp;
+  React 18 · TypeScript 5.9 · Vite 7 · Tailwind CSS v4 · pnpm monorepo
+</div>
+
+<div class="terminal">
+  <!-- macOS-style title bar -->
+  <div class="term-bar">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <div class="term-title">zsh — Unified-Security-View — 120×40</div>
+  </div>
+
+  <div class="term-body">
+
+    <!-- ① git clone -->
+    <div class="cmd-block">
+      <div class="step-label">① clone repository</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="cmd-git">git</span>&nbsp;<span class="cmd-verb">clone</span>&nbsp;<span class="cmd-url">https://github.com/Telieou-source/Unified-Security-View.git</span>
+      </div>
+      <div class="output-block">
+        <div class="out-muted">Cloning into 'Unified-Security-View'...</div>
+        <div class="out-muted">remote: Enumerating objects: 847, done.</div>
+        <div class="out-muted">remote: Counting objects: 100% (847/847), done.</div>
+        <div class="out-muted">remote: Compressing objects: 100% (512/512), done.</div>
+        <div class="out-ok">Receiving objects: 100% (847/847), 1.42 MiB | 3.8 MiB/s, done.</div>
+        <div class="out-ok">Resolving deltas: 100% (231/231), done.</div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">Clones the full pnpm workspace monorepo including <strong>artifacts/cross-domain-demo/</strong>,
+        <strong>lib/</strong> shared packages, and <strong>scripts/</strong> — no submodules required.</span>
+      </div>
+    </div>
+
+    <div class="div-line"></div>
+
+    <!-- ② cd -->
+    <div class="cmd-block">
+      <div class="step-label">② change to project directory</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="cmd-cd">cd</span>&nbsp;<span class="cmd-arg">Unified-Security-View</span>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">Root of the pnpm workspace — contains <strong>pnpm-workspace.yaml</strong>,
+        <strong>tsconfig.base.json</strong>, and the root <strong>package.json</strong> orchestration scripts.</span>
+      </div>
+    </div>
+
+    <div class="div-line"></div>
+
+    <!-- ③ pnpm install -->
+    <div class="cmd-block">
+      <div class="step-label">③ install all workspace dependencies</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="cmd-pnpm">pnpm</span>&nbsp;<span class="cmd-verb">install</span>
+      </div>
+      <div class="output-block">
+        <div class="out-muted">Lockfile is up to date, resolution step is skipped</div>
+        <div class="out-pkg">Packages: <span style="color:#264a38;">+312</span></div>
+        <div class="out-pkg">Progress: resolved 312, reused 312, downloaded 0, added 312, done</div>
+        <div class="out-muted">&nbsp;</div>
+        <div class="out-muted">devDependencies:</div>
+        <div class="out-muted">&nbsp; @workspace/api-server   — express 5 · drizzle-orm · zod</div>
+        <div class="out-muted">&nbsp; @workspace/cross-domain-demo — react 18 · vite 7 · tailwindcss</div>
+        <div class="out-muted">&nbsp; @workspace/api-spec      — openapi-typescript · orval</div>
+        <div class="out-ok">&nbsp;</div>
+        <div class="out-ok">Done in 4.3s</div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">pnpm installs all workspace packages in a single hoisted <strong>node_modules/</strong>;
+        no <code>--no-frozen-lockfile</code> flag needed — the committed lockfile is used as-is.</span>
+      </div>
+    </div>
+
+    <div class="div-line"></div>
+
+    <!-- ④ pnpm run dev -->
+    <div class="cmd-block">
+      <div class="step-label">④ start the development server</div>
+      <div class="cmd-line">
+        <span class="prompt">$</span>
+        <span class="cmd-pnpm">pnpm</span>&nbsp;<span class="cmd-flag">--filter</span>&nbsp;<span class="cmd-arg">@workspace/cross-domain-demo</span>&nbsp;<span class="cmd-verb">run</span>&nbsp;<span class="cmd-arg">dev</span>
+      </div>
+      <div class="output-block">
+        <div class="out-muted">&nbsp;</div>
+        <div class="out-accent">&nbsp; VITE v7.0.0  ready in 312 ms</div>
+        <div class="out-muted">&nbsp;</div>
+        <div style="color:#3a4a3a;">&nbsp; ➜  Local:   <span class="out-url">http://localhost:5173/</span></div>
+        <div class="out-muted">&nbsp; ➜  Network: use --host to expose</div>
+        <div class="out-muted">&nbsp; ➜  press h + enter to show help</div>
+      </div>
+      <div class="ann">
+        <span class="ann-arrow">└─</span>
+        <span class="ann-text">
+          Vite 7 dev server starts on <em>http://localhost:5173</em> with HMR enabled.
+          The simulation begins immediately on page load — no build step required.
+          For the full monorepo (API server + demo), run <strong>pnpm run dev</strong> from the workspace root.
+        </span>
+      </div>
+    </div>
+
+  </div><!-- /term-body -->
+</div><!-- /terminal -->
+
+<!-- Summary metadata -->
+<div class="summary-box">
+  <div class="sb-row"><span class="sb-key">Repository:</span><span class="sb-val-blue">github.com/Telieou-source/Unified-Security-View</span></div>
+  <div class="sb-row"><span class="sb-key">Dev server URL:</span><span class="sb-val">http://localhost:5173/</span></div>
+  <div class="sb-row"><span class="sb-key">Node.js required:</span><span class="sb-val-orange">v20.0.0+  (v24 recommended)</span></div>
+  <div class="sb-row"><span class="sb-key">Package manager:</span><span class="sb-val-orange">pnpm  (workspace protocol)</span></div>
+  <div class="sb-row"><span class="sb-key">Build tool:</span><span class="sb-val-orange">Vite 7 · esbuild bundler</span></div>
+  <div class="sb-row"><span class="sb-key">Install time:</span><span class="sb-val">&lt; 5 s (cached lockfile)</span></div>
+  <div class="sb-row"><span class="sb-key">Cold start time:</span><span class="sb-val">&lt; 400 ms (Vite ESM)</span></div>
+  <div class="sb-row"><span class="sb-key">Artifacts:</span><span class="sb-val">cross-domain-demo · api-server · api-spec · db</span></div>
+</div>
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

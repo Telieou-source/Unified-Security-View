@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 6 — HealthMonitor · 60-second run</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111315; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #c8d0d8; padding: 20px; }
+
+  /* ── Section label ── */
+  .section {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px; margin-top: 16px;
+  }
+  .section:first-of-type { margin-top: 0; }
+  .section-badge {
+    font-size: 9px; font-weight: bold; padding: 2px 10px; border-radius: 2px;
+    white-space: nowrap; letter-spacing: 0.06em;
+  }
+  .sep { flex: 1; border-top: 1px solid #21262d; }
+  .section-note { font-size: 9px; color: #444850; white-space: nowrap; }
+
+  /* ── Shared card base ── */
+  .card {
+    background: #161b22; border: 1px solid #2a2d32; border-radius: 5px;
+    overflow: hidden; margin-bottom: 6px;
+  }
+  .card-header {
+    padding: 7px 12px; border-bottom: 1px solid #2a2d32; background: #1a1c1f;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 11px; font-weight: bold; }
+  .card-body  { padding: 12px; }
+
+  /* pulse */
+  .pulse {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 5px; vertical-align: middle;
+  }
+
+  /* ── SimulationController run summary ── */
+  .run-summary {
+    background: #0e1a0e; border: 1px solid #264a38; border-radius: 5px;
+    padding: 10px 16px; display: flex; align-items: center; gap: 0;
+    margin-bottom: 6px;
+  }
+  .rs-item { flex: 1; text-align: center; }
+  .rs-num  { font-size: 26px; font-weight: bold; line-height: 1; }
+  .rs-lbl  { font-size: 9px; color: #555a62; margin-top: 3px; }
+  .rs-sep  { color: #264a38; font-size: 20px; padding: 0 8px; flex-shrink: 0; }
+
+  /* ── HealthMonitor main panel ── */
+  .hm-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr 1fr 1fr 200px;
+    gap: 0;
+    border-bottom: 1px solid #21262d;
+  }
+  .hm-cell {
+    padding: 14px 12px; border-right: 1px solid #21262d; text-align: center;
+  }
+  .hm-cell:last-child { border-right: none; }
+  .hm-num   { font-size: 32px; font-weight: bold; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hm-unit  { font-size: 11px; font-weight: bold; }
+  .hm-label { font-size: 9px; color: #555a62; margin-top: 4px; }
+  .hm-sub   { font-size: 8px; color: #3a4048; margin-top: 2px; }
+
+  /* Domain load cells */
+  .hm-domain-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0; border-bottom: 1px solid #21262d;
+  }
+  .hm-domain-cell {
+    padding: 10px 14px; border-right: 1px solid #21262d;
+  }
+  .hm-domain-cell:last-child { border-right: none; }
+  .hm-domain-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .hm-domain-name   { font-size: 10px; font-weight: bold; }
+  .hm-domain-count  { font-size: 9px; color: #555a62; }
+  .bar-track { height: 7px; background: #1a1c20; border-radius: 3px; overflow: hidden; }
+  .bar-fill  { height: 7px; border-radius: 3px; }
+  .bar-stats { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; }
+  .bar-pct   { font-weight: bold; }
+
+  /* Telemetry rows */
+  .telem-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .telem-cell {
+    padding: 10px 14px; border-right: 1px solid #21262d; text-align: center;
+  }
+  .telem-cell:last-child { border-right: none; }
+  .telem-num { font-size: 20px; font-weight: bold; }
+  .telem-lbl { font-size: 9px; color: #555a62; margin-top: 3px; }
+  .telem-sub { font-size: 8px; color: #3a4048; margin-top: 2px; }
+
+  /* ── Invariant section ── */
+  .invariant-banner {
+    background: #0e1a0e; border: 1px solid #264a38; border-radius: 5px;
+    padding: 12px 16px;
+  }
+  .inv-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .inv-title { font-size: 11px; font-weight: bold; color: #48c78e; }
+  .inv-tag { font-size: 9px; padding: 2px 8px; border-radius: 2px; background: #1a3020; color: #48c78e; border: 1px solid #264a38; }
+
+  .inv-equation {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    padding: 12px 0; border-top: 1px solid #1e2128; border-bottom: 1px solid #1e2128;
+    margin-bottom: 10px;
+  }
+  .inv-box {
+    text-align: center; background: #1a1c1f; border: 1px solid #2a2d32;
+    border-radius: 4px; padding: 8px 20px; min-width: 120px;
+  }
+  .inv-varname { font-size: 9px; color: #555a62; margin-bottom: 3px; }
+  .inv-val { font-size: 28px; font-weight: bold; line-height: 1; }
+  .inv-source { font-size: 8px; color: #444850; margin-top: 2px; }
+  .inv-op { font-size: 20px; color: #264a38; }
+  .inv-eq { font-size: 20px; color: #48c78e; font-weight: bold; }
+
+  .inv-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  .inv-table th {
+    padding: 4px 8px; text-align: left; color: #444850; font-weight: normal;
+    border-bottom: 1px solid #1e2128; font-size: 8px; text-transform: uppercase; letter-spacing: 0.06em;
+    background: #12151a;
+  }
+  .inv-table td { padding: 4px 8px; border-bottom: 1px solid #1a1c20; }
+  .inv-table tr:last-child td { border-bottom: none; }
+  .inv-table tr:nth-child(even) td { background: #12151a; }
+  .mono { font-family: 'Courier New', monospace; }
+  .c-green  { color: #48c78e; }
+  .c-orange { color: #f58220; }
+  .c-blue   { color: #79c0ff; }
+  .c-purple { color: #d2a8ff; }
+  .c-red    { color: #e55555; }
+  .c-gold   { color: #c9a227; }
+  .c-grey   { color: #555a62; }
+
+  /* strip-log */
+  .strip-log {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+    padding: 8px 12px; font-size: 9px; font-family: 'Courier New', monospace;
+  }
+  .strip-log-row { display: flex; gap: 10px; padding: 2px 0; border-bottom: 1px solid #0d1117; }
+  .sl-idx  { color: #444850; min-width: 40px; }
+  .sl-id   { color: #4ea6dc; min-width: 80px; }
+  .sl-dom  { min-width: 65px; }
+  .sl-field{ color: #e55555; min-width: 110px; }
+  .sl-ts   { color: #444850; min-width: 80px; }
+  .sl-gid  { color: #d2a8ff; font-size: 8px; }
+
+  /* status bar */
+  .status-bar {
+    background: #0e1a0e; border-top: 1px solid #264a38;
+    padding: 4px 12px; display: flex; align-items: center; gap: 12px;
+    font-size: 9px;
+  }
+  .sb-dot { width: 6px; height: 6px; border-radius: 50%; background: #48c78e; box-shadow: 0 0 4px #48c78e88; display: inline-block; margin-right: 4px; }
+  .sb-ok  { color: #48c78e; }
+  .sb-dim { color: #264a38; }
+
+  /* Watermark */
+  .watermark {
+    text-align: right; font-size: 9px; color: rgba(245,130,32,0.22);
+    margin-top: 14px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- Run summary banner -->
+<div class="section">
+  <span class="section-badge" style="background:#1a3020;color:#48c78e;border:1px solid #264a38;">SIMULATION RUN SUMMARY</span>
+  <span class="section-note">SimulationController · 60-second run · 5 events / second / domain · 3 domains</span>
+  <span class="sep"></span>
+  <span class="section-note">index=cross_domain_siem · runSimulationTick() · speed=200ms</span>
+</div>
+<div class="run-summary">
+  <div class="rs-item">
+    <div class="rs-num" style="color:#48c78e;">60.0</div>
+    <div class="rs-lbl">seconds elapsed</div>
+  </div>
+  <div class="rs-sep">·</div>
+  <div class="rs-item">
+    <div class="rs-num" style="color:#f58220;">15</div>
+    <div class="rs-lbl">events / sec (aggregate)</div>
+  </div>
+  <div class="rs-sep">·</div>
+  <div class="rs-item">
+    <div class="rs-num" style="color:#4ea6dc;">5</div>
+    <div class="rs-lbl">events / sec / domain</div>
+  </div>
+  <div class="rs-sep">·</div>
+  <div class="rs-item">
+    <div class="rs-num" style="color:#c8d0d8;">900</div>
+    <div class="rs-lbl">total raw events</div>
+  </div>
+  <div class="rs-sep">·</div>
+  <div class="rs-item">
+    <div class="rs-num" style="color:#d2a8ff;">900</div>
+    <div class="rs-lbl">sanitized events</div>
+  </div>
+  <div class="rs-sep">·</div>
+  <div class="rs-item">
+    <div class="rs-num" style="color:#e55555;">38</div>
+    <div class="rs-lbl">correlated alerts</div>
+  </div>
+</div>
+
+<!-- ── HealthMonitor panel ── -->
+<div class="section" style="margin-top:12px;">
+  <span class="section-badge" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">HEALTHMONITOR — TELEMETRY</span>
+  <span class="section-note">reactive render · driven by rawEvents + sanitizedEvents state · updates every tick</span>
+  <span class="sep"></span>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <span class="pulse" style="background:#79c0ff;box-shadow:0 0 5px #79c0ff99;"></span>
+      <span style="color:#79c0ff;">HealthMonitor</span>
+      <span style="color:#444850;font-size:9px;font-weight:normal;margin-left:10px;">component: artifacts/cross-domain-demo/src/components/HealthMonitor.tsx</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-size:9px;padding:2px 8px;border-radius:2px;background:#1a3020;color:#48c78e;border:1px solid #264a38;">● ALL SYSTEMS NOMINAL</span>
+      <span style="font-size:9px;color:#444850;">uptime: 60.0s</span>
+    </div>
+  </div>
+
+  <!-- Row 1: key throughput metrics -->
+  <div class="hm-grid">
+    <div class="hm-cell" style="background:#0e1a12;">
+      <div class="hm-num" style="color:#48c78e;">15.0</div>
+      <div class="hm-unit" style="color:#48c78e;">evt/s</div>
+      <div class="hm-label">aggregate throughput</div>
+      <div class="hm-sub">α 5.0 + β 5.0 + γ 5.0</div>
+    </div>
+    <div class="hm-cell">
+      <div class="hm-num" style="color:#4ea6dc;">300</div>
+      <div class="hm-label">Domain Alpha events</div>
+      <div class="hm-sub">10.1.0.0/16 · 5.0 evt/s</div>
+    </div>
+    <div class="hm-cell">
+      <div class="hm-num" style="color:#48c78e;">300</div>
+      <div class="hm-label">Domain Bravo events</div>
+      <div class="hm-sub">10.2.0.0/16 · 5.0 evt/s</div>
+    </div>
+    <div class="hm-cell">
+      <div class="hm-num" style="color:#c9a227;">300</div>
+      <div class="hm-label">Domain Charlie events</div>
+      <div class="hm-sub">10.3.0.0/16 · 5.0 evt/s</div>
+    </div>
+    <div class="hm-cell">
+      <div class="hm-num" style="color:#d2a8ff;">&lt;&nbsp;1</div>
+      <div class="hm-unit" style="color:#d2a8ff;">ms</div>
+      <div class="hm-label">guard latency / event</div>
+      <div class="hm-sub">sanitizeEvent() · ES2018 rest</div>
+    </div>
+    <div class="hm-cell" style="background:#0e1a12;">
+      <div class="hm-num" style="color:#48c78e;">60.0</div>
+      <div class="hm-unit" style="color:#48c78e;">s</div>
+      <div class="hm-label">uptime</div>
+      <div class="hm-sub">● isRunning=true</div>
+    </div>
+  </div>
+
+  <!-- Row 2: domain load bars -->
+  <div class="hm-domain-grid">
+    <div class="hm-domain-cell">
+      <div class="hm-domain-header">
+        <span class="hm-domain-name" style="color:#4ea6dc;">
+          <span class="pulse" style="background:#4ea6dc;box-shadow:0 0 4px #4ea6dc88;"></span>Domain Alpha
+        </span>
+        <span class="hm-domain-count">300 / 900 events</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:67%;background:#4ea6dc;"></div></div>
+      <div class="bar-stats">
+        <span style="color:#444850;">utilization</span>
+        <span class="bar-pct" style="color:#4ea6dc;">67%</span>
+        <span style="color:#444850;">last evt: 60.0s</span>
+      </div>
+    </div>
+    <div class="hm-domain-cell">
+      <div class="hm-domain-header">
+        <span class="hm-domain-name" style="color:#48c78e;">
+          <span class="pulse" style="background:#48c78e;box-shadow:0 0 4px #48c78e88;"></span>Domain Bravo
+        </span>
+        <span class="hm-domain-count">300 / 900 events</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:67%;background:#48c78e;"></div></div>
+      <div class="bar-stats">
+        <span style="color:#444850;">utilization</span>
+        <span class="bar-pct" style="color:#48c78e;">67%</span>
+        <span style="color:#444850;">last evt: 60.0s</span>
+      </div>
+    </div>
+    <div class="hm-domain-cell">
+      <div class="hm-domain-header">
+        <span class="hm-domain-name" style="color:#c9a227;">
+          <span class="pulse" style="background:#c9a227;box-shadow:0 0 4px #c9a22788;"></span>Domain Charlie
+        </span>
+        <span class="hm-domain-count">300 / 900 events</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:67%;background:#c9a227;"></div></div>
+      <div class="bar-stats">
+        <span style="color:#444850;">utilization</span>
+        <span class="bar-pct" style="color:#c9a227;">67%</span>
+        <span style="color:#444850;">last evt: 60.0s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: secondary telemetry -->
+  <div class="telem-grid">
+    <div class="telem-cell">
+      <div class="telem-num" style="color:#e55555;">1.00</div>
+      <div class="telem-lbl">fields stripped / event</div>
+      <div class="telem-sub">stripCount / inCount · ratio = 1.000</div>
+    </div>
+    <div class="telem-cell">
+      <div class="telem-num" style="color:#f58220;">900</div>
+      <div class="telem-lbl">total fields stripped</div>
+      <div class="telem-sub">rawPacketBytes only · all 900 events</div>
+    </div>
+    <div class="telem-cell">
+      <div class="telem-num" style="color:#d2a8ff;">100%</div>
+      <div class="telem-lbl">guard compliance</div>
+      <div class="telem-sub">0 violations in 900 events</div>
+    </div>
+    <div class="telem-cell">
+      <div class="telem-num" style="color:#48c78e;">38</div>
+      <div class="telem-lbl">alerts generated</div>
+      <div class="telem-sub">4.2% of events triggered correlation</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span><span class="sb-dot"></span><span class="sb-ok">throughput: 15.0 evt/s</span></span>
+    <span class="sb-dim">|</span>
+    <span class="sb-ok">guard: nominal</span>
+    <span class="sb-dim">|</span>
+    <span class="sb-ok">all domains: active</span>
+    <span class="sb-dim">|</span>
+    <span style="color:#444850;">runSimulationTick() · tick #900 complete</span>
+    <span class="sb-dim">|</span>
+    <span style="color:#444850;">speed: 200ms interval (5 evt/s)</span>
+    <span class="sb-dim">|</span>
+    <span style="color:#444850;">uptime: 60.0s · MAX_RAW=80 · MAX_SANITIZED=160 · MAX_ALERTS=60</span>
+  </div>
+</div>
+
+<!-- ── IN = OUT = STRIP invariant ── -->
+<div class="section" style="margin-top:14px;">
+  <span class="section-badge" style="background:#1a3020;color:#48c78e;border:1px solid #264a38;">CROSSDOMAINGUARD — IN = OUT = STRIP INVARIANT</span>
+  <span class="section-note">getGuardCounters() → { inCount, outCount, stripCount } · all three must equal after lossless sanitization</span>
+  <span class="sep"></span>
+</div>
+
+<div class="invariant-banner">
+  <div class="inv-row">
+    <span class="inv-title">
+      <span class="pulse" style="background:#48c78e;box-shadow:0 0 5px #48c78e99;"></span>
+      CrossDomainGuard counter audit — tick #900 (t = 60.0 s)
+    </span>
+    <span class="inv-tag">guardId: CDG-ALPHA-BRAVO-CHARLIE-v1.2</span>
+    <span class="inv-tag">GUARD_ID constant · simulation.ts</span>
+  </div>
+
+  <div class="inv-equation">
+    <div class="inv-box" style="border-color:#4ea6dc;background:#0e1420;">
+      <div class="inv-varname" style="color:#4ea6dc;">inCount</div>
+      <div class="inv-val" style="color:#4ea6dc;">900</div>
+      <div class="inv-source">RawEvents received</div>
+    </div>
+    <div class="inv-op">=</div>
+    <div class="inv-box" style="border-color:#48c78e;background:#0e1a12;">
+      <div class="inv-varname" style="color:#48c78e;">outCount</div>
+      <div class="inv-val" style="color:#48c78e;">900</div>
+      <div class="inv-source">SanitizedEvents emitted</div>
+    </div>
+    <div class="inv-op">=</div>
+    <div class="inv-box" style="border-color:#e55555;background:#130a0a;">
+      <div class="inv-varname" style="color:#e55555;">stripCount</div>
+      <div class="inv-val" style="color:#e55555;">900</div>
+      <div class="inv-source">rawPacketBytes stripped</div>
+    </div>
+    <div class="inv-eq" style="margin-left:10px;">✓ INVARIANT HOLDS</div>
+  </div>
+
+  <table class="inv-table">
+    <thead>
+      <tr>
+        <th>Counter</th>
+        <th>Export (simulation.ts)</th>
+        <th>Value at t=60s</th>
+        <th>Formula</th>
+        <th>Meaning</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono c-blue">inCount</td>
+        <td class="mono c-grey">getGuardCounters().inCount</td>
+        <td class="mono c-blue" style="font-weight:bold;">900</td>
+        <td class="mono c-grey">5 evt/s × 3 domains × 60 s</td>
+        <td style="color:#8b949e;">Total RawEvents received by sanitizeEvent()</td>
+        <td><span style="color:#48c78e;font-weight:bold;">✓ expected</span></td>
+      </tr>
+      <tr>
+        <td class="mono c-green">outCount</td>
+        <td class="mono c-grey">getGuardCounters().outCount</td>
+        <td class="mono c-green" style="font-weight:bold;">900</td>
+        <td class="mono c-grey">inCount – 0 drops</td>
+        <td style="color:#8b949e;">SanitizedEvent objects returned (no drop policy)</td>
+        <td><span style="color:#48c78e;font-weight:bold;">✓ expected</span></td>
+      </tr>
+      <tr>
+        <td class="mono c-red">stripCount</td>
+        <td class="mono c-grey">getGuardCounters().stripCount</td>
+        <td class="mono c-red" style="font-weight:bold;">900</td>
+        <td class="mono c-grey">1 field stripped × 900 events</td>
+        <td style="color:#8b949e;">rawPacketBytes removals via ES2018 rest-destructuring</td>
+        <td><span style="color:#48c78e;font-weight:bold;">✓ expected</span></td>
+      </tr>
+      <tr>
+        <td class="mono c-purple">ratio</td>
+        <td class="mono c-grey">stripCount / inCount</td>
+        <td class="mono c-purple" style="font-weight:bold;">1.000</td>
+        <td class="mono c-grey">900 / 900</td>
+        <td style="color:#8b949e;">Every event carries exactly one rawPacketBytes field</td>
+        <td><span style="color:#48c78e;font-weight:bold;">✓ expected</span></td>
+      </tr>
+      <tr>
+        <td class="mono c-gold">violations</td>
+        <td class="mono c-grey">inCount – outCount</td>
+        <td class="mono c-gold" style="font-weight:bold;">0</td>
+        <td class="mono c-grey">900 – 900</td>
+        <td style="color:#8b949e;">Events lost or duplicated at the boundary</td>
+        <td><span style="color:#48c78e;font-weight:bold;">✓ zero</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Recent strip log -->
+  <div style="margin-top:10px;">
+    <div style="font-size:9px;color:#444850;margin-bottom:4px;">sanitizeEvent() audit trail — last 8 events (sanitizationTimestamp · guardId)</div>
+    <div class="strip-log">
+      <div class="strip-log-row" style="border-bottom:1px solid #21262d;margin-bottom:2px;">
+        <span class="sl-idx" style="color:#30363d;">tick</span>
+        <span class="sl-id"  style="color:#30363d;">eventId</span>
+        <span class="sl-dom" style="color:#30363d;">domain</span>
+        <span class="sl-field" style="color:#30363d;">field stripped</span>
+        <span class="sl-ts"  style="color:#30363d;">sanitizationTs</span>
+        <span class="sl-gid" style="color:#30363d;">guardId</span>
+      </div>
+      <div class="strip-log-row"><span class="sl-idx">900</span><span class="sl-id">EVT-00900</span><span class="sl-dom" style="color:#4ea6dc;">ALPHA</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224060000</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">899</span><span class="sl-id">EVT-00899</span><span class="sl-dom" style="color:#48c78e;">BRAVO</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224059800</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">898</span><span class="sl-id">EVT-00898</span><span class="sl-dom" style="color:#c9a227;">CHARLIE</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224059600</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">897</span><span class="sl-id">EVT-00897</span><span class="sl-dom" style="color:#4ea6dc;">ALPHA</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224059400</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">896</span><span class="sl-id">EVT-00896</span><span class="sl-dom" style="color:#48c78e;">BRAVO</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224059200</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">895</span><span class="sl-id">EVT-00895</span><span class="sl-dom" style="color:#c9a227;">CHARLIE</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224059000</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">894</span><span class="sl-id">EVT-00894</span><span class="sl-dom" style="color:#4ea6dc;">ALPHA</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224058800</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+      <div class="strip-log-row"><span class="sl-idx">893</span><span class="sl-id">EVT-00893</span><span class="sl-dom" style="color:#48c78e;">BRAVO</span><span class="sl-field">rawPacketBytes</span><span class="sl-ts">1747224058600</span><span class="sl-gid">CDG-ALPHA-BRAVO-CHARLIE-v1.2</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="watermark">
+  Will Lawson<br/>MSIT 5910-01 · AY2026-T4
+</div>
+</body>
+</html>

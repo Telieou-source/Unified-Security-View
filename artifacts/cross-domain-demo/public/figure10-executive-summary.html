@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 10 — Executive Summary Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 22px 28px 18px;
+  }
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 9px;
+  }
+  .fig-title { font-size: 13.5px; font-weight: bold; color: #c8d0d8; margin-bottom: 3px; }
+  .fig-sub   { font-size: 9.5px; color: #555a62; line-height: 1.6; margin-bottom: 14px; }
+
+  /* ── app chrome ── */
+  .app-chrome { background: #111315; border: 1px solid #21262d; border-radius: 6px; overflow: hidden; }
+  .chrome-bar {
+    background: #1a1c1f; border-bottom: 1px solid #2a2d32;
+    padding: 0 14px; height: 33px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .cbadge { font-size: 8.5px; font-weight: bold; padding: 2px 8px; border-radius: 2px;
+            display: flex; align-items: center; gap: 4px; }
+  .pulse { display: inline-block; width: 5px; height: 5px; border-radius: 50%; }
+
+  /* run strip */
+  .run-strip {
+    background: #0f1318; border-bottom: 1px solid #1e2228;
+    padding: 5px 16px; display: flex; align-items: center; gap: 0;
+  }
+  .rs-item { padding: 0 12px; border-right: 1px solid #1e2228;
+             display: flex; flex-direction: column; gap: 1px; }
+  .rs-item:last-child { border-right: none; }
+  .rs-val { font-size: 13px; font-weight: bold; line-height: 1; }
+  .rs-lbl { font-size: 7px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.07em; }
+
+  /* ── content area ── */
+  .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* section label */
+  .sec-lbl {
+    font-size: 8px; font-weight: bold; color: #3a4048;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .sec-lbl::after { content:''; flex:1; height:1px; background:#1e2228; }
+
+  /* ── Risk posture banner ── */
+  .risk-banner {
+    padding: 14px 18px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1a1c20; border: 1px solid #e5555540;
+  }
+  .rp-left { display: flex; flex-direction: column; gap: 2px; }
+  .rp-eyebrow { font-size: 8.5px; color: #555a62; text-transform: uppercase; letter-spacing: 0.09em; }
+  .rp-label { font-size: 32px; font-weight: bold; color: #e55555; line-height: 1; }
+  .rp-sub { font-size: 9px; color: #555a62; margin-top: 3px; }
+
+  /* gauge */
+  .gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .gauge-sub { font-size: 8.5px; color: #555a62; text-align: center; }
+
+  /* ── KPI row ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .kpi-card {
+    border-radius: 3px; padding: 9px 10px;
+    display: flex; flex-direction: column; gap: 2px;
+    background: #14161a; border: 1px solid #2a2d32;
+    position: relative; overflow: hidden;
+  }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-val { font-size: 24px; font-weight: bold; line-height: 1; }
+  .kpi-lbl { font-size: 8px; color: #555a62; text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-sub { font-size: 7.5px; color: #3a4048; margin-top: 1px; }
+  .kpi-arrow { font-size: 8px; position: absolute; right: 8px; top: 8px; }
+
+  /* ── two-panel grid (severity + domain) ── */
+  .two-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel {
+    background: #14161a; border: 1px solid #2a2d32; border-radius: 3px; overflow: hidden;
+  }
+  .panel-hdr {
+    background: #16191e; padding: 6px 12px; border-bottom: 1px solid #2a2d32;
+    font-size: 8px; font-weight: bold; color: #3a4048; text-transform: uppercase; letter-spacing: 0.09em;
+  }
+  .panel-body { padding: 8px 12px; display: flex; flex-direction: column; gap: 5px; }
+
+  /* severity row */
+  .sev-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 6px; border-bottom: 1px solid #121518; border-radius: 2px;
+  }
+  .sev-left { display: flex; align-items: center; gap: 6px; }
+  .sev-dot  { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+  .sev-name { font-size: 10px; font-weight: bold; }
+  .sev-right { display: flex; align-items: center; gap: 8px; }
+  .sev-bar-track { width: 100px; height: 6px; border-radius: 1px; background: #1e2124; overflow: hidden; }
+  .sev-bar-fill  { height: 6px; border-radius: 1px; }
+  .sev-count { font-size: 10px; color: #8a9aaa; width: 32px; text-align: right; font-weight: bold; }
+  .sev-pct   { font-size: 9px; color: #444850; width: 28px; text-align: right; }
+
+  /* domain row */
+  .dom-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 6px; border-bottom: 1px solid #121518; border-radius: 2px;
+  }
+  .dom-dot    { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+  .dom-name   { font-size: 9px; font-weight: bold; width: 52px; flex-shrink: 0; }
+  .dom-bar-track { flex: 1; height: 6px; border-radius: 1px; background: #1e2124; overflow: hidden; }
+  .dom-bar-fill  { height: 6px; border-radius: 1px; }
+  .dom-count  { font-size: 9.5px; color: #8a9aaa; width: 30px; text-align: right; font-weight: bold; }
+  .dom-fatal  { font-size: 9px; color: #e55555; width: 48px; text-align: right; }
+  .dom-error  { font-size: 9px; color: #f58220; width: 48px; text-align: right; }
+  .dom-arrow  { font-size: 8px; color: #3a4048; }
+
+  /* ── bandwidth health panel ── */
+  .bw-panel { background: #14161a; border: 1px solid #2a2d32; border-radius: 3px; overflow: hidden; }
+  .bw-hdr {
+    background: #16191e; padding: 6px 12px; border-bottom: 1px solid #2a2d32;
+    font-size: 8px; font-weight: bold; color: #3a4048; text-transform: uppercase; letter-spacing: 0.09em;
+  }
+  .bw-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* component status row */
+  .comp-row { display: flex; gap: 6px; }
+  .comp-pill {
+    flex: 1; display: flex; align-items: center; gap: 5px;
+    padding: 5px 8px; border-radius: 2px;
+    font-size: 9px; font-weight: bold;
+  }
+  .comp-dot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .comp-name { flex: 1; font-size: 8.5px; overflow: hidden; text-overflow: ellipsis; }
+  .comp-status { font-size: 8.5px; flex-shrink: 0; }
+
+  /* volume grid */
+  .vol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vol-lbl { font-size: 8px; color: #555a62; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .vol-dom-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .vol-dom-name { font-size: 9px; width: 52px; flex-shrink: 0; }
+  .vol-bar-track { flex: 1; height: 14px; border-radius: 2px; background: #1e2124; overflow: hidden; }
+  .vol-bar-fill  { height: 14px; border-radius: 2px; }
+  .vol-bytes { font-size: 9px; color: #8a9aaa; width: 56px; text-align: right; flex-shrink: 0; }
+
+  .throughput-box {
+    background: #111315; border-radius: 3px; padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .tp-row { display: flex; align-items: center; justify-content: space-between; font-size: 9.5px; }
+  .tp-key { color: #555a62; }
+  .tp-divider { height: 1px; background: #2a2d32; margin: 2px 0; }
+
+  /* recommendations */
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .rec-item {
+    display: flex; align-items: flex-start; gap: 6px;
+    padding: 8px 10px 8px 12px; border-radius: 2px;
+    background: #1a1c20; font-size: 9px; font-mono: true;
+    border: 1px solid;
+  }
+  .rec-arrow { font-size: 8px; flex-shrink: 0; margin-top: 1px; }
+  .rec-text  { color: #8a9aaa; line-height: 1.5; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 12px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">FIGURE 10 — EXECUTIVE SUMMARY DASHBOARD · LIVE SIMULATION RUN</div>
+<div class="fig-title">Executive Summary — Risk Posture, KPI Cards, Severity Breakdown, Domain Health &amp; Bandwidth Metrics</div>
+<div class="fig-sub">
+  ExecSummary view · ExecSummary.tsx · t = 150 s (mid-run) · 2,250 events ingested ·
+  risk posture gauge: strokeDasharray = min(threatRate × 2.26, 226) ·
+  BandwidthHealthPanel: BYTES_RAW=200 · BYTES_SAN=136 · BYTES_STRIP=64 per event
+</div>
+
+<div class="app-chrome">
+
+  <!-- chrome bar -->
+  <div class="chrome-bar">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <div style="font-size:11px;color:#c8d0d8;font-weight:bold;margin-left:6px;flex:1;">
+      Demo SIEM &nbsp;·&nbsp; Executive Summary &nbsp;·&nbsp; exec-summary view &nbsp;·&nbsp; t = 150 s
+    </div>
+    <span class="cbadge" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">
+      <span class="pulse" style="background:#e55555;box-shadow:0 0 4px #e55;"></span>SIMULATION RUNNING
+    </span>
+    <span class="cbadge" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">2,250 events</span>
+    <span class="cbadge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">CDG ACTIVE</span>
+  </div>
+
+  <!-- run strip -->
+  <div class="run-strip">
+    <div class="rs-item">
+      <span class="rs-val" style="color:#f58220;">150 s</span>
+      <span class="rs-lbl">Elapsed</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#c8d0d8;">2,250</span>
+      <span class="rs-lbl">Total Events</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#4ea6dc;">15.0</span>
+      <span class="rs-lbl">evt/s</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#e55555;">261</span>
+      <span class="rs-lbl">FATAL</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#f58220;">495</span>
+      <span class="rs-lbl">ERROR</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#f58220;">19</span>
+      <span class="rs-lbl">Active Alerts</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#48c78e;">3</span>
+      <span class="rs-lbl">Domains Online</span>
+    </div>
+    <div class="rs-item">
+      <span class="rs-val" style="color:#4ea6dc;">0.91</span>
+      <span class="rs-lbl">Avg Confidence</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════════
+         RISK POSTURE BANNER
+    ══════════════════════════════════ -->
+    <div>
+      <div class="sec-lbl">Risk Posture</div>
+      <div class="risk-banner">
+        <div class="rp-left">
+          <span class="rp-eyebrow">Current Risk Posture</span>
+          <span class="rp-label">CRITICAL</span>
+          <span class="rp-sub">3 domains monitored · 756 notable events · threat rate 33.6%</span>
+          <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+            <span style="font-size:8.5px;color:#555a62;">
+              <span style="color:#e55555;font-weight:bold;">261</span> FATAL events driving escalation
+            </span>
+            <span style="font-size:8.5px;color:#555a62;">
+              <span style="color:#f58220;font-weight:bold;">7</span> cross-domain user accounts flagged
+            </span>
+            <span style="font-size:8.5px;color:#555a62;">
+              <span style="color:#e55555;font-weight:bold;">96</span> ExfilAttempts · data loss risk active
+            </span>
+          </div>
+        </div>
+
+        <!-- right side: gauge + avg confidence KPI -->
+        <div style="display:flex;align-items:center;gap:20px;">
+
+          <!-- avg confidence badge -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <div style="font-size:8px;color:#555a62;text-transform:uppercase;letter-spacing:0.08em;">Avg Alert Confidence</div>
+            <div style="font-size:36px;font-weight:bold;color:#4ea6dc;line-height:1;">0.91</div>
+            <div style="font-size:8px;padding:2px 8px;border-radius:2px;background:#0e1e30;color:#4ea6dc;border:1px solid #4ea6dc30;">
+              XDOM-EXFIL-007
+            </div>
+          </div>
+
+          <!-- domains online badge -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <div style="font-size:8px;color:#555a62;text-transform:uppercase;letter-spacing:0.08em;">Domains Online</div>
+            <div style="font-size:36px;font-weight:bold;color:#48c78e;line-height:1;">3/3</div>
+            <div style="font-size:8px;padding:2px 8px;border-radius:2px;background:#0e2208;color:#48c78e;border:1px solid #264a38;">
+              α · β · γ ONLINE
+            </div>
+          </div>
+
+          <!-- risk gauge SVG — r=36, circ=226.2 -->
+          <!-- threatRate = 756/2250 = 33.6% → dasharray = 33.6 * 2.26 = 75.94 226 -->
+          <div class="gauge-wrap">
+            <svg width="96" height="96" viewBox="0 0 88 88">
+              <!-- bg ring -->
+              <circle cx="44" cy="44" r="36" fill="none" stroke="#2a2d32" stroke-width="8"/>
+              <!-- threat ring -->
+              <circle cx="44" cy="44" r="36"
+                fill="none" stroke="#e55555" stroke-width="8"
+                stroke-dasharray="75.94 226"
+                stroke-linecap="round"
+                transform="rotate(-90 44 44)"
+                opacity="0.85"/>
+              <!-- safe ring remainder (very faint) -->
+              <circle cx="44" cy="44" r="36"
+                fill="none" stroke="#264a38" stroke-width="8"
+                stroke-dasharray="150 226"
+                stroke-dashoffset="-76"
+                stroke-linecap="round"
+                transform="rotate(-90 44 44)"
+                opacity="0.25"/>
+              <!-- percentage label -->
+              <text x="44" y="41" text-anchor="middle"
+                font-size="13" font-weight="bold" fill="#e55555"
+                font-family="Courier New,monospace">34%</text>
+              <text x="44" y="53" text-anchor="middle"
+                font-size="8.5" fill="#555a62"
+                font-family="Courier New,monospace">threat</text>
+            </svg>
+            <span class="gauge-sub">risk gauge</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         KPI ROW — 6 StatCards
+    ══════════════════════════════════ -->
+    <div>
+      <div class="sec-lbl">Key Performance Indicators</div>
+      <div class="kpi-row">
+
+        <!-- Total Events -->
+        <div class="kpi-card" style="border-top: 2px solid #8eb8d4;">
+          <span class="kpi-val" style="color:#8eb8d4;">2,250</span>
+          <span class="kpi-lbl">Total Events</span>
+          <span class="kpi-sub">All domains · 150 s</span>
+          <span class="kpi-arrow" style="color:#8eb8d440;">▼</span>
+        </div>
+
+        <!-- FATAL -->
+        <div class="kpi-card" style="border-top: 2px solid #e55555;">
+          <span class="kpi-val" style="color:#e55555;">261</span>
+          <span class="kpi-lbl">FATAL</span>
+          <span class="kpi-sub">Immediate action</span>
+          <span class="kpi-arrow" style="color:#e5555540;">▼</span>
+        </div>
+
+        <!-- Exfil Attempts -->
+        <div class="kpi-card" style="border-top: 2px solid #e55555;">
+          <span class="kpi-val" style="color:#e55555;">96</span>
+          <span class="kpi-lbl">Exfil Attempts</span>
+          <span class="kpi-sub">Data loss risk</span>
+          <span class="kpi-arrow" style="color:#e5555540;">▼</span>
+        </div>
+
+        <!-- Priv Escalations -->
+        <div class="kpi-card" style="border-top: 2px solid #f58220;">
+          <span class="kpi-val" style="color:#f58220;">79</span>
+          <span class="kpi-lbl">Priv Escalations</span>
+          <span class="kpi-sub">Lateral movement</span>
+          <span class="kpi-arrow" style="color:#f5822040;">▼</span>
+        </div>
+
+        <!-- Cross-Domain users -->
+        <div class="kpi-card" style="border-top: 2px solid #c9a227;">
+          <span class="kpi-val" style="color:#c9a227;">7</span>
+          <span class="kpi-lbl">Cross-Domain</span>
+          <span class="kpi-sub">Suspicious users</span>
+          <span class="kpi-arrow" style="color:#c9a22740;">▼</span>
+        </div>
+
+        <!-- Domains -->
+        <div class="kpi-card" style="border-top: 2px solid #48c78e;">
+          <span class="kpi-val" style="color:#48c78e;">3</span>
+          <span class="kpi-lbl">Domains</span>
+          <span class="kpi-sub">Under monitoring</span>
+          <span class="kpi-arrow" style="color:#48c78e40;">▼</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         SEVERITY BREAKDOWN + DOMAIN HEALTH
+    ══════════════════════════════════ -->
+    <div class="two-panel">
+
+      <!-- Severity Breakdown -->
+      <div class="panel">
+        <div class="panel-hdr">Severity Breakdown</div>
+        <div class="panel-body">
+          <!-- FATAL: 261 / 2250 = 11.6% -->
+          <div class="sev-row">
+            <div class="sev-left">
+              <div class="sev-dot" style="background:#e55555;"></div>
+              <span class="sev-name" style="color:#e55555;">FATAL</span>
+              <span style="font-size:8px;color:#444850;">▼</span>
+            </div>
+            <div class="sev-right">
+              <div class="sev-bar-track">
+                <div class="sev-bar-fill" style="width:11.6%;background:#e55555;opacity:0.8;"></div>
+              </div>
+              <span class="sev-count">261</span>
+              <span class="sev-pct">11.6%</span>
+            </div>
+          </div>
+          <!-- ERROR: 495 / 2250 = 22.0% -->
+          <div class="sev-row">
+            <div class="sev-left">
+              <div class="sev-dot" style="background:#f58220;"></div>
+              <span class="sev-name" style="color:#f58220;">ERROR</span>
+              <span style="font-size:8px;color:#444850;">▼</span>
+            </div>
+            <div class="sev-right">
+              <div class="sev-bar-track">
+                <div class="sev-bar-fill" style="width:22%;background:#f58220;opacity:0.8;"></div>
+              </div>
+              <span class="sev-count">495</span>
+              <span class="sev-pct">22.0%</span>
+            </div>
+          </div>
+          <!-- WARN: 675 / 2250 = 30.0% -->
+          <div class="sev-row">
+            <div class="sev-left">
+              <div class="sev-dot" style="background:#e5c97a;"></div>
+              <span class="sev-name" style="color:#e5c97a;">WARN</span>
+              <span style="font-size:8px;color:#444850;">▼</span>
+            </div>
+            <div class="sev-right">
+              <div class="sev-bar-track">
+                <div class="sev-bar-fill" style="width:30%;background:#e5c97a;opacity:0.8;"></div>
+              </div>
+              <span class="sev-count">675</span>
+              <span class="sev-pct">30.0%</span>
+            </div>
+          </div>
+          <!-- INFO: 819 / 2250 = 36.4% -->
+          <div class="sev-row" style="border-bottom:none;">
+            <div class="sev-left">
+              <div class="sev-dot" style="background:#8eb8d4;"></div>
+              <span class="sev-name" style="color:#8eb8d4;">INFO</span>
+              <span style="font-size:8px;color:#444850;">▼</span>
+            </div>
+            <div class="sev-right">
+              <div class="sev-bar-track">
+                <div class="sev-bar-fill" style="width:36.4%;background:#8eb8d4;opacity:0.8;"></div>
+              </div>
+              <span class="sev-count">819</span>
+              <span class="sev-pct">36.4%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domain Health -->
+      <div class="panel">
+        <div class="panel-hdr">Domain Health</div>
+        <div class="panel-body">
+          <!-- ALPHA: 750 events, 87 FATAL, 165 ERROR -->
+          <div class="dom-row">
+            <div class="dom-dot" style="background:#4ea6dc;"></div>
+            <span class="dom-name" style="color:#4ea6dc;">ALPHA</span>
+            <div class="dom-bar-track">
+              <div class="dom-bar-fill" style="width:33.3%;background:#4ea6dc;opacity:0.7;"></div>
+            </div>
+            <span class="dom-count">750</span>
+            <span class="dom-fatal">87 FATAL</span>
+            <span class="dom-error">165 ERROR</span>
+            <span class="dom-arrow">▼</span>
+          </div>
+          <!-- BRAVO: 751 events, 88 FATAL, 165 ERROR -->
+          <div class="dom-row">
+            <div class="dom-dot" style="background:#48c78e;"></div>
+            <span class="dom-name" style="color:#48c78e;">BRAVO</span>
+            <div class="dom-bar-track">
+              <div class="dom-bar-fill" style="width:33.4%;background:#48c78e;opacity:0.7;"></div>
+            </div>
+            <span class="dom-count">751</span>
+            <span class="dom-fatal">88 FATAL</span>
+            <span class="dom-error">165 ERROR</span>
+            <span class="dom-arrow">▼</span>
+          </div>
+          <!-- CHARLIE: 749 events, 86 FATAL, 165 ERROR -->
+          <div class="dom-row" style="border-bottom:none;">
+            <div class="dom-dot" style="background:#c9a227;"></div>
+            <span class="dom-name" style="color:#c9a227;">CHARLIE</span>
+            <div class="dom-bar-track">
+              <div class="dom-bar-fill" style="width:33.3%;background:#c9a227;opacity:0.7;"></div>
+            </div>
+            <span class="dom-count">749</span>
+            <span class="dom-fatal">86 FATAL</span>
+            <span class="dom-error">165 ERROR</span>
+            <span class="dom-arrow">▼</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════
+         BANDWIDTH & SYSTEM HEALTH
+         (BandwidthHealthPanel faithfully reproduced)
+         2,250 events: totalBytes=450KB, sanBytes=306KB, strippedBytes=144KB, reduction=32%
+         per domain: 750 events × 200 = 150KB each
+    ══════════════════════════════════ -->
+    <div class="bw-panel">
+      <div class="bw-hdr">Bandwidth &amp; System Health</div>
+      <div class="bw-body">
+
+        <!-- component status row -->
+        <div class="comp-row">
+          <div class="comp-pill" style="background:#4ea6dc12;border:1px solid #4ea6dc30;">
+            <span class="comp-dot" style="background:#4ea6dc;box-shadow:0 0 3px #4ea6dc88;"></span>
+            <span class="comp-name" style="color:#4ea6dc;">Domain Alpha</span>
+            <span class="comp-status" style="color:#4ea6dc;">ONLINE</span>
+          </div>
+          <div class="comp-pill" style="background:#48c78e12;border:1px solid #48c78e30;">
+            <span class="comp-dot" style="background:#48c78e;box-shadow:0 0 3px #48c78e88;"></span>
+            <span class="comp-name" style="color:#48c78e;">Domain Bravo</span>
+            <span class="comp-status" style="color:#48c78e;">ONLINE</span>
+          </div>
+          <div class="comp-pill" style="background:#c9a22712;border:1px solid #c9a22730;">
+            <span class="comp-dot" style="background:#c9a227;box-shadow:0 0 3px #c9a22788;"></span>
+            <span class="comp-name" style="color:#c9a227;">Domain Charlie</span>
+            <span class="comp-status" style="color:#c9a227;">ONLINE</span>
+          </div>
+          <div class="comp-pill" style="background:#a855f712;border:1px solid #a855f730;">
+            <span class="comp-dot" style="background:#a855f7;box-shadow:0 0 3px #a855f788;"></span>
+            <span class="comp-name" style="color:#a855f7;">Cross-Domain Guard</span>
+            <span class="comp-status" style="color:#a855f7;">ACTIVE</span>
+          </div>
+          <div class="comp-pill" style="background:#f5822012;border:1px solid #f5822030;">
+            <span class="comp-dot" style="background:#f58220;box-shadow:0 0 3px #f5822088;"></span>
+            <span class="comp-name" style="color:#f58220;">High-Side Engine</span>
+            <span class="comp-status" style="color:#f58220;">ACTIVE</span>
+          </div>
+        </div>
+
+        <!-- volume breakdown grid -->
+        <div class="vol-grid">
+
+          <!-- per-domain volume bars -->
+          <div>
+            <div class="vol-lbl">Volume by Domain</div>
+            <!-- ALPHA: 150.0 KB / maxDomBytes=150KB → 100% -->
+            <div class="vol-dom-row">
+              <span class="vol-dom-name" style="color:#4ea6dc;">ALPHA</span>
+              <div class="vol-bar-track">
+                <div class="vol-bar-fill" style="width:100%;background:#4ea6dc;opacity:0.8;"></div>
+              </div>
+              <span class="vol-bytes">150.0 KB</span>
+            </div>
+            <!-- BRAVO: 150.2 KB (751 events) → 100% -->
+            <div class="vol-dom-row">
+              <span class="vol-dom-name" style="color:#48c78e;">BRAVO</span>
+              <div class="vol-bar-track">
+                <div class="vol-bar-fill" style="width:100%;background:#48c78e;opacity:0.8;"></div>
+              </div>
+              <span class="vol-bytes">150.2 KB</span>
+            </div>
+            <!-- CHARLIE: 149.8 KB (749 events) → 99.9% -->
+            <div class="vol-dom-row">
+              <span class="vol-dom-name" style="color:#c9a227;">CHARLIE</span>
+              <div class="vol-bar-track">
+                <div class="vol-bar-fill" style="width:99.9%;background:#c9a227;opacity:0.8;"></div>
+              </div>
+              <span class="vol-bytes">149.8 KB</span>
+            </div>
+          </div>
+
+          <!-- throughput summary -->
+          <div>
+            <div class="vol-lbl">Throughput Summary</div>
+            <div class="throughput-box">
+              <div class="tp-row">
+                <span class="tp-key">Total Ingested</span>
+                <span style="color:#8a9aaa;font-weight:bold;">450.0 KB</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-key">Sanitized Output</span>
+                <span style="color:#48c78e;font-weight:bold;">306.0 KB</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-key">Stripped (rawPktBytes)</span>
+                <span style="color:#e55555;font-weight:bold;">144.0 KB</span>
+              </div>
+              <div class="tp-divider"></div>
+              <div class="tp-row">
+                <span class="tp-key">Data Reduction</span>
+                <span style="color:#48c78e;font-weight:bold;font-size:11px;">32%</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-key">Guard Status</span>
+                <span style="color:#48c78e;font-weight:bold;">NOMINAL</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-key">CDG IN = OUT = STRIP</span>
+                <span style="color:#48c78e;font-weight:bold;">2,250 ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         ANALYST RECOMMENDATIONS
+    ══════════════════════════════════ -->
+    <div class="panel">
+      <div class="panel-hdr">Analyst Recommendations</div>
+      <div class="panel-body" style="padding:8px 10px;">
+        <div class="rec-grid">
+          <div class="rec-item" style="border-color:#e5555530;border-left:3px solid #e55555;">
+            <span class="rec-arrow" style="color:#e55555;">▶</span>
+            <span class="rec-text">Investigate <strong style="color:#e55555;">7</strong> cross-domain user account(s) — potential lateral movement across ALPHA, BRAVO, CHARLIE</span>
+          </div>
+          <div class="rec-item" style="border-color:#e5555530;border-left:3px solid #e55555;">
+            <span class="rec-arrow" style="color:#e55555;">▶</span>
+            <span class="rec-text">Review <strong style="color:#e55555;">96</strong> ExfilAttempt event(s) — validate data-loss controls and DLP policies on all boundary interfaces</span>
+          </div>
+          <div class="rec-item" style="border-color:#f5822030;border-left:3px solid #f58220;">
+            <span class="rec-arrow" style="color:#f58220;">▶</span>
+            <span class="rec-text">Audit <strong style="color:#f58220;">79</strong> PrivilegeEsc event(s) — confirm authorization for each escalation; contain <strong style="color:#f58220;">svc_relay_01</strong></span>
+          </div>
+          <div class="rec-item" style="border-color:#e5c97a30;border-left:3px solid #e5c97a;">
+            <span class="rec-arrow" style="color:#e5c97a;">▶</span>
+            <span class="rec-text">Run cross-domain correlation query to identify shared threat actor indicators; confidence avg <strong style="color:#4ea6dc;">0.91</strong> across 19 active alerts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app-chrome -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>

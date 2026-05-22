@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 3 — CrossDomainGuard Invariant Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f11;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0d8;
+    padding: 26px 30px 20px;
+  }
+
+  .fig-badge {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 2px 10px; border-radius: 2px; letter-spacing: 0.07em;
+    background: #1a1c20; color: #8b949e; border: 1px solid #2a2d32;
+    margin-bottom: 10px;
+  }
+  .fig-title { font-size: 14px; font-weight: bold; color: #c8d0d8; margin-bottom: 4px; }
+  .fig-sub   { font-size: 10px; color: #555a62; line-height: 1.6; margin-bottom: 16px; }
+
+  /* ── outer card ── */
+  .card {
+    background: #111315; border: 1px solid #21262d; border-radius: 6px;
+    overflow: hidden;
+  }
+
+  /* chrome bar */
+  .chrome-bar {
+    background: #1a1c1f; border-bottom: 1px solid #2a2d32;
+    padding: 0 14px; height: 34px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .bar-title { font-size: 11px; color: #c8d0d8; font-weight: bold; margin-left: 4px; flex: 1; }
+  .badge { font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 2px; display: flex; align-items: center; gap: 4px; }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+  /* ── guard header strip ── */
+  .guard-header {
+    background: #0e1a0e; border-bottom: 1px solid #1e3a1e;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .guard-id { font-size: 11px; font-weight: bold; color: #48c78e; letter-spacing: 0.05em; }
+  .guard-meta { font-size: 9px; color: #264a38; display: flex; flex-direction: column; gap: 2px; }
+  .gh-sep { width: 1px; height: 32px; background: #1e3a1e; }
+  .gh-stat { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .gh-stat-val { font-size: 13px; font-weight: bold; }
+  .gh-stat-lbl { font-size: 8px; color: #264a38; text-transform: uppercase; letter-spacing: 0.07em; }
+  .invariant-badge {
+    margin-left: auto;
+    background: #0e2a1a; border: 1px solid #264a38; border-radius: 3px;
+    padding: 6px 14px; text-align: center;
+  }
+  .inv-check { font-size: 22px; color: #48c78e; line-height: 1; }
+  .inv-label { font-size: 9px; color: #264a38; margin-top: 2px; font-weight: bold; letter-spacing: 0.06em; }
+
+  /* ── body grid ── */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 260px;
+    border-bottom: 1px solid #1e2228;
+  }
+
+  /* big counter cells */
+  .counter-cell {
+    padding: 24px 20px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    border-right: 1px solid #1e2228;
+  }
+  .cc-label {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: bold; padding: 2px 10px; border-radius: 2px; margin-bottom: 6px;
+  }
+  .cc-icon { font-size: 24px; line-height: 1; margin-bottom: 2px; }
+  .cc-num {
+    font-size: 72px; font-weight: bold; line-height: 1; letter-spacing: -2px;
+  }
+  .cc-unit { font-size: 10px; color: #444850; margin-top: 2px; }
+  .cc-desc { font-size: 8.5px; color: #3a4048; margin-top: 6px; text-align: center; line-height: 1.5; }
+  .cc-domain-bar {
+    width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .cdb-row { display: flex; align-items: center; gap: 6px; }
+  .cdb-lbl { font-size: 8px; width: 46px; flex-shrink: 0; }
+  .cdb-track { flex: 1; height: 6px; background: #1a1c20; border-radius: 1px; overflow: hidden; }
+  .cdb-fill  { height: 6px; border-radius: 1px; }
+  .cdb-val   { font-size: 8px; font-weight: bold; width: 24px; text-align: right; flex-shrink: 0; }
+
+  /* right telemetry column */
+  .telem-col {
+    padding: 16px 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .tl-section-lbl {
+    font-size: 8px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.09em;
+    border-bottom: 1px solid #1e2228; padding-bottom: 4px; margin-bottom: 2px;
+  }
+  .tl-row { display: flex; justify-content: space-between; font-size: 9px; padding: 2px 0; }
+  .tl-key { color: #444850; }
+  .tl-val { color: #8b949e; font-weight: bold; }
+
+  /* ── invariant proof row ── */
+  .proof-row {
+    background: #0a1208; border-bottom: 1px solid #1e3a1e;
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 0;
+  }
+  .proof-term {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 20px;
+  }
+  .pt-label { font-size: 9px; color: #264a38; text-transform: uppercase; letter-spacing: 0.07em; }
+  .pt-num   { font-size: 20px; font-weight: bold; color: #48c78e; }
+  .proof-op { font-size: 18px; color: #264a38; padding: 0 4px; }
+  .proof-result {
+    margin-left: auto; background: #0e2208; border: 1px solid #264a38;
+    border-radius: 3px; padding: 6px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pr-check { font-size: 18px; color: #48c78e; }
+  .pr-text  { font-size: 10px; font-weight: bold; color: #48c78e; letter-spacing: 0.05em; }
+  .pr-sub   { font-size: 8px; color: #264a38; margin-top: 1px; }
+
+  /* ── timeline strip ── */
+  .timeline-section {
+    padding: 14px 20px 16px;
+    border-bottom: 1px solid #1e2228;
+  }
+  .ts-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .ts-title { font-size: 9px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ts-right { font-size: 8.5px; color: #264a38; }
+
+  .tl-chart-area {
+    position: relative; height: 56px;
+    background: #0a0c0e; border: 1px solid #1e2228; border-radius: 2px;
+    overflow: hidden;
+  }
+  /* Simulated "bar chart" of cumulative events over 60s: 12 ticks × 5s = 75 events/tick per domain = 225/tick total */
+  .tl-bars { display: flex; align-items: flex-end; gap: 2px; height: 100%; padding: 4px 4px 0; }
+  .tl-bar  { flex: 1; border-radius: 1px 1px 0 0; }
+
+  .tl-axis { display: flex; justify-content: space-between; margin-top: 3px; }
+  .tl-tick { font-size: 7.5px; color: #3a4048; }
+
+  .tl-legend {
+    display: flex; gap: 16px; margin-top: 8px;
+  }
+  .tl-leg-item { display: flex; align-items: center; gap: 5px; font-size: 8px; color: #3a4048; }
+  .tl-leg-dot  { width: 8px; height: 8px; border-radius: 1px; }
+
+  /* ── per-domain breakdown table ── */
+  .breakdown-section {
+    padding: 14px 20px 16px;
+  }
+  .bk-header {
+    font-size: 9px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .bk-table {
+    width: 100%; border-collapse: collapse; font-size: 9px;
+  }
+  .bk-table th {
+    font-size: 8px; color: #3a4048; text-transform: uppercase; letter-spacing: 0.07em;
+    text-align: left; padding: 4px 10px; border-bottom: 1px solid #1e2228;
+    background: #0f1318;
+  }
+  .bk-table th.r { text-align: right; }
+  .bk-table td {
+    padding: 7px 10px; border-bottom: 1px solid #1a1c20; vertical-align: middle;
+  }
+  .bk-table td.r { text-align: right; }
+  .bk-table tr:last-child td { border-bottom: none; }
+  .bk-table tr.total-row td { border-top: 1px solid #264a38; padding-top: 8px; }
+
+  .dom-dot { display: inline-block; width: 8px; height: 8px; border-radius: 1px; margin-right: 5px; vertical-align: middle; }
+  .mono-num { font-weight: bold; font-family: 'Courier New', monospace; }
+  .check-cell { color: #48c78e; font-weight: bold; }
+  .rate-badge { font-size: 8px; padding: 1px 5px; border-radius: 2px; background: #0e1a0e; color: #48c78e; border: 1px solid #264a38; }
+
+  .watermark {
+    text-align: right; font-size: 9px;
+    color: rgba(245,130,32,0.20); margin-top: 14px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig-badge">FIGURE 3 — CROSSDOMAINGUARD INVARIANT VERIFICATION</div>
+<div class="fig-title">CrossDomainGuard — Post-Run Sanitization Counter Report (60-Second Simulation)</div>
+<div class="fig-sub">
+  5 events/s per domain × 3 domains × 60 s = 900 total events processed &nbsp;·&nbsp;
+  IN = OUT = STRIP = 900 confirms the sanitization invariant &nbsp;·&nbsp;
+  rawPacketBytes stripped on every event &nbsp;·&nbsp; zero boundary violations &nbsp;·&nbsp; guardId: CDG-ALPHA-BRAVO-CHARLIE-v1.2
+</div>
+
+<div class="card">
+
+  <!-- chrome -->
+  <div class="chrome-bar">
+    <div class="dot" style="background:#e55555;"></div>
+    <div class="dot" style="background:#e5c97a;"></div>
+    <div class="dot" style="background:#48c78e;"></div>
+    <div class="bar-title">CrossDomainGuard &nbsp;·&nbsp; sanitization-report &nbsp;·&nbsp; run completed 13:06:02.001</div>
+    <span class="badge" style="background:#0e2a1a;color:#48c78e;border:1px solid #264a38;">
+      <span class="pulse" style="background:#48c78e;"></span>GUARD ACTIVE
+    </span>
+    <span class="badge" style="background:#1a2030;color:#79c0ff;border:1px solid #2a3a60;">60 s RUN</span>
+    <span style="font-size:9px;color:#e55555;font-weight:bold;margin-left:6px;">TOP SECRET // HIGH SIDE</span>
+  </div>
+
+  <!-- guard header strip -->
+  <div class="guard-header">
+    <div>
+      <div class="guard-id">CDG-ALPHA-BRAVO-CHARLIE-v1.2</div>
+      <div class="guard-meta">
+        <span>Boundary: HIGH-SIDE → LOW-SIDE &nbsp;·&nbsp; unidirectional</span>
+        <span>sanitizeEvent() &nbsp;·&nbsp; ES2018 rest-destructure &nbsp;·&nbsp; stripField: rawPacketBytes</span>
+      </div>
+    </div>
+    <div class="gh-sep"></div>
+    <div class="gh-stat">
+      <span class="gh-stat-val" style="color:#48c78e;">ACTIVE</span>
+      <span class="gh-stat-lbl">Guard State</span>
+    </div>
+    <div class="gh-sep"></div>
+    <div class="gh-stat">
+      <span class="gh-stat-val" style="color:#f58220;">60.0 s</span>
+      <span class="gh-stat-lbl">Run Duration</span>
+    </div>
+    <div class="gh-sep"></div>
+    <div class="gh-stat">
+      <span class="gh-stat-val" style="color:#4ea6dc;">15.0/s</span>
+      <span class="gh-stat-lbl">Event Rate</span>
+    </div>
+    <div class="gh-sep"></div>
+    <div class="gh-stat">
+      <span class="gh-stat-val" style="color:#48c78e;">0</span>
+      <span class="gh-stat-lbl">Violations</span>
+    </div>
+    <div class="gh-sep"></div>
+    <div class="gh-stat">
+      <span class="gh-stat-val" style="color:#79c0ff;">&lt; 1 ms</span>
+      <span class="gh-stat-lbl">Mean Latency</span>
+    </div>
+    <div class="invariant-badge">
+      <div class="inv-check">✓</div>
+      <div class="inv-label">INVARIANT HOLDS</div>
+    </div>
+  </div>
+
+  <!-- three big counters + telemetry -->
+  <div class="body-grid">
+
+    <!-- IN counter -->
+    <div class="counter-cell" style="background:#0d1208;">
+      <span class="cc-label" style="background:#0e2208;color:#48c78e;border:1px solid #264a38;">IN COUNT</span>
+      <span class="cc-icon">↓</span>
+      <span class="cc-num" style="color:#48c78e;">900</span>
+      <span class="cc-unit">raw events received</span>
+      <span class="cc-desc">
+        All 14 fields intact on ingress<br/>
+        No events dropped or rejected
+      </span>
+      <div class="cc-domain-bar">
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#4ea6dc;">α ALPHA</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#4ea6dc;opacity:0.7;"></div></div>
+          <span class="cdb-val" style="color:#4ea6dc;">300</span>
+        </div>
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#48c78e;">β BRAVO</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#48c78e;opacity:0.7;"></div></div>
+          <span class="cdb-val" style="color:#48c78e;">300</span>
+        </div>
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#c9a227;">γ CHARLIE</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#c9a227;opacity:0.7;"></div></div>
+          <span class="cdb-val" style="color:#c9a227;">300</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STRIP counter -->
+    <div class="counter-cell" style="background:#120a0a;">
+      <span class="cc-label" style="background:#2d0e0e;color:#e55555;border:1px solid #6a2020;">STRIP COUNT</span>
+      <span class="cc-icon" style="color:#e55555;">✕</span>
+      <span class="cc-num" style="color:#e55555;">900</span>
+      <span class="cc-unit">rawPacketBytes removed</span>
+      <span class="cc-desc">
+        One strip per event &nbsp;·&nbsp; 100% yield<br/>
+        Field: rawPacketBytes (IPv4 header bytes)
+      </span>
+      <div class="cc-domain-bar">
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#4ea6dc;">α ALPHA</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#e55555;opacity:0.6;"></div></div>
+          <span class="cdb-val" style="color:#e55555;">300</span>
+        </div>
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#48c78e;">β BRAVO</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#e55555;opacity:0.6;"></div></div>
+          <span class="cdb-val" style="color:#e55555;">300</span>
+        </div>
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#c9a227;">γ CHARLIE</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#e55555;opacity:0.6;"></div></div>
+          <span class="cdb-val" style="color:#e55555;">300</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUT counter -->
+    <div class="counter-cell" style="background:#0d1208;">
+      <span class="cc-label" style="background:#0e2208;color:#48c78e;border:1px solid #264a38;">OUT COUNT</span>
+      <span class="cc-icon">↑</span>
+      <span class="cc-num" style="color:#48c78e;">900</span>
+      <span class="cc-unit">sanitized events passed</span>
+      <span class="cc-desc">
+        13 fields retained per event<br/>
+        rawPacketBytes absent on egress
+      </span>
+      <div class="cc-domain-bar">
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#4ea6dc;">α ALPHA</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#4ea6dc;opacity:0.7;"></div></div>
+          <span class="cdb-val" style="color:#4ea6dc;">300</span>
+        </div>
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#48c78e;">β BRAVO</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#48c78e;opacity:0.7;"></div></div>
+          <span class="cdb-val" style="color:#48c78e;">300</span>
+        </div>
+        <div class="cdb-row">
+          <span class="cdb-lbl" style="color:#c9a227;">γ CHARLIE</span>
+          <div class="cdb-track"><div class="cdb-fill" style="width:100%;background:#c9a227;opacity:0.7;"></div></div>
+          <span class="cdb-val" style="color:#c9a227;">300</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- right telemetry column -->
+    <div class="telem-col" style="background:#0f1318;border-left:1px solid #1e2228;">
+      <div>
+        <div class="tl-section-lbl">Guard Telemetry</div>
+        <div class="tl-row"><span class="tl-key">guardId</span><span class="tl-val" style="color:#48c78e;font-size:8px;">CDG-ABC-v1.2</span></div>
+        <div class="tl-row"><span class="tl-key">startTime</span><span class="tl-val">13:05:02.001</span></div>
+        <div class="tl-row"><span class="tl-key">endTime</span><span class="tl-val">13:06:02.001</span></div>
+        <div class="tl-row"><span class="tl-key">duration</span><span class="tl-val" style="color:#f58220;">60,000 ms</span></div>
+        <div class="tl-row"><span class="tl-key">tick interval</span><span class="tl-val">200 ms</span></div>
+        <div class="tl-row"><span class="tl-key">ticks executed</span><span class="tl-val">300</span></div>
+      </div>
+      <div>
+        <div class="tl-section-lbl">Throughput</div>
+        <div class="tl-row"><span class="tl-key">total rate</span><span class="tl-val" style="color:#4ea6dc;">15.0 evt/s</span></div>
+        <div class="tl-row"><span class="tl-key">per domain</span><span class="tl-val">5.0 evt/s</span></div>
+        <div class="tl-row"><span class="tl-key">mean latency</span><span class="tl-val" style="color:#48c78e;">&lt; 1 ms</span></div>
+        <div class="tl-row"><span class="tl-key">max latency</span><span class="tl-val">&lt; 2 ms</span></div>
+        <div class="tl-row"><span class="tl-key">stripped bytes</span><span class="tl-val" style="color:#e55555;">~56 KB</span></div>
+      </div>
+      <div>
+        <div class="tl-section-lbl">Invariant Checks</div>
+        <div class="tl-row"><span class="tl-key">IN = OUT</span><span class="tl-val" style="color:#48c78e;">✓  900 = 900</span></div>
+        <div class="tl-row"><span class="tl-key">IN = STRIP</span><span class="tl-val" style="color:#48c78e;">✓  900 = 900</span></div>
+        <div class="tl-row"><span class="tl-key">violations</span><span class="tl-val" style="color:#48c78e;">0  (none)</span></div>
+        <div class="tl-row"><span class="tl-key">strip yield</span><span class="tl-val" style="color:#48c78e;">100.0 %</span></div>
+      </div>
+    </div>
+
+  </div><!-- /body-grid -->
+
+  <!-- invariant proof bar -->
+  <div class="proof-row">
+    <span style="font-size:9px;color:#264a38;margin-right:12px;text-transform:uppercase;letter-spacing:0.08em;">Invariant Proof:</span>
+    <div class="proof-term">
+      <span class="pt-label">inCount</span>
+      <span class="pt-num">900</span>
+    </div>
+    <span class="proof-op">=</span>
+    <div class="proof-term">
+      <span class="pt-label">outCount</span>
+      <span class="pt-num">900</span>
+    </div>
+    <span class="proof-op">=</span>
+    <div class="proof-term">
+      <span class="pt-label">stripCount</span>
+      <span class="pt-num" style="color:#e55555;">900</span>
+    </div>
+    <span class="proof-op" style="font-size:22px;color:#264a38;">→</span>
+    <div class="proof-result">
+      <span class="pr-check">✓</span>
+      <div>
+        <div class="pr-text">IN = OUT = STRIP</div>
+        <div class="pr-sub">No data escapes the sanitization boundary unstripped</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 60-second cumulative timeline -->
+  <div class="timeline-section">
+    <div class="ts-header">
+      <span class="ts-title">Cumulative Strip Count — 60-Second Run (12 × 5 s ticks)</span>
+      <span class="ts-right">900 strips · 15.0/s · 0 misses · 0 gaps</span>
+    </div>
+    <div class="tl-chart-area">
+      <div class="tl-bars">
+        <!-- 12 bars, each representing 75 cumulative total events (25/domain) per 5-second tick -->
+        <!-- heights proportional to cumulative total / 900 -->
+        <div class="tl-bar" style="height: 8.3%;background:#264a38;"></div>
+        <div class="tl-bar" style="height:16.7%;background:#264a38;"></div>
+        <div class="tl-bar" style="height:25.0%;background:#2a5040;"></div>
+        <div class="tl-bar" style="height:33.3%;background:#2a5040;"></div>
+        <div class="tl-bar" style="height:41.7%;background:#2d5845;"></div>
+        <div class="tl-bar" style="height:50.0%;background:#2d5845;"></div>
+        <div class="tl-bar" style="height:58.3%;background:#316050;"></div>
+        <div class="tl-bar" style="height:66.7%;background:#316050;"></div>
+        <div class="tl-bar" style="height:75.0%;background:#346858;"></div>
+        <div class="tl-bar" style="height:83.3%;background:#346858;"></div>
+        <div class="tl-bar" style="height:91.7%;background:#387060;"></div>
+        <div class="tl-bar" style="height:100%;background:#48c78e;"></div>
+      </div>
+    </div>
+    <div class="tl-axis">
+      <span class="tl-tick">t = 0 s</span>
+      <span class="tl-tick">5 s</span>
+      <span class="tl-tick">10 s</span>
+      <span class="tl-tick">15 s</span>
+      <span class="tl-tick">20 s</span>
+      <span class="tl-tick">25 s</span>
+      <span class="tl-tick">30 s</span>
+      <span class="tl-tick">35 s</span>
+      <span class="tl-tick">40 s</span>
+      <span class="tl-tick">45 s</span>
+      <span class="tl-tick">50 s</span>
+      <span class="tl-tick">55 s</span>
+      <span class="tl-tick" style="color:#48c78e;font-weight:bold;">60 s</span>
+    </div>
+    <div class="tl-legend">
+      <div class="tl-leg-item"><div class="tl-leg-dot" style="background:#48c78e;"></div>Cumulative strip count (IN = OUT = STRIP at each tick)</div>
+      <div class="tl-leg-item"><div class="tl-leg-dot" style="background:#264a38;"></div>Ramp-up phase</div>
+      <div class="tl-leg-item" style="margin-left:auto;color:#48c78e;font-weight:bold;">Final: 900 / 900 = 100.0%</div>
+    </div>
+  </div>
+
+  <!-- per-domain breakdown table -->
+  <div class="breakdown-section">
+    <div class="bk-header">Per-Domain Sanitization Breakdown</div>
+    <table class="bk-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Classification</th>
+          <th class="r">Events In</th>
+          <th class="r">rawPacketBytes Stripped</th>
+          <th class="r">Events Out</th>
+          <th class="r">Strip Yield</th>
+          <th class="r">Rate</th>
+          <th class="r">Invariant</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="dom-dot" style="background:#4ea6dc;"></span><strong style="color:#4ea6dc;">ALPHA</strong></td>
+          <td style="color:#e55555;">TOP SECRET</td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#e55555;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">100.0 %</span></td>
+          <td class="r"><span class="rate-badge">5.0 /s</span></td>
+          <td class="r check-cell">✓ IN=OUT=STRIP</td>
+        </tr>
+        <tr>
+          <td><span class="dom-dot" style="background:#48c78e;"></span><strong style="color:#48c78e;">BRAVO</strong></td>
+          <td style="color:#c9a227;">SECRET</td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#e55555;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">100.0 %</span></td>
+          <td class="r"><span class="rate-badge">5.0 /s</span></td>
+          <td class="r check-cell">✓ IN=OUT=STRIP</td>
+        </tr>
+        <tr>
+          <td><span class="dom-dot" style="background:#c9a227;"></span><strong style="color:#c9a227;">CHARLIE</strong></td>
+          <td style="color:#c9a227;">CONFIDENTIAL</td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#e55555;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">300</span></td>
+          <td class="r"><span class="mono-num" style="color:#48c78e;">100.0 %</span></td>
+          <td class="r"><span class="rate-badge">5.0 /s</span></td>
+          <td class="r check-cell">✓ IN=OUT=STRIP</td>
+        </tr>
+        <tr class="total-row" style="background:#0e2208;">
+          <td colspan="2"><strong style="color:#48c78e;">TOTAL (all domains)</strong></td>
+          <td class="r"><strong class="mono-num" style="color:#48c78e;font-size:11px;">900</strong></td>
+          <td class="r"><strong class="mono-num" style="color:#e55555;font-size:11px;">900</strong></td>
+          <td class="r"><strong class="mono-num" style="color:#48c78e;font-size:11px;">900</strong></td>
+          <td class="r"><strong class="mono-num" style="color:#48c78e;">100.0 %</strong></td>
+          <td class="r"><span class="rate-badge">15.0 /s</span></td>
+          <td class="r" style="color:#48c78e;font-weight:bold;font-size:10px;">✓ INVARIANT HOLDS</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /card -->
+
+<div class="watermark">Will Lawson<br/>MSIT 5910-01 · AY2026-T4</div>
+</body>
+</html>
