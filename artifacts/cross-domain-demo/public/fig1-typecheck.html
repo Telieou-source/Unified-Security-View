@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Figure 1 — TypeScript Strict-Mode Typecheck</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1e1e1e; font-family:'Courier New',Courier,monospace; padding:0; }
+
+  .window {
+    background:#1e1e1e; border-radius:8px; overflow:hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    border: 1px solid #3c3c3c;
+    width: 900px; margin: 24px auto;
+  }
+  .titlebar {
+    background:#323233; padding:10px 16px; display:flex; align-items:center; gap:8px;
+    border-bottom: 1px solid #3c3c3c;
+  }
+  .dot { width:12px; height:12px; border-radius:50%; }
+  .title { color:#cccccc; font-size:12px; margin-left:8px; font-family:sans-serif; }
+
+  .tabs { background:#252526; padding:0 0 0 0; border-bottom:1px solid #3c3c3c; display:flex; }
+  .tab { padding:8px 20px; font-size:11px; font-family:sans-serif; color:#cccccc;
+         border-right:1px solid #3c3c3c; }
+  .tab.active { background:#1e1e1e; color:#ffffff; border-top:2px solid #007acc; }
+
+  .terminal { padding:20px 20px 24px; font-size:13px; line-height:1.7; min-height:300px; }
+
+  .prompt { color:#4ec9b0; }
+  .cmd    { color:#ce9178; }
+  .dim    { color:#6a9955; }
+  .white  { color:#d4d4d4; }
+  .green  { color:#4ec9b0; font-weight:bold; }
+  .blue   { color:#569cd6; }
+  .yellow { color:#dcdcaa; }
+  .scope  { color:#9cdcfe; }
+  .done   { color:#4ec9b0; }
+  .bold   { font-weight:bold; }
+  .ok-badge {
+    display:inline-block; background:#14532d; color:#4ade80;
+    padding:2px 12px; border-radius:3px; font-weight:bold;
+    font-size:12px; border:1px solid #166534;
+  }
+
+  .cap {
+    background:#252526; border-top:1px solid #3c3c3c;
+    padding:10px 20px; font-family:sans-serif; font-size:11px;
+    color:#8e8e8e; font-style:italic; text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot" style="background:#ff5f57;"></div>
+    <div class="dot" style="background:#febc2e;"></div>
+    <div class="dot" style="background:#28c840;"></div>
+    <span class="title">TERMINAL — workspace root — pnpm run typecheck</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active">TERMINAL</div>
+    <div class="tab">PROBLEMS</div>
+    <div class="tab">OUTPUT</div>
+  </div>
+  <div class="terminal">
+
+<div><span class="prompt">~/workspace $</span> <span class="cmd">pnpm run typecheck</span></div>
+<div>&nbsp;</div>
+<div><span class="dim">></span> <span class="scope">workspace@0.0.0</span> <span class="yellow">typecheck</span> <span class="dim">/home/runner/workspace</span></div>
+<div><span class="dim">></span> <span class="white">pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck</span></div>
+<div>&nbsp;</div>
+<div><span class="dim">></span> <span class="scope">workspace@0.0.0</span> <span class="yellow">typecheck:libs</span> <span class="dim">/home/runner/workspace</span></div>
+<div><span class="dim">></span> <span class="blue">tsc --build</span></div>
+<div>&nbsp;</div>
+<div><span class="dim">Scope:</span> <span class="white">4 of 9 workspace projects</span></div>
+<div>&nbsp;</div>
+<div><span class="scope">artifacts/api-server        </span> <span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div><span class="scope">artifacts/cross-domain-demo </span> <span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div><span class="scope">artifacts/mockup-sandbox    </span> <span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div><span class="scope">scripts                     </span> <span class="yellow">typecheck$</span> <span class="white">tsc -p tsconfig.json --noEmit</span></div>
+<div>&nbsp;</div>
+<div><span class="scope">scripts                     </span> <span class="yellow">typecheck:</span> <span class="done">Done</span></div>
+<div><span class="scope">artifacts/api-server        </span> <span class="yellow">typecheck:</span> <span class="done">Done</span></div>
+<div><span class="scope">artifacts/mockup-sandbox    </span> <span class="yellow">typecheck:</span> <span class="done">Done</span></div>
+<div><span class="scope">artifacts/cross-domain-demo </span> <span class="yellow">typecheck:</span> <span class="done">Done</span></div>
+<div>&nbsp;</div>
+<div><span class="white bold">TypeScript strict-mode build complete</span></div>
+<div>&nbsp;</div>
+<div><span class="white">Errors:    </span><span class="green bold">0</span><span class="dim">   — across all 9 modules</span></div>
+<div><span class="white">Warnings:  </span><span class="green bold">0</span><span class="dim">   — TypeScript 5.9 strict mode</span></div>
+<div><span class="white">Packages:  </span><span class="white">9</span><span class="dim">   — DomainEventGenerator · CrossDomainGuard · CorrelationEngine · SimulationController</span></div>
+<div class="dim">                    DashboardRenderer · SearchModule · ReportGenerator · InvestigationManager · HealthMonitor</span></div>
+<div>&nbsp;</div>
+<div><span class="ok-badge">✓ PASS — 0 errors · 0 warnings · 9/9 modules</span></div>
+<div>&nbsp;</div>
+<div><span class="prompt">~/workspace $</span> <span class="white">▊</span></div>
+
+  </div>
+  <div class="cap">Figure 1 — pnpm run typecheck · TypeScript 5.9 strict mode · workspace root · May 2026 · All interface contracts satisfied across all nine Demo SIEM modules</div>
+</div>
+</body>
+</html>

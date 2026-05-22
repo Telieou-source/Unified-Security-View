@@ -216,3 +216,9 @@ id = "esfqI2_Acitj6qGhRWim5"
 uri = "file://screenshots/CodeExcerpt6_SimulationTick.jpg"
 type = "image"
 title = "Code Excerpt 6 — runSimulationTick() · App.tsx lines 17–76 · ① generateEvent() · ② setRawEvents (MAX_RAW=80) · ③ sanitizeEvent() · ④ setSanitizedEvents (MAX_SANITIZED=160) · ⑤ tryCorrelate() · ⑥ conditional setAlerts (MAX_ALERTS=60) · ⑦ HealthMonitor reactive · useCallback(fn,[]) + sanitizedRef stale-closure escape · setInterval clock useEffect deps"
+
+[[outputs]]
+id = "U7jZAjIfKFX7dZ8A9WfpD"
+uri = "file://Unit7_Assignment_With_Figures.docx"
+type = "word_document"
+title = "Unit 7 Assignment — MSIT 5910-01 Capstone — With All 8 Figures Inserted"
