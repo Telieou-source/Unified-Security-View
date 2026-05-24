@@ -107,6 +107,43 @@ Output is written to `artifacts/cross-domain-demo/dist/public/`.
 
 ---
 
+## Windows Desktop App
+
+A native Windows installer is built automatically via GitHub Actions whenever a version tag is pushed.
+
+### Download
+
+Go to [Releases](https://github.com/Telieou-source/Unified-Security-View/releases) and download:
+
+| File | Description |
+|---|---|
+| `Demo_SIEM_vX.X.X_x64-setup.exe` | **Recommended.** NSIS installer — guided setup, bundles WebView2 |
+| `Demo_SIEM_vX.X.X_x64_en-US.msi` | MSI package for enterprise/group policy deployment |
+
+**Requirements:** Windows 10 or 11 (64-bit)
+
+### Build locally (Windows)
+
+Requires [Node.js](https://nodejs.org/) v20+, [pnpm](https://pnpm.io/), and [Rust stable](https://rustup.rs/).
+
+```bash
+pnpm install
+pnpm --filter @workspace/cross-domain-demo run tauri:build
+```
+
+Installers are written to `artifacts/cross-domain-demo/src-tauri/target/release/bundle/`.
+
+### Release a new version
+
+```bash
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+GitHub Actions builds the Windows installer and attaches it to the release automatically.
+
+---
+
 ## Tech Stack
 
 - **React 18** + **TypeScript**
