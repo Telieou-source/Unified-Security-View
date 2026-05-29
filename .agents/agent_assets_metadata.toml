@@ -246,3 +246,9 @@ id = "VM84mPiq0M_kCVuZnFVbm"
 uri = "file://screenshots/Figure11_GitHubActions_workflow_run.png"
 type = "image"
 title = "Figure 11 — GitHub Actions workflow run (rendered)"
+
+[[outputs]]
+id = "itxTLWehokcHil7EwckXX"
+uri = "file://Unit8_Final_Capstone_Report_corrected.docx"
+type = "word_document"
+title = "Unit 8 Final Capstone Report — corrected (your formatting preserved)"
