@@ -233,10 +233,16 @@ title = "Unit 7 Part C — Capstone Project Report (With All Figures & Code Exce
 id = "xTLqRO3rfpRWKmb9Kx9Tx"
 uri = "file://Unit8_Final_Capstone_Report.docx"
 type = "word_document"
-title = "Unit 8 Final Capstone Report — fixed images + tauri.conf.json rendered (9,999 words, 18 figures)"
+title = "Unit 8 Final Capstone Report — all 19 figures embedded (9,993 words)"
 
 [[outputs]]
 id = "8uz3eQIFiRgwwMnxqaNqi"
 uri = "file://screenshots/CodeExcerpt5_TauriConf_rendered.png"
 type = "image"
 title = "Code Excerpt 5 — tauri.conf.json (rendered image)"
+
+[[outputs]]
+id = "VM84mPiq0M_kCVuZnFVbm"
+uri = "file://screenshots/Figure11_GitHubActions_workflow_run.png"
+type = "image"
+title = "Figure 11 — GitHub Actions workflow run (rendered)"
