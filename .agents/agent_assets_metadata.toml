@@ -252,3 +252,15 @@ id = "itxTLWehokcHil7EwckXX"
 uri = "file://Unit8_Final_Capstone_Report_corrected.docx"
 type = "word_document"
 title = "Unit 8 Final Capstone Report — §1.7 Report Organization fixed"
+
+[[outputs]]
+id = "VsZqg060jm4a8yd95mOZn"
+uri = "file://INSTALL.md"
+type = "text"
+title = "INSTALL.md — Step-by-step installation guide"
+
+[[outputs]]
+id = "PdMb-P2JRB297lDv4gXzx"
+uri = "file://README.md"
+type = "text"
+title = "README.md — Updated"
