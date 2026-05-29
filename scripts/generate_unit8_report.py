@@ -36,6 +36,7 @@ IMG = {
     "code3":           "screenshots/CodeExcerpt3_computeConfidence.jpg",
     "code4":           "screenshots/CodeExcerpt4_runSimulationTick.jpg",
     "code5_appendix":  "screenshots/CodeExcerpt5_CloneInstall.jpg",
+    "code5_conf":      "screenshots/CodeExcerpt5_TauriConf_rendered.png",
 }
 
 # ---------------------------------------------------------------------------
@@ -128,8 +129,8 @@ def insert_figure(doc, key, fig_num, caption, width=Inches(5.5)):
     r2 = cap.add_run(f"Figure {fig_num}. {caption}")
     set_font(r2, italic=True, size=10)
 
-def insert_code_img(doc, key, label, width=Inches(5.2)):
-    """Insert a code screenshot with a bold label above it."""
+def insert_code_img(doc, key, label, max_width=Inches(5.4), max_height=Inches(4.5)):
+    """Insert a code screenshot — auto-fits portrait vs landscape so images never overflow the page."""
     p_label = doc.add_paragraph()
     p_label.paragraph_format.space_before = Pt(10)
     p_label.paragraph_format.space_after  = Pt(3)
@@ -139,12 +140,24 @@ def insert_code_img(doc, key, label, width=Inches(5.2)):
 
     path = IMG.get(key)
     if path and os.path.exists(path):
+        from PIL import Image as PILImage
+        im = PILImage.open(path)
+        w_px, h_px = im.size
+        ratio = w_px / h_px  # >1 landscape, <1 portrait
+
+        # If width-constrained height would exceed max_height, switch to height constraint
+        height_if_width_capped = max_width / ratio   # EMU / float = EMU
+        if height_if_width_capped <= max_height:
+            add_kw = {"width": max_width}
+        else:
+            add_kw = {"height": max_height}
+
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(2)
         p.paragraph_format.space_after  = Pt(12)
-        # Do NOT set line_spacing — it clips inline images in Word
-        p.add_run().add_picture(path, width=width)
+        # Do NOT set line_spacing — exact spacing clips inline images in Word
+        p.add_run().add_picture(path, **add_kw)
         _add_img_border(p)
     else:
         p = doc.add_paragraph()
@@ -959,26 +972,13 @@ para(doc, (
     "The Tauri configuration specifies a 1400x900 application window and two bundle targets: the NSIS "
     "installer (.exe), which bundles the WebView2 runtime for systems where it is not already present, "
     "and the MSI package (.msi), which supports enterprise Group Policy deployment. Both targets are "
-    "produced automatically by the GitHub Actions release workflow on every version tag push."
+    "produced automatically by the GitHub Actions release workflow on every version tag push. "
+    "Code Excerpt 5 below shows the key sections of tauri.conf.json, including the productName, "
+    "build commands, window dimensions, and bundle targets that drive both the NSIS and MSI outputs."
 ), first_indent=0.5)
 
-add_code_text(doc, "Code Excerpt 5 — tauri.conf.json key configuration (abbreviated):", [
-    '{',
-    '  "productName": "Demo SIEM",',
-    '  "version": "1.2.0",',
-    '  "build": {',
-    '    "beforeBuildCommand": "pnpm run build:tauri",',
-    '    "frontendDist": "../dist"',
-    '  },',
-    '  "app": {',
-    '    "windows": [{ "title": "Demo SIEM", "width": 1400, "height": 900 }]',
-    '  },',
-    '  "bundle": {',
-    '    "targets": ["nsis", "msi"],',
-    '    "icon": ["icons/32x32.png","icons/128x128.png","icons/icon.ico"]',
-    '  }',
-    '}',
-])
+insert_code_img(doc, "code5_conf",
+    "Code Excerpt 5 — tauri.conf.json key configuration (abbreviated):")
 
 add_page_break(doc)
 
