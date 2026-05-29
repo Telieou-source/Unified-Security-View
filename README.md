@@ -83,35 +83,38 @@ Demo SIEM models three isolated classification domains, each generating realisti
 
 ## Getting Started
 
-### Prerequisites
+There are three ways to run Demo SIEM:
 
-- [Node.js](https://nodejs.org/) v18+
-- [pnpm](https://pnpm.io/) v8+
+| Option | What you need |
+|---|---|
+| **Live web app** | Just a browser — no install at all |
+| **Windows desktop app** | Download the installer from GitHub Releases |
+| **Run from source** | Node.js 20+, pnpm 8+, Git |
 
-### Install and run
+See [INSTALL.md](INSTALL.md) for full step-by-step instructions for all options, including building the Windows installer from source.
+
+### Quick start (live web)
+
+```
+https://unified-security-view.replit.app
+```
+
+### Quick start (from source)
 
 ```bash
+git clone https://github.com/Telieou-source/Unified-Security-View.git
+cd Unified-Security-View
 pnpm install
 pnpm --filter @workspace/cross-domain-demo run dev
 ```
 
-The app will be available at `http://localhost:<PORT>` (port is assigned automatically).
-
-### Build for production
-
-```bash
-pnpm --filter @workspace/cross-domain-demo run build
-```
-
-Output is written to `artifacts/cross-domain-demo/dist/public/`.
+Open the URL printed in the terminal.
 
 ---
 
 ## Windows Desktop App
 
 A native Windows installer is built automatically via GitHub Actions whenever a version tag is pushed.
-
-### Download
 
 Go to [Releases](https://github.com/Telieou-source/Unified-Security-View/releases) and download:
 
@@ -122,25 +125,7 @@ Go to [Releases](https://github.com/Telieou-source/Unified-Security-View/release
 
 **Requirements:** Windows 10 or 11 (64-bit)
 
-### Build locally (Windows)
-
-Requires [Node.js](https://nodejs.org/) v20+, [pnpm](https://pnpm.io/), and [Rust stable](https://rustup.rs/).
-
-```bash
-pnpm install
-pnpm --filter @workspace/cross-domain-demo run tauri:build
-```
-
-Installers are written to `artifacts/cross-domain-demo/src-tauri/target/release/bundle/`.
-
-### Release a new version
-
-```bash
-git tag v1.2.0
-git push origin v1.2.0
-```
-
-GitHub Actions builds the Windows installer and attaches it to the release automatically.
+See [INSTALL.md](INSTALL.md) for the full Windows build-from-source walkthrough.
 
 ---
 
