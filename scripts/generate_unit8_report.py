@@ -708,12 +708,12 @@ para(doc, (
     "in the correlation theory described by Gonzalez-Granadillo et al. (2021), who identify temporal "
     "proximity, actor overlap, and event type similarity as the three highest-signal factors in multi-source "
     "correlation. The Demo SIEM confidence scoring algorithm directly operationalizes this research by "
-    "incorporating all three factors into a normalized weighted sum — event type concordance contributing "
-    "0.40 weight, user identity overlap 0.30 weight, temporal proximity up to 0.20 weight, and destination "
-    "subnet overlap 0.10 weight — yielding scores bounded in [0.0, 1.0] with an alert threshold of 0.75. "
-    "This weighting reflects the relative signal reliability of each factor: user identity is a highly "
-    "stable indicator that is difficult for adversaries to spoof across domain boundaries, while temporal "
-    "proximity alone is easily coincidental and therefore weighted lower."
+    "incorporating all three factors into a normalized weighted sum — shared user identity contributing "
+    "0.40 weight, event type concordance 0.30 weight, destination subnet overlap up to 0.20 weight, and "
+    "temporal proximity up to 0.10 weight — yielding scores bounded in [0.0, 1.0] with an alert threshold "
+    "of 0.75. This weighting reflects the relative signal reliability of each factor: user identity is a "
+    "highly stable indicator that is difficult for adversaries to spoof across domain boundaries, while "
+    "temporal proximity alone is easily coincidental and therefore weighted lower."
 ), first_indent=0.5)
 
 heading(doc, "2.4 Gap Analysis and Research Positioning", level=2)
@@ -1178,8 +1178,8 @@ add_table(doc,
     caption="Table 8. Windows Desktop Build Artifact Summary")
 
 insert_figure(doc, "fig11_actions", 11,
-    "GitHub Actions release-desktop workflow — successful Windows build run showing all eight steps "
-    "completed (checkout, Node.js/pnpm, Rust toolchain, dependencies, icons, Vite build, Tauri compile, release publish)")
+    "GitHub Actions release-desktop workflow — successful Windows build run, all pipeline stages "
+    "completed (checkout, Node.js/pnpm setup, Rust toolchain, dependency install, icon generation, Vite build, Tauri compile, release publish)")
 
 insert_figure(doc, "fig12_releases", 12,
     "GitHub Releases page for Unified-Security-View — v1.2.0 Final Release and v1.1.0 Health Monitor Feature "
@@ -1232,7 +1232,7 @@ para(doc, (
     "These findings align with and extend the research identified in the literature review. "
     "Gonzalez-Granadillo et al. (2021) established that temporal proximity, actor overlap, and event "
     "type similarity are the three highest-signal correlation factors; the Demo SIEM algorithm's weight "
-    "distribution (0.40 event type, 0.30 user identity, 0.20 temporal proximity, 0.10 subnet) directly "
+    "distribution (0.40 user identity, 0.30 event type, 0.20 subnet overlap, 0.10 temporal proximity) directly "
     "reflects this research prioritization while adding a fourth network-layer factor. The gap identified "
     "by Tariq et al. (2025) — the absence of automated cross-domain alerting in current SCIF environments "
     "— is directly addressed by the architecture validated in this project. The addition of the Tauri v2 "
