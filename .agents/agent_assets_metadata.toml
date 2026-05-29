@@ -234,3 +234,9 @@ id = "xTLqRO3rfpRWKmb9Kx9Tx"
 uri = "file://Unit8_Final_Capstone_Report.docx"
 type = "word_document"
 title = "Unit 8 Final Capstone Report — fixed image formatting (10,008 words, 17 figures)"
+
+[[outputs]]
+id = "8uz3eQIFiRgwwMnxqaNqi"
+uri = "file://screenshots/CodeExcerpt5_TauriConf_rendered.png"
+type = "image"
+title = "Code Excerpt 5 — tauri.conf.json (rendered image)"
