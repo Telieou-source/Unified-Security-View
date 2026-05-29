@@ -28,7 +28,7 @@ IMG = {
     "fig8_tc03":       "screenshots/Figure7_CorrelationLog_validation.jpg",
     "fig9_tc01":       "screenshots/Figure6_HealthMonitor_60s.jpg",
     "fig10_conf":      "screenshots/Figure3_CorrelationEngine_alert.jpg",
-    "fig11_actions":   None,   # no screenshot available — kept as placeholder
+    "fig11_actions":   "screenshots/Figure11_GitHubActions_workflow_run.png",
     "fig12_releases":  "attached_assets/screenshots/github_com_Telieou-source_Unified-Security-View_releases.png",
     "fig13_exec":      "screenshots/Figure5_UnifiedView_live.jpg",
     "code1":           "screenshots/CodeExcerpt1_interface_definitions.jpg",
