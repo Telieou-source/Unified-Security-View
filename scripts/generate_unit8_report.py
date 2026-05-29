@@ -7,6 +7,8 @@ High-Side Multi-Classification SIEM
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 import os
 
@@ -83,43 +85,54 @@ def heading(doc, text, level=1, size=None, space_before=12, space_after=6):
     set_font(r, size=sz, bold=True)
     return p
 
-def insert_figure(doc, key, fig_num, caption, width=Inches(5.8)):
+def _add_img_border(paragraph, color="BBBBBB", sz="6", space="4"):
+    """Add a thin light-gray box border around a paragraph (makes images stand out on white page)."""
+    pPr = paragraph._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    for side in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:val'), 'single')
+        el.set(qn('w:sz'), sz)       # border thickness in 1/8 pt units (6 = 0.75 pt)
+        el.set(qn('w:space'), space) # distance from text in pt
+        el.set(qn('w:color'), color)
+        pBdr.append(el)
+    pPr.append(pBdr)
+
+def insert_figure(doc, key, fig_num, caption, width=Inches(5.5)):
     """Insert a real screenshot image with figure caption, or a text placeholder if no image."""
     path = IMG.get(key)
     if path and os.path.exists(path):
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         pf = p.paragraph_format
-        pf.space_before = Pt(8)
-        pf.space_after  = Pt(2)
-        pf.line_spacing = Pt(20)
+        pf.space_before = Pt(10)
+        pf.space_after  = Pt(4)
+        # Do NOT set line_spacing on image paragraphs — Word clips images under "Exact" spacing
         run = p.add_run()
         run.add_picture(path, width=width)
+        _add_img_border(p)
     else:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         pf = p.paragraph_format
-        pf.space_before = Pt(8)
-        pf.space_after  = Pt(2)
-        pf.line_spacing = Pt(20)
-        r = p.add_run(f"[Screenshot pending — Figure {fig_num}]")
+        pf.space_before = Pt(10)
+        pf.space_after  = Pt(4)
+        r = p.add_run(f"[Screenshot not available — Figure {fig_num}]")
         set_font(r, italic=True, size=11)
-    # Caption
+    # Caption line
     cap = doc.add_paragraph()
     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
     pf2 = cap.paragraph_format
-    pf2.space_before = Pt(2)
-    pf2.space_after  = Pt(10)
-    pf2.line_spacing = Pt(20)
+    pf2.space_before = Pt(3)
+    pf2.space_after  = Pt(12)
     r2 = cap.add_run(f"Figure {fig_num}. {caption}")
-    set_font(r2, italic=True, size=11)
+    set_font(r2, italic=True, size=10)
 
-def insert_code_img(doc, key, label, width=Inches(5.5)):
+def insert_code_img(doc, key, label, width=Inches(5.2)):
     """Insert a code screenshot with a bold label above it."""
     p_label = doc.add_paragraph()
-    p_label.paragraph_format.space_before = Pt(8)
-    p_label.paragraph_format.space_after  = Pt(2)
-    p_label.paragraph_format.line_spacing = Pt(20)
+    p_label.paragraph_format.space_before = Pt(10)
+    p_label.paragraph_format.space_after  = Pt(3)
     p_label.paragraph_format.left_indent  = Inches(0.25)
     rl = p_label.add_run(label)
     set_font(rl, bold=True, size=11)
@@ -129,13 +142,14 @@ def insert_code_img(doc, key, label, width=Inches(5.5)):
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after  = Pt(10)
-        p.paragraph_format.line_spacing = Pt(20)
+        p.paragraph_format.space_after  = Pt(12)
+        # Do NOT set line_spacing — it clips inline images in Word
         p.add_run().add_picture(path, width=width)
+        _add_img_border(p)
     else:
         p = doc.add_paragraph()
         p.paragraph_format.left_indent = Inches(0.5)
-        p.paragraph_format.space_after = Pt(10)
+        p.paragraph_format.space_after = Pt(12)
         r = p.add_run("[Code screenshot not available]")
         set_font(r, italic=True, size=11)
 
