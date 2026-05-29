@@ -1,0 +1,222 @@
+Here are the prerequisits for Final Unit 8 Report: "Instructions
+For this section, you will develop and submit a professionally written, well-organized final capstone project report along with all required supporting artifacts. Your report should present your project clearly, logically, and professionally. Please make changes suggested by the instructor from week 7. The report should follow the Capstone Project Report Template and contain the following three sections: 
+
+Preliminary Sections: 
+
+Subsection A: Front Matter Essentials:  
+
+Title Page 
+
+Abstract 
+
+Acknowledgements  
+
+Subsection B: Navigational and Reference Aids 
+
+Table of Contents 
+
+List of tables, figures 
+
+Abbreviations and symbols 
+
+Core Chapters: 
+
+Subsection A: Foundation and Design Development 
+
+Chapter 1: Introduction – include background, objectives, and scope. 
+
+Chapter 2: Literature Review – summarize key studies or technologies influencing your project. 
+
+Chapter 3: System Design and Methodology – outline architecture including system architecture diagram, algorithms, and tools used. 
+
+Subsection B: Results, Analysis, and Conclusion 
+
+Chapter 4: Results and Evaluation – key code snippets and output screenshots are mandatory. Summarize testing outcomes and evaluation metrics 
+
+Chapter 5: Discussion – interpret results and address limitations. Present findings using graphs, charts, etc. 
+
+Chapter 6: Conclusion and Future Work – summarize contributions and suggest improvements. 
+
+Additional Sections: 
+
+References (APA 7th Edition) 
+
+Appendices (if applicable: screenshots, logs, data samples) 
+
+
+Report Submission Instructions
+Read the rubric on how your assignment will be graded.   
+
+Compile all parts (1,2, and 3) into a single, well-organized Word document formatted as per template (Headings, page numbers, table of contents) 
+
+ Include all code and output screenshots within the report. Screenshots should be clear, properly captioned, and relevant. 
+
+Your report should be a minimum of 10000 words and not more than 15000 words (not including the reference list or the title);    
+
+You should use the proper APA citation and referencing, when creating your report. You can locate and use additional sources provided you cite them according to APA with a correct and clickable link. 
+
+Remember to cite and list references to validate statements of fact or information that is not considered common knowledge and to corroborate personal opinions/points of view. Explore additional details on the INFORMATION LITERACY page (located on the right-hand side of this page). "  Same Template as used before.  And below is the grading rubric: "Criteria	
+Level 5
+Level 4
+Level 3
+Level 2
+Level 1
+Criterion Score
+Q1. A. Preliminary Section – Front Matter
+4.1–5.0 points
+All three aspects of Front matter (title page, abstract, and acknowledgement) have been written well. 
+
+2.6–4.0 points
+Two aspects of Front matter have been written and one aspect is missing or with formatting errors. 
+
+1.6–2.5 points
+One aspect of Front matter has been written and two aspects are missing or with formatting errors. 
+
+0.1–1.5 points
+All three aspects of Front matter show formatting or other errors. 
+
+0.0 points
+Front matter of preliminary section not written. 
+
+Score of Q1. A. Preliminary Section – Front Matter,/ 5
+Q1.B. Preliminary Section – Navigation and Reference
+4.1–5.0 points
+All three aspects of Navigation and reference (Table of contents, List of figures, tables and Symbols and abbreviations) has been written well. 
+
+2.6–4.0 points
+Two aspects of Navigation and reference have been written and one aspect is missing or with formatting errors. 
+
+1.6–2.5 points
+One aspect of Navigation and reference has been written and two aspects are missing or with formatting errors. 
+
+0.1–1.5 points
+ 
+
+All three aspects of Navigation and reference show formatting or other errors. 
+
+0.0 points
+Navigation and reference of preliminary section not written. 
+
+Score of Q1.B. Preliminary Section – Navigation and Reference,/ 5
+Q2.A. Core Chapters – Foundation and Design
+17–20 points
+All three chapters of Foundation and design (Introduction, Literature Review, System Design and methodology) has been written well. 
+
+Screenshots and visuals enhance understanding. 
+
+11–16 points
+Two chapters of Foundation and design have been written and one chapter is missing or with errors. 
+
+7–10 points
+One chapter of Foundation and design has been written and two chapters are missing or with errors. 
+
+1–6 points
+All three chapters of Foundation and design show formatting or other errors. 
+
+0 points
+Foundation and design of Core chapters section not written. 
+
+Score of Q2.A. Core Chapters – Foundation and Design,/ 20
+Q2.B. Core Chapters – Results, Analysis and Conclusion
+17–20 points
+All three chapters of Results, Analysis and Conclusion has been written well. 
+
+11–16 points
+Two chapters of Results, Analysis and Conclusion have been written and one chapter is missing or with errors. 
+
+7–10 points
+One chapter of Results, Analysis and Conclusion has been written and two chapters are missing or with errors. 
+
+1–6 points
+All three chapters of Results, Analysis and Conclusion show formatting or other errors. 
+
+0 points
+Results, Analysis and Conclusion of Core chapters section not written. 
+
+Score of Q2.B. Core Chapters – Results, Analysis and Conclusion,/ 20
+Q3. Additional Sections – Appendix and References
+9–10 points
+All two sections of Appendix and references have been written well. 
+
+6–8 points
+Both sections of Appendix and references have been written but show minor errors or inaccuracies 
+
+4–5 points
+One of the two sections of Appendix and references have been written well and one section is missing or with errors. 
+
+1–3 points
+Both sections of Appendix and references show major formatting or other errors. 
+
+0 points
+Appendix and reference sections are not written. 
+
+Score of Q3. Additional Sections – Appendix and References,/ 10
+Use Information effectively
+9–10 points
+Chooses from a variety of information sources appropriate to the scope of the question. Selects sources after considering the importance to the question/topic of the multiple criteria used (such as relevance to the question, currency, authority, audience, and bias or point of view). 
+
+6–8 points
+Chooses from a variety of information sources appropriate to the scope of the question. Selects sources using multiple criteria (such as relevance to the question, currency, and authority). 
+
+4–5 points
+Chooses from a variety of information sources. Selects sources using basic criteria (such as relevance to the question and currency). 
+
+1–3 points
+Chooses from a few information sources. Selects sources using limited criteria (such as relevance to the question). 
+
+0 points
+Does not choose relevant information sources or relies on sources that lack connection to the question or topic. Selection lacks consideration of key criteria such as relevance, currency, or authority. 
+
+Score of Use Information effectively,/ 10
+Sources and Evidence
+9–10 points
+Demonstrates skillful use of high-quality, credible, relevant sources to develop ideas appropriate for the discipline and genre of the writing. Proper citations and references are consistently included. 
+
+6–8 points
+Demonstrates consistent use of credible, relevant sources to support ideas that are situated within the discipline and genre of the writing. Proper citations and references are included, but occasionally inconsistent. 
+
+4–5 points
+Demonstrates an attempt to use credible and/or relevant sources to support ideas that are appropriate for the discipline and genre of the writing. The citations and references are mostly not proper and inconsistent.   
+
+1–3 points
+Demonstrates an attempt to use sources to support ideas in writing. However, the citations and references are not proper and very inconsistent. 
+
+0 points
+Uses no sources to support ideas in writing.   
+
+Score of Sources and Evidence,/ 10
+Effective Communication
+9–10 points
+Uses graceful language that skillfully communicates meaning to readers with clarity and fluency and is error-free. 
+
+6–8 points
+Uses straightforward language that generally conveys meaning to readers with clarity. The language has a few errors. 
+
+4–5 points
+Uses language that generally conveys meaning to readers. The writing includes some errors. 
+
+1–3 points
+Uses language that sometimes impedes meaning because of errors in usage. 
+
+0 points
+Uses language that consistently impedes meaning due to frequent errors, making the content unclear and distracting to the reader.   
+
+Score of Effective Communication,/ 10
+Criteria	
+Level 3
+Level 2
+Level 1
+Criterion Score
+Word Count and Formatting
+6–10 points
+Meets the word count range, is double-spaced in Times New Roman font, and font is no greater than 12 points in size.   
+
+1–5 points
+Either the word count range requirement is met or the formatting requirements (double-spacing, Times New Roman font, and font size no greater than 12 points) are met, but not both. 
+
+0 points
+Neither the word count range nor the formatting requirements (double-spacing, Times New Roman font, and font size no greater than 12 points) are met. 
+
+Score of Word Count and Formatting,/ 10
+Total
+Score of Rubric 5910 _Report_U8,/ 100"
