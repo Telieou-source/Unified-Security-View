@@ -178,7 +178,3 @@ artifacts/cross-domain-demo/
 
 Cross-Domain Security Metadata Demo
 https://unified-security-view.replit.app
-
-## License
-
-This project is provided for demonstration and educational purposes.
