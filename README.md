@@ -81,6 +81,14 @@ Demo SIEM models three isolated classification domains, each generating realisti
 
 ---
 
+## Screenshots
+
+| Domain event streams | Cross-domain guard | Correlation engine |
+|---|---|---|
+| ![Domain event streams](screenshots/A1_domain_event_streams.jpg) | ![Cross-domain guard](screenshots/A2_crossdomain_guard.jpg) | ![Correlation engine](screenshots/A3_correlation_engine.jpg) |
+
+---
+
 ## Getting Started
 
 There are three ways to run Demo SIEM:
